@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import FilePreviewModal from "./FilePreviewModal";
 
 interface FileItem {
     id: string;
@@ -19,6 +20,7 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
 
     const fetchFiles = async () => {
         try {
@@ -66,6 +68,17 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
         } finally {
             setDeletingId(null);
         }
+    };
+
+    const handleDownload = (e: React.MouseEvent, file: FileItem) => {
+        e.stopPropagation();
+        const link = document.createElement("a");
+        link.href = file.url;
+        link.download = file.name;
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const formatSize = (bytes: number) => {
@@ -123,7 +136,7 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
 
     if (error) {
         return (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600">
                 {error}
             </div>
         );
@@ -143,59 +156,78 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
     }
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {files.map((file) => (
-                <div
-                    key={file.id}
-                    className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors shadow-sm hover:shadow-md"
-                >
-                    {/* Preview / Icon */}
-                    <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block"
+        <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {files.map((file) => (
+                    <div
+                        key={file.id}
+                        className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors shadow-sm hover:shadow-md cursor-pointer"
+                        onClick={() => setPreviewFile(file)}
                     >
-                        {file.mimeType.startsWith("image/") ? (
-                            <img
-                                src={file.url}
-                                alt={file.name}
-                                className="w-full aspect-square object-cover rounded-lg bg-gray-100"
-                            />
-                        ) : (
-                            <div className="w-full aspect-square bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 border border-gray-100">
-                                {getFileIcon(file.mimeType)}
-                            </div>
-                        )}
-                    </a>
+                        {/* Preview / Icon */}
+                        <div className="block">
+                            {file.mimeType.startsWith("image/") ? (
+                                <img
+                                    src={file.url}
+                                    alt={file.name}
+                                    className="w-full aspect-square object-cover rounded-lg bg-gray-100"
+                                />
+                            ) : (
+                                <div className="w-full aspect-square bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 border border-gray-100">
+                                    {getFileIcon(file.mimeType)}
+                                </div>
+                            )}
+                        </div>
 
-                    {/* Info */}
-                    <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-900 truncate" title={file.name}>
-                            {file.name}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                            {formatSize(file.size)}
-                        </p>
+                        {/* Info */}
+                        <div className="mt-3">
+                            <p className="text-sm font-medium text-gray-900 truncate" title={file.name}>
+                                {file.name}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {formatSize(file.size)}
+                            </p>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                            {/* Download Button */}
+                            <button
+                                onClick={(e) => handleDownload(e, file)}
+                                className="p-2 bg-sky-500/80 hover:bg-sky-500 text-white rounded-lg transition-colors"
+                                title="Download"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                            </button>
+                            {/* Delete Button */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }}
+                                disabled={deletingId === file.id}
+                                className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                                title="Delete"
+                            >
+                                {deletingId === file.id ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                     </div>
+                ))}
+            </div>
 
-                    {/* Delete Button */}
-                    <button
-                        onClick={() => handleDelete(file.id)}
-                        disabled={deletingId === file.id}
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg transition-all disabled:opacity-50"
-                    >
-                        {deletingId === file.id ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        )}
-                    </button>
-                </div>
-            ))}
-        </div>
+            {/* Preview Modal */}
+            <FilePreviewModal
+                isOpen={!!previewFile}
+                onClose={() => setPreviewFile(null)}
+                file={previewFile}
+            />
+        </>
     );
 }

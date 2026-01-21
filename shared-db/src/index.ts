@@ -83,4 +83,4 @@ export * from "./schema/auth-schema";
 export * from "./schema/sedia-arcive";
 
 // Re-export drizzle-orm operators for consistent typing
-export { eq, and, or, desc, asc, sql as sqlOp } from "drizzle-orm";
+export { eq, and, or, desc, asc, sql, sql as sqlOp } from "drizzle-orm";
