@@ -1,0 +1,222 @@
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv called
+loadEnv: Start
+loadEnv: Checking 3 paths
+loadEnv: Checking path: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/sedia-arcive/.env
+loadEnv: Found env at: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/sedia-arcive/.env
+loadEnv: Loaded .env. DATABASE_URL present: true
+loadEnv: Checking path: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Found env at: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Loaded .env. DATABASE_URL present: true
+loadEnv: Checking path: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Found env at: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Loaded .env. DATABASE_URL present: true
+loadEnv: DATABASE_URL already set.
+loadEnv: End
+getDb: Read DATABASE_URL: postgresql://neondb_owner:npg_OX3u7gtFsIvN@ep-raspy-night-a8l71l7a-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require
+loadEnv: Start
+loadEnv: Checking 3 paths
+loadEnv: Checking path: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/sedia-arcive/.env
+loadEnv: Found env at: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/sedia-arcive/.env
+loadEnv: Loaded .env. DATABASE_URL present: true
+loadEnv: Checking path: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Found env at: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Loaded .env. DATABASE_URL present: true
+loadEnv: Checking path: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Found env at: /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/shared-db/.env
+loadEnv: Loaded .env. DATABASE_URL present: true
+loadEnv: DATABASE_URL already set.
+loadEnv: End
+getDb: Read DATABASE_URL: postgresql://neondb_owner:npg_OX3u7gtFsIvN@ep-raspy-night-a8l71l7a-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require
