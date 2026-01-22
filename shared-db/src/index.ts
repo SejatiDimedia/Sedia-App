@@ -1,13 +1,5 @@
-import { config } from "dotenv";
 import { neon } from "@neondatabase/serverless";
 import { drizzle, NeonHttpDatabase } from "drizzle-orm/neon-http";
-import { resolve, dirname } from "path";
-import { existsSync } from "fs";
-import { fileURLToPath } from "url";
-
-// ESM dirname shim
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Import all schemas
 import * as authSchema from "./schema/auth-schema";
@@ -21,43 +13,20 @@ const combinedSchema = {
 
 // Lazy database instance
 let _db: NeonHttpDatabase<typeof combinedSchema> | null = null;
-let _envLoaded = false;
-
-function loadEnv() {
-    if (_envLoaded) return;
-    _envLoaded = true;
-
-    // Try to load .env from various locations  
-    const possiblePaths = [
-        resolve(process.cwd(), ".env"),                    // App's .env
-        resolve(process.cwd(), "../../shared-db/.env"),    // From app to shared-db
-        resolve(__dirname, "../.env"),                     // Relative to dist
-        resolve(__dirname, "../../.env"),                  // One level up
-    ];
-
-    for (const envPath of possiblePaths) {
-        if (existsSync(envPath)) {
-            config({ path: envPath });
-            if (process.env.DATABASE_URL) {
-                break;
-            }
-        }
-    }
-
-    // Fallback: Check if Astro loaded it (but not into process.env, which requires dotenv or manual copy)
-    if (!process.env.DATABASE_URL && (import.meta as any).env?.DATABASE_URL) {
-        process.env.DATABASE_URL = (import.meta as any).env.DATABASE_URL;
-    }
-}
 
 function getDb(): NeonHttpDatabase<typeof combinedSchema> {
     if (!_db) {
-        loadEnv();
+        // In Vercel/Production, process.env is already populated
         const databaseUrl = process.env.DATABASE_URL;
+
         if (!databaseUrl) {
+            // Only try to load dotenv in development if needed, but for shared-lib consumed by Astro,
+            // Astro handles env vars in both dev and prod.
+            // If strictly needed for standalone scripts, we should use dynamic import(), but
+            // for now, assuming the consumer application (Astro) loads the env is safer for bundling.
             throw new Error(
                 "DATABASE_URL environment variable is not set. " +
-                "Make sure it's defined in your .env file."
+                "Make sure it's defined in your .env file or Vercel project settings."
             );
         }
         const sql = neon(databaseUrl);
@@ -65,6 +34,8 @@ function getDb(): NeonHttpDatabase<typeof combinedSchema> {
     }
     return _db;
 }
+
+
 
 // Export a proxy that accesses the db lazily
 export const db = new Proxy({} as NeonHttpDatabase<typeof combinedSchema>, {
