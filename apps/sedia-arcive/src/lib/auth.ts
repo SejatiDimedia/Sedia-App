@@ -35,6 +35,8 @@ export const auth = betterAuth({
     trustedOrigins: [
         "http://localhost:4321",
         "http://localhost:3000",
+        ...(import.meta.env.BETTER_AUTH_URL ? [import.meta.env.BETTER_AUTH_URL] : []),
+        ...(import.meta.env.PUBLIC_APP_URL ? [import.meta.env.PUBLIC_APP_URL] : []),
     ],
 });
 
