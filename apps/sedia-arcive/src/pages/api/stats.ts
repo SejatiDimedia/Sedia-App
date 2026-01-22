@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { auth } from "../../lib/auth";
 import { db, file, folder, eq, sql } from "@shared-db";
+import { getUserPermission } from "../../lib/permissions";
 
 export const GET: APIRoute = async ({ request }) => {
     try {
@@ -32,10 +33,19 @@ export const GET: APIRoute = async ({ request }) => {
             .from(folder)
             .where(eq(folder.userId, session.user.id));
 
+        // Get user permission for storage limits
+        const permission = await getUserPermission(session.user.id);
+
         const stats = {
             totalFiles: Number(fileStats[0]?.totalFiles || 0),
             totalSize: Number(fileStats[0]?.totalSize || 0),
             totalFolders: Number(folderStats[0]?.totalFolders || 0),
+            // Permission data
+            uploadEnabled: permission.uploadEnabled,
+            storageLimit: permission.storageLimit,
+            storageUsed: permission.storageUsed,
+            storageRemaining: permission.storageLimit - permission.storageUsed,
+            role: permission.role,
         };
 
         return new Response(JSON.stringify(stats), {

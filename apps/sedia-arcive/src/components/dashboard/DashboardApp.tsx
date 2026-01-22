@@ -12,6 +12,7 @@ interface Stats {
 export default function DashboardApp() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -75,8 +76,8 @@ export default function DashboardApp() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Sidebar activePage="dashboard" />
-            <div className="ml-64 transition-all duration-300">
+            <Sidebar activePage="dashboard" onCollapsedChange={setSidebarCollapsed} />
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
                 <Header title="Dashboard" />
                 <main className="p-6">
                     {/* Stats Grid */}

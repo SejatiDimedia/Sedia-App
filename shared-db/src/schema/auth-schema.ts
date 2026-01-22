@@ -1,4 +1,4 @@
-import { pgSchema, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgSchema, text, timestamp, boolean, bigint, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 // ============================================
@@ -78,6 +78,27 @@ export const verification = sediaAuth.table("verification", {
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+/**
+ * App Permissions table - stores per-app roles and limits
+ * Each user can have different permissions for each app
+ */
+export const appPermission = sediaAuth.table("app_permission", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id, { onDelete: "cascade" }),
+    appId: text("app_id").notNull(), // e.g., 'sedia-arcive'
+    role: text("role").notNull().default("user"), // 'user' | 'admin'
+    uploadEnabled: boolean("upload_enabled").notNull().default(false),
+    storageLimit: bigint("storage_limit", { mode: "number" }).notNull().default(524288000), // 500 MB
+    storageUsed: bigint("storage_used", { mode: "number" }).notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+    // Unique constraint: one permission record per user per app
+    userAppUnique: unique().on(table.userId, table.appId),
+}));
+
 // ============================================
 // Relations
 // ============================================
@@ -85,6 +106,7 @@ export const verification = sediaAuth.table("verification", {
 export const userRelations = relations(user, ({ many }) => ({
     sessions: many(session),
     accounts: many(account),
+    appPermissions: many(appPermission),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -97,6 +119,13 @@ export const sessionRelations = relations(session, ({ one }) => ({
 export const accountRelations = relations(account, ({ one }) => ({
     user: one(user, {
         fields: [account.userId],
+        references: [user.id],
+    }),
+}));
+
+export const appPermissionRelations = relations(appPermission, ({ one }) => ({
+    user: one(user, {
+        fields: [appPermission.userId],
         references: [user.id],
     }),
 }));

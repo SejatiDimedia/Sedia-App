@@ -2,28 +2,49 @@
 import Button from "../ui/Button.astro";
 ---
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-zinc-100">
+<header
+  class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-zinc-100"
+>
   <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
-      <a href="/" class="flex items-center gap-2">
-        <div class="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-          <span class="text-white font-bold text-sm">SA</span>
-        </div>
-        <span class="font-semibold text-zinc-900 text-lg">SediaArcive</span>
+      <a
+        href="/"
+        class="flex items-center gap-0.5 text-xl tracking-tight leading-none group"
+      >
+        <span class="font-black text-primary-600 transition-colors">Sedia</span>
+        <span
+          class="font-normal text-slate-500 group-hover:text-slate-700 transition-colors"
+          >Arcive</span
+        >
+        <span class="text-primary-500 font-bold mb-1.5 text-2xl">.</span>
       </a>
 
       <!-- Nav Links -->
       <div class="hidden md:flex items-center gap-8">
-        <a href="#features" class="text-sm text-zinc-600 hover:text-zinc-900 transition-colors">Features</a>
-        <a href="#pricing" class="text-sm text-zinc-600 hover:text-zinc-900 transition-colors">Pricing</a>
-        <a href="#about" class="text-sm text-zinc-600 hover:text-zinc-900 transition-colors">About</a>
+        <a
+          href="#features"
+          class="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+          >Features</a
+        >
+        <a
+          href="#pricing"
+          class="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+          >Pricing</a
+        >
+        <a
+          href="#about"
+          class="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+          >About</a
+        >
       </div>
 
       <!-- CTA -->
       <div class="flex items-center gap-3">
         <Button variant="ghost" size="sm" href="/login">Sign In</Button>
-        <Button variant="primary" size="sm" href="/dashboard">Get Started</Button>
+        <Button variant="primary" size="sm" href="/dashboard"
+          >Get Started</Button
+        >
       </div>
     </div>
   </nav>

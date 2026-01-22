@@ -68,7 +68,8 @@ export default function SearchResults({ onFolderClick }: SearchResultsProps) {
     }, [query]);
 
     const handleFileClick = (file: FileResult) => {
-        window.open(file.url, "_blank");
+        // Redirect to files page - the file is in root if no folderId in search data
+        window.location.href = `/dashboard/files`;
         setIsOpen(false);
         setQuery("");
     };

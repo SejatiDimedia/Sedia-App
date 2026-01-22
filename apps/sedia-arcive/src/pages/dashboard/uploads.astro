@@ -1,55 +1,8 @@
 ---
-import "../../styles/global.css";
-import Sidebar from "../../components/dashboard/Sidebar";
-import Header from "../../components/dashboard/Header";
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import UploadsApp from "../../components/dashboard/UploadsApp";
 ---
 
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="SediaArcive Uploads" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-            rel="stylesheet"
-        />
-        <title>Uploads | SediaArcive</title>
-    </head>
-    <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased font-sans">
-        <div class="min-h-screen bg-gray-50">
-            <Sidebar activePage="uploads" client:load />
-            <div class="ml-64 transition-all duration-300">
-                <Header title="Uploads" client:load />
-                <main class="p-6">
-                    <div
-                        class="bg-white border border-gray-200 rounded-2xl p-12 shadow-sm text-center"
-                    >
-                        <svg
-                            class="w-16 h-16 mx-auto text-gray-300 mb-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.5"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                            ></path>
-                        </svg>
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">
-                            Upload History
-                        </h2>
-                        <p class="text-gray-500">
-                            Coming soon - View your recent uploads here.
-                        </p>
-                    </div>
-                </main>
-            </div>
-        </div>
-    </body>
-</html>
+<DashboardLayout title="Uploads">
+    <UploadsApp client:load />
+</DashboardLayout>

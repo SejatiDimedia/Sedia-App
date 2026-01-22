@@ -3,6 +3,8 @@ import { auth } from "../../../lib/auth";
 import { uploadFile, generateFileKey } from "../../../lib/storage";
 import { db, file } from "@shared-db";
 import { nanoid } from "nanoid";
+import { getUserPermission, validateUpload, updateStorageUsed } from "../../../lib/permissions";
+import { logActivity } from "../../../lib/activity";
 
 export const POST: APIRoute = async ({ request }) => {
     try {
@@ -29,6 +31,17 @@ export const POST: APIRoute = async ({ request }) => {
             );
         }
 
+        // Get user permission and validate upload
+        const permission = await getUserPermission(session.user.id);
+        const validation = validateUpload(permission, uploadedFile.size);
+
+        if (!validation.valid) {
+            return new Response(
+                JSON.stringify({ error: validation.error }),
+                { status: 403 }
+            );
+        }
+
         // Generate unique key for R2
         const r2Key = generateFileKey(session.user.id, uploadedFile.name);
 
@@ -50,6 +63,23 @@ export const POST: APIRoute = async ({ request }) => {
             folderId: folderId || null,
             userId: session.user.id,
         }).returning();
+
+        // Update storage used
+        await updateStorageUsed(session.user.id, uploadedFile.size);
+
+        // Log activity
+        await logActivity({
+            userId: session.user.id,
+            action: "upload",
+            targetType: "file",
+            targetId: fileId,
+            targetName: uploadedFile.name,
+            metadata: {
+                size: uploadedFile.size,
+                mimeType: uploadedFile.type,
+                folderId: folderId || null,
+            },
+        });
 
         return new Response(
             JSON.stringify({

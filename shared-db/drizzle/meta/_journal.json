@@ -8,6 +8,27 @@
       "when": 1769003221292,
       "tag": "0000_sticky_wolverine",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769076686151,
+      "tag": "0001_simple_harpoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769079201301,
+      "tag": "0002_illegal_red_ghost",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769081674696,
+      "tag": "0003_messy_wither",
+      "breakpoints": true
     }
   ]
 }

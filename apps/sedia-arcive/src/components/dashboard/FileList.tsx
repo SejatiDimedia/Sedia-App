@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import FilePreviewModal from "./FilePreviewModal";
+import ShareModal from "./ShareModal";
+import ConfirmationModal from "./ConfirmationModal";
 
 interface FileItem {
     id: string;
@@ -13,14 +15,16 @@ interface FileItem {
 interface FileListProps {
     refreshTrigger?: number;
     folderId?: string | null;
+    onDeleteComplete?: () => void;
 }
 
-export default function FileList({ refreshTrigger, folderId }: FileListProps) {
+export default function FileList({ refreshTrigger, folderId, onDeleteComplete }: FileListProps) {
     const [files, setFiles] = useState<FileItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+    const [shareTarget, setShareTarget] = useState<{ id: string; name: string } | null>(null);
 
     const fetchFiles = async () => {
         try {
@@ -47,26 +51,36 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
         fetchFiles();
     }, [refreshTrigger, folderId]);
 
-    const handleDelete = async (fileId: string) => {
-        if (!confirm("Are you sure you want to delete this file?")) return;
+    // State for deletion confirmation
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
 
-        setDeletingId(fileId);
+    const handleDeleteClick = (e: React.MouseEvent, file: FileItem) => {
+        e.stopPropagation();
+        setDeleteConfirmation({ id: file.id, name: file.name });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirmation) return;
+
+        setDeletingId(deleteConfirmation.id);
         try {
             const response = await fetch("/api/files", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ fileId }),
+                body: JSON.stringify({ fileId: deleteConfirmation.id }),
             });
 
             if (!response.ok) {
                 throw new Error("Failed to delete file");
             }
 
-            setFiles((prev) => prev.filter((f) => f.id !== fileId));
+            setFiles((prev) => prev.filter((f) => f.id !== deleteConfirmation.id));
+            if (onDeleteComplete) onDeleteComplete();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Delete failed");
         } finally {
             setDeletingId(null);
+            setDeleteConfirmation(null);
         }
     };
 
@@ -161,7 +175,16 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
                 {files.map((file) => (
                     <div
                         key={file.id}
-                        className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors shadow-sm hover:shadow-md cursor-pointer"
+                        draggable={true}
+                        onDragStart={(e) => {
+                            e.dataTransfer.setData("application/json", JSON.stringify({
+                                type: "file",
+                                id: file.id,
+                                folderId: folderId // Current folder (source)
+                            }));
+                            e.dataTransfer.effectAllowed = "move";
+                        }}
+                        className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors shadow-sm hover:shadow-md cursor-pointer active:cursor-grabbing active:scale-95 transition-transform"
                         onClick={() => setPreviewFile(file)}
                     >
                         {/* Preview / Icon */}
@@ -173,7 +196,10 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
                                     className="w-full aspect-square object-cover rounded-lg bg-gray-100"
                                 />
                             ) : (
-                                <div className="w-full aspect-square bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 border border-gray-100">
+                                <div className={`w-full aspect-square rounded-lg flex items-center justify-center border border-transparent ${file.mimeType.startsWith("video/") ? "bg-pink-50 text-pink-500" :
+                                    file.mimeType === "application/pdf" ? "bg-red-50 text-red-500" :
+                                        "bg-indigo-50 text-indigo-500"
+                                    }`}>
                                     {getFileIcon(file.mimeType)}
                                 </div>
                             )}
@@ -191,10 +217,20 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
 
                         {/* Action Buttons */}
                         <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                            {/* Share Button */}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShareTarget({ id: file.id, name: file.name }); }}
+                                className="p-2 bg-green-100 text-green-600 hover:bg-green-200 rounded-lg transition-colors shadow-sm"
+                                title="Share"
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                            </button>
                             {/* Download Button */}
                             <button
                                 onClick={(e) => handleDownload(e, file)}
-                                className="p-2 bg-sky-500/80 hover:bg-sky-500 text-white rounded-lg transition-colors"
+                                className="p-2 bg-sky-100 text-sky-600 hover:bg-sky-200 rounded-lg transition-colors shadow-sm"
                                 title="Download"
                             >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -203,13 +239,13 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
                             </button>
                             {/* Delete Button */}
                             <button
-                                onClick={(e) => { e.stopPropagation(); handleDelete(file.id); }}
+                                onClick={(e) => handleDeleteClick(e, file)}
                                 disabled={deletingId === file.id}
-                                className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                                className="p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors shadow-sm disabled:opacity-50"
                                 title="Delete"
                             >
                                 {deletingId === file.id ? (
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
                                 ) : (
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -227,6 +263,27 @@ export default function FileList({ refreshTrigger, folderId }: FileListProps) {
                 isOpen={!!previewFile}
                 onClose={() => setPreviewFile(null)}
                 file={previewFile}
+            />
+
+            {/* Share Modal */}
+            <ShareModal
+                isOpen={!!shareTarget}
+                onClose={() => setShareTarget(null)}
+                targetType="file"
+                targetId={shareTarget?.id || ""}
+                targetName={shareTarget?.name || ""}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={!!deleteConfirmation}
+                onClose={() => setDeleteConfirmation(null)}
+                onConfirm={confirmDelete}
+                title="Delete File"
+                message={`Are you sure you want to delete "${deleteConfirmation?.name}"? This action cannot be undone.`}
+                confirmText="Delete"
+                isDangerous={true}
+                isLoading={!!deletingId}
             />
         </>
     );

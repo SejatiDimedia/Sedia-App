@@ -1,56 +1,8 @@
 ---
-import "../../styles/global.css";
-import Sidebar from "../../components/dashboard/Sidebar";
-import Header from "../../components/dashboard/Header";
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import TeamApp from "../../components/dashboard/TeamApp";
 ---
 
-<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="SediaArcive Team" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-            rel="stylesheet"
-        />
-        <title>Team | SediaArcive</title>
-    </head>
-    <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased font-sans">
-        <div class="min-h-screen bg-gray-50">
-            <Sidebar activePage="team" client:load />
-            <div class="ml-64 transition-all duration-300">
-                <Header title="Team" client:load />
-                <main class="p-6">
-                    <div
-                        class="bg-white border border-gray-200 rounded-2xl p-12 shadow-sm text-center"
-                    >
-                        <svg
-                            class="w-16 h-16 mx-auto text-gray-300 mb-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.5"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                            ></path>
-                        </svg>
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">
-                            Team Management
-                        </h2>
-                        <p class="text-gray-500">
-                            Coming soon - Invite team members and manage
-                            permissions.
-                        </p>
-                    </div>
-                </main>
-            </div>
-        </div>
-    </body>
-</html>
+<DashboardLayout title="Team">
+    <TeamApp client:load />
+</DashboardLayout>
