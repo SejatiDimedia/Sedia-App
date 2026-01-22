@@ -4,9 +4,10 @@ import SearchResults from "./SearchResults";
 interface HeaderProps {
     title: string;
     breadcrumbs?: { label: string; href?: string }[];
+    onMobileMenuOpen?: () => void;
 }
 
-export default function Header({ title, breadcrumbs = [] }: HeaderProps) {
+export default function Header({ title, breadcrumbs = [], onMobileMenuOpen }: HeaderProps) {
     const { data: session, isPending } = useSession();
 
     const handleSignOut = async () => {
@@ -21,30 +22,45 @@ export default function Header({ title, breadcrumbs = [] }: HeaderProps) {
 
     return (
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-sm border-b border-zinc-100">
-            <div className="flex items-center justify-between h-16 px-6">
-                {/* Breadcrumbs & Title */}
-                <div>
-                    {breadcrumbs.length > 0 && (
-                        <nav className="flex items-center gap-2 text-sm text-zinc-500 mb-1">
-                            {breadcrumbs.map((crumb, index) => (
-                                <span key={crumb.label} className="flex items-center gap-2">
-                                    {crumb.href ? (
-                                        <a href={crumb.href} className="hover:text-zinc-900 transition-colors">
-                                            {crumb.label}
-                                        </a>
-                                    ) : (
-                                        <span>{crumb.label}</span>
-                                    )}
-                                    {index < breadcrumbs.length - 1 && (
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    )}
-                                </span>
-                            ))}
-                        </nav>
+            <div className="flex items-center justify-between h-16 px-4 md:px-6">
+                {/* Left Side: Mobile Menu + Breadcrumbs/Title */}
+                <div className="flex items-center gap-3 md:gap-4">
+                    {/* Mobile Hamburger */}
+                    {onMobileMenuOpen && (
+                        <button
+                            onClick={onMobileMenuOpen}
+                            className="md:hidden p-2 -ml-2 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+                        >
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
                     )}
-                    <h1 className="text-xl font-semibold text-zinc-900">{title}</h1>
+
+                    {/* Title Group */}
+                    <div>
+                        {breadcrumbs.length > 0 && (
+                            <nav className="flex items-center gap-2 text-sm text-zinc-500 mb-1">
+                                {breadcrumbs.map((crumb, index) => (
+                                    <span key={crumb.label} className="flex items-center gap-2">
+                                        {crumb.href ? (
+                                            <a href={crumb.href} className="hover:text-zinc-900 transition-colors">
+                                                {crumb.label}
+                                            </a>
+                                        ) : (
+                                            <span>{crumb.label}</span>
+                                        )}
+                                        {index < breadcrumbs.length - 1 && (
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        )}
+                                    </span>
+                                ))}
+                            </nav>
+                        )}
+                        <h1 className="text-xl font-semibold text-zinc-900">{title}</h1>
+                    </div>
                 </div>
 
                 {/* Right Actions */}

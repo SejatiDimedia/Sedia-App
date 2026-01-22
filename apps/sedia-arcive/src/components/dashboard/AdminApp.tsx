@@ -25,6 +25,7 @@ export default function AdminApp() {
     const [error, setError] = useState<string | null>(null);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const fetchUsers = async () => {
         try {
@@ -78,9 +79,17 @@ export default function AdminApp() {
     if (error?.includes("Admin access required") || error?.includes("Forbidden")) {
         return (
             <div className="min-h-screen bg-gray-50">
-                <Sidebar activePage="admin" onCollapsedChange={setSidebarCollapsed} />
-                <div className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
-                    <Header title="Admin" />
+                <Sidebar
+                    activePage="admin"
+                    onCollapsedChange={setSidebarCollapsed}
+                    mobileMenuOpen={mobileMenuOpen}
+                    onMobileClose={() => setMobileMenuOpen(false)}
+                />
+                <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-16" : "md:ml-64"} ml-0`}>
+                    <Header
+                        title="Admin"
+                        onMobileMenuOpen={() => setMobileMenuOpen(true)}
+                    />
                     <main className="p-6">
                         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
                             <svg className="w-12 h-12 mx-auto text-red-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,9 +106,17 @@ export default function AdminApp() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Sidebar activePage="admin" onCollapsedChange={setSidebarCollapsed} />
-            <div className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
-                <Header title="Admin - User Management" />
+            <Sidebar
+                activePage="admin"
+                onCollapsedChange={setSidebarCollapsed}
+                mobileMenuOpen={mobileMenuOpen}
+                onMobileClose={() => setMobileMenuOpen(false)}
+            />
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-16" : "md:ml-64"} ml-0`}>
+                <Header
+                    title="Admin - User Management"
+                    onMobileMenuOpen={() => setMobileMenuOpen(true)}
+                />
                 <main className="p-6">
                     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                         <div className="p-6 border-b border-gray-100">
@@ -176,8 +193,8 @@ export default function AdminApp() {
                                                         onClick={() => toggleUploadEnabled(u.id, u.permission?.uploadEnabled ?? false)}
                                                         disabled={updatingId === u.id}
                                                         className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${u.permission?.uploadEnabled
-                                                                ? "bg-red-50 text-red-600 hover:bg-red-100"
-                                                                : "bg-sky-50 text-sky-600 hover:bg-sky-100"
+                                                            ? "bg-red-50 text-red-600 hover:bg-red-100"
+                                                            : "bg-sky-50 text-sky-600 hover:bg-sky-100"
                                                             }`}
                                                     >
                                                         {updatingId === u.id ? (

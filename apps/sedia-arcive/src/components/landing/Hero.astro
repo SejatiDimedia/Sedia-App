@@ -2,125 +2,293 @@
 import Button from "../ui/Button.astro";
 ---
 
-<section class="relative pt-32 pb-20 overflow-hidden">
-  <!-- Background Gradient -->
-  <div class="absolute inset-0 bg-gradient-to-br from-zinc-50 via-white to-primary-50/30 -z-10"></div>
-  <div class="absolute top-20 right-0 w-96 h-96 bg-primary-200/20 rounded-full blur-3xl -z-10"></div>
-  <div class="absolute bottom-0 left-0 w-80 h-80 bg-primary-300/10 rounded-full blur-3xl -z-10"></div>
+<section
+  class="relative pt-32 pb-20 sm:pt-48 sm:pb-32 overflow-hidden bg-white"
+>
+  <!-- Dynamic Background -->
+  <div
+    class="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,black,rgba(255,255,255,0))] opacity-[0.03]"
+  >
+  </div>
+  <div
+    class="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-sky-200/20 rounded-[100%] blur-[120px] -z-10 mix-blend-multiply"
+  >
+  </div>
+  <div
+    class="absolute bottom-0 right-0 w-[800px] h-[600px] bg-sky-100/40 rounded-full blur-[100px] -z-10 mix-blend-multiply"
+  >
+  </div>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center max-w-3xl mx-auto">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="text-center max-w-4xl mx-auto">
       <!-- Badge -->
-      <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 border border-primary-100 rounded-full text-sm text-primary-700 mb-6">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
+      <div
+        class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-sky-50 border border-sky-100 rounded-full mb-6 sm:mb-8 shadow-sm hover:bg-sky-100 transition-colors cursor-default group"
+      >
+        <span class="flex h-2 w-2 relative">
+          <span
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"
+          ></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-500"
+          ></span>
         </span>
-        Now in Public Beta
+        <span
+          class="text-xs sm:text-sm font-medium text-sky-700 group-hover:text-sky-800 transition-colors"
+          >Part of SejatiDimedia Ecosystem</span
+        >
       </div>
 
       <!-- Headline -->
-      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-zinc-900 tracking-tight leading-tight">
-        Your Digital Archive,
-        <span class="bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
-          Reimagined
+      <h1
+        class="text-4xl sm:text-7xl lg:text-8xl font-black text-zinc-900 tracking-tighter leading-[1.1] sm:leading-[0.9] mb-6 sm:mb-8"
+      >
+        Store files. <br />
+        <span
+          class="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-sky-400 to-sky-600 animate-text-shimmer bg-[length:200%_auto]"
+        >
+          Share instantly.
         </span>
       </h1>
 
       <!-- Subheadline -->
-      <p class="mt-6 text-lg sm:text-xl text-zinc-600 max-w-2xl mx-auto leading-relaxed">
-        Store, organize, and access your files with blazing-fast performance. 
-        Built for teams and individuals who demand excellence.
+      <p
+        class="text-lg sm:text-2xl text-zinc-600 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12 px-4"
+      >
+        The archive platform for the <span class="text-zinc-900 font-medium"
+          >next generation</span
+        >. Zero-knowledge encryption meets lightspeed R2 storage.
       </p>
 
       <!-- CTA Buttons -->
-      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Button variant="primary" size="lg" href="/dashboard">
-          Start Free Trial
-          <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      <div
+        class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6"
+      >
+        <a
+          href="/dashboard"
+          class="group relative px-6 py-3 sm:px-8 sm:py-4 bg-zinc-900 text-white font-bold rounded-full text-base sm:text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto text-center"
+        >
+          Get Started Now
+          <div
+            class="absolute inset-0 rounded-full ring-2 ring-zinc-900/5 group-hover:ring-zinc-900/10 transition-all"
+          >
+          </div>
+        </a>
+        <a
+          href="#features"
+          class="px-6 py-3 sm:px-8 sm:py-4 text-zinc-600 font-medium hover:text-zinc-900 transition-colors flex items-center justify-center gap-2 group w-full sm:w-auto text-center"
+        >
+          Explore Features
+          <svg
+            class="w-4 h-4 group-hover:translate-x-1 transition-transform"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
           </svg>
-        </Button>
-        <Button variant="secondary" size="lg" href="#features">
-          See How It Works
-        </Button>
-      </div>
-
-      <!-- Trust Indicators -->
-      <div class="mt-12 flex items-center justify-center gap-6 text-sm text-zinc-500">
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-          </svg>
-          <span>Free 14-day trial</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-          </svg>
-          <span>No credit card required</span>
-        </div>
+        </a>
       </div>
     </div>
 
-    <!-- Hero Image Mockup -->
-    <div class="mt-16 relative">
-      <div class="relative mx-auto max-w-5xl">
-        <div class="bg-zinc-900 rounded-xl shadow-2xl overflow-hidden border border-zinc-800">
-          <!-- Browser Bar -->
-          <div class="flex items-center gap-2 px-4 py-3 bg-zinc-800 border-b border-zinc-700">
+    <!-- 3D Hero Image - Upload & Share Mockup -->
+    <div class="mt-16 sm:mt-24 relative perspective-[2000px] group">
+      <!-- Glow effect behind -->
+      <div
+        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-sky-300/20 rounded-full blur-[100px] -z-10 group-hover:bg-sky-300/30 transition-all duration-700"
+      >
+      </div>
+
+      <!-- Container matches dark mode tilt but with light styling -->
+      <div
+        class="relative transform transition-all duration-700 hover:rotate-x-2 hover:-translate-y-4 rotate-x-6 sm:rotate-x-12 scale-95 sm:scale-90 mx-auto max-w-5xl"
+      >
+        <div
+          class="bg-white rounded-2xl border border-zinc-200/50 shadow-2xl shadow-zinc-200/50 overflow-hidden ring-1 ring-zinc-900/5"
+        >
+          <!-- Window Controls -->
+          <div
+            class="flex items-center gap-2 px-4 py-3 bg-zinc-50 border-b border-zinc-100"
+          >
             <div class="flex gap-1.5">
-              <div class="w-3 h-3 rounded-full bg-red-500"></div>
-              <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              <div class="w-3 h-3 rounded-full bg-red-400/80"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-400/80"></div>
+              <div class="w-3 h-3 rounded-full bg-green-400/80"></div>
             </div>
-            <div class="flex-1 mx-4">
-              <div class="bg-zinc-700 rounded-md px-3 py-1.5 text-sm text-zinc-400 text-center">
-                app.sediaarcive.com/dashboard
+            <div class="flex-1 text-center">
+              <div
+                class="inline-block px-3 py-1 rounded-md bg-white border border-zinc-200 text-xs text-zinc-400 font-mono shadow-sm"
+              >
+                sedia-arcive.vercel.app
               </div>
             </div>
           </div>
-          <!-- Dashboard Preview -->
-          <div class="aspect-video bg-gradient-to-br from-zinc-900 to-zinc-800 p-8">
-            <div class="grid grid-cols-4 gap-4 h-full">
-              <!-- Sidebar placeholder -->
-              <div class="bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                <div class="h-8 bg-zinc-700 rounded-md"></div>
-                <div class="h-4 bg-zinc-700/50 rounded w-3/4"></div>
-                <div class="h-4 bg-zinc-700/50 rounded w-1/2"></div>
-                <div class="h-4 bg-zinc-700/50 rounded w-2/3"></div>
+
+          <!-- Upload & Share UI -->
+          <div
+            class="aspect-[16/9] sm:aspect-[2/1] bg-zinc-50 p-6 sm:p-12 relative overflow-hidden flex items-center justify-center"
+          >
+            <!-- Background Grid Lines -->
+            <div
+              class="absolute inset-0 bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-50"
+            >
+            </div>
+
+            <!-- Upload Drop Zone (Background Layer) -->
+            <div
+              class="absolute inset-x-12 sm:inset-x-32 top-12 bottom-12 border-2 border-dashed border-zinc-300 rounded-3xl bg-white/50 backdrop-blur-sm flex flex-col items-center justify-center gap-4"
+            >
+              <div
+                class="w-16 h-16 rounded-2xl bg-sky-50 flex items-center justify-center mb-2"
+              >
+                <svg
+                  class="w-8 h-8 text-sky-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  ></path>
+                </svg>
               </div>
-              <!-- Content area -->
-              <div class="col-span-3 space-y-4">
-                <div class="grid grid-cols-3 gap-4">
-                  <div class="bg-primary-500/20 border border-primary-500/30 rounded-lg p-4">
-                    <div class="h-4 bg-primary-500/50 rounded w-1/2 mb-2"></div>
-                    <div class="h-8 bg-primary-500/70 rounded w-full"></div>
+              <div class="text-center">
+                <p class="text-zinc-900 font-medium">Drop files to upload</p>
+                <p class="text-zinc-500 text-sm mt-1">or click to browse</p>
+              </div>
+            </div>
+
+            <!-- Share Success Card (Floating Overlay) -->
+            <div
+              class="relative bg-white rounded-2xl p-6 shadow-xl border border-zinc-100 w-full max-w-sm transform sm:translate-x-12 sm:translate-y-8 animate-float"
+            >
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center text-sky-600 font-bold"
+                  >
+                    <svg
+                      class="w-6 h-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      ></path>
+                    </svg>
                   </div>
-                  <div class="bg-zinc-800/50 rounded-lg p-4">
-                    <div class="h-4 bg-zinc-700 rounded w-1/2 mb-2"></div>
-                    <div class="h-8 bg-zinc-700 rounded w-full"></div>
-                  </div>
-                  <div class="bg-zinc-800/50 rounded-lg p-4">
-                    <div class="h-4 bg-zinc-700 rounded w-1/2 mb-2"></div>
-                    <div class="h-8 bg-zinc-700 rounded w-full"></div>
+                  <div>
+                    <h3 class="font-bold text-zinc-900 text-sm">
+                      Project_Proposal.pdf
+                    </h3>
+                    <p
+                      class="text-xs text-green-600 font-medium flex items-center gap-1"
+                    >
+                      <svg
+                        class="w-3 h-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        ><path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"></path></svg
+                      >
+                      Upload Complete
+                    </p>
                   </div>
                 </div>
-                <div class="bg-zinc-800/50 rounded-lg flex-1 p-4">
-                  <div class="h-4 bg-zinc-700 rounded w-1/4 mb-4"></div>
-                  <div class="space-y-2">
-                    <div class="h-10 bg-zinc-700/50 rounded"></div>
-                    <div class="h-10 bg-zinc-700/50 rounded"></div>
-                    <div class="h-10 bg-zinc-700/50 rounded"></div>
+                <button class="text-zinc-400 hover:text-zinc-600">
+                  <svg
+                    class="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    ><path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"></path></svg
+                  >
+                </button>
+              </div>
+
+              <div class="space-y-3">
+                <label
+                  class="text-xs font-semibold text-zinc-500 uppercase tracking-wider"
+                  >Share Link</label
+                >
+                <div class="flex gap-2">
+                  <div
+                    class="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm text-zinc-600 truncate font-mono"
+                  >
+                    sedia.com/s/9x87-2m...
                   </div>
+                  <button
+                    class="bg-zinc-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors shadow-lg shadow-zinc-900/20"
+                  >
+                    Copy
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- Glow effect -->
-        <div class="absolute -inset-4 bg-gradient-to-r from-primary-500/20 via-transparent to-primary-500/20 blur-2xl -z-10"></div>
       </div>
     </div>
   </div>
 </section>
+
+<style>
+  .perspective-\[2000px\] {
+    perspective: 2000px;
+  }
+  .rotate-x-6 {
+    transform: rotateX(6deg);
+  }
+  .rotate-x-12 {
+    transform: rotateX(12deg);
+  }
+  .hover\:rotate-x-2:hover {
+    transform: rotateX(2deg);
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px) translateX(20px);
+    }
+    50% {
+      transform: translateY(-10px) translateX(20px);
+    }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  /* Mobile optimized float */
+  @media (max-width: 640px) {
+    @keyframes float {
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-5px);
+      }
+    }
+    .animate-float {
+      transform: none !important; /* Reset translate for mobile flow */
+      animation: float 4s ease-in-out infinite;
+    }
+  }
+</style>

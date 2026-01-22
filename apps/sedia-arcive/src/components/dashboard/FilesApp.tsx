@@ -27,6 +27,7 @@ export default function FilesApp() {
     const [permission, setPermission] = useState<PermissionData | null>(null);
     const [isLoadingPermission, setIsLoadingPermission] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchPermission = async () => {
@@ -73,9 +74,17 @@ export default function FilesApp() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Sidebar activePage="files" onCollapsedChange={setSidebarCollapsed} />
-            <div className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
-                <Header title="Files" />
+            <Sidebar
+                activePage="files"
+                onCollapsedChange={setSidebarCollapsed}
+                mobileMenuOpen={mobileMenuOpen}
+                onMobileClose={() => setMobileMenuOpen(false)}
+            />
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-16" : "md:ml-64"} ml-0`}>
+                <Header
+                    title="Files"
+                    onMobileMenuOpen={() => setMobileMenuOpen(true)}
+                />
                 <main className="p-6">
                     {/* View-Only Banner */}
                     {!isLoadingPermission && !canUpload && (

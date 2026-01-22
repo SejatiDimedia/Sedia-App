@@ -6,7 +6,8 @@ interface Props {
   description?: string;
 }
 
-const { title, description = "SediaArcive - Your Digital Archive Solution" } = Astro.props;
+const { title, description = "SediaArcive - Your Digital Archive Solution" } =
+  Astro.props;
 ---
 
 <!doctype html>
@@ -18,7 +19,10 @@ const { title, description = "SediaArcive - Your Digital Archive Solution" } = A
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <title>{title} | SediaArcive</title>
   </head>
   <body class="min-h-screen bg-zinc-50 text-zinc-900 antialiased font-sans">

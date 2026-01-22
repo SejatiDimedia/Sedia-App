@@ -6,6 +6,7 @@ import { signOut } from "../../lib/auth-client";
 export default function SettingsApp() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
@@ -20,9 +21,17 @@ export default function SettingsApp() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Sidebar activePage="settings" onCollapsedChange={setSidebarCollapsed} />
-            <div className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
-                <Header title="Settings" />
+            <Sidebar
+                activePage="settings"
+                onCollapsedChange={setSidebarCollapsed}
+                mobileMenuOpen={mobileMenuOpen}
+                onMobileClose={() => setMobileMenuOpen(false)}
+            />
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-16" : "md:ml-64"} ml-0`}>
+                <Header
+                    title="Settings"
+                    onMobileMenuOpen={() => setMobileMenuOpen(true)}
+                />
                 <main className="p-6 max-w-3xl">
                     {/* Account Section */}
                     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-6">

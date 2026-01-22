@@ -2,33 +2,33 @@
 const features = [
   {
     icon: "folder",
-    title: "Smart Organization",
-    description: "AI-powered file organization that learns from your habits and suggests optimal folder structures.",
+    title: "Smart File Management",
+    description: "Organize your files with nested folders and easy-to-use breadcrumb navigation.",
   },
   {
     icon: "shield",
-    title: "Enterprise Security",
-    description: "End-to-end encryption with zero-knowledge architecture. Your data stays yours.",
+    title: "Secure Storage",
+    description: "Your files are stored safely with robust access controls and role-based permissions.",
   },
   {
     icon: "zap",
-    title: "Lightning Fast",
-    description: "Global CDN with edge caching ensures your files are always accessible in milliseconds.",
+    title: "High Performance",
+    description: "Built on a modern stack for blazing fast uploads and downloads.",
   },
   {
     icon: "users",
-    title: "Team Collaboration",
-    description: "Real-time collaboration with granular permissions and activity tracking.",
+    title: "Easy Sharing",
+    description: "Share files and folders publicly with optional password protection and expiration dates.",
   },
   {
     icon: "search",
     title: "Instant Search",
-    description: "Full-text search across all your documents, images, and media files.",
+    description: "Find exactly what you're looking for by searching across all your file names.",
   },
   {
     icon: "download",
     title: "Zero Egress Fees",
-    description: "Powered by Cloudflare R2. Download your files without worrying about costs.",
+    description: "Powered by Cloudflare R2 structure. Download your files without worrying about hidden costs.",
   },
 ];
 
@@ -42,38 +42,48 @@ const iconPaths: Record<string, string> = {
 };
 ---
 
-<section id="features" class="py-24 bg-white">
+<section id="features" class="py-32 bg-zinc-50 relative overflow-hidden">
+  <!-- Decorative blobs -->
+  <div class="absolute left-0 top-1/4 w-[500px] h-[500px] bg-primary-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply"></div>
+  <div class="absolute right-0 bottom-1/4 w-[500px] h-[500px] bg-violet-200/20 rounded-full blur-[100px] -z-10 mix-blend-multiply"></div>
+
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Section Header -->
-    <div class="text-center max-w-2xl mx-auto mb-16">
-      <h2 class="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight">
-        Everything you need to <span class="text-primary-600">manage your files</span>
+    <div class="text-center max-w-2xl mx-auto mb-20">
+      <h2 class="text-3xl sm:text-5xl font-black text-zinc-900 tracking-tight mb-6">
+        Essential features. <br/>
+        <span class="text-transparent bg-clip-text bg-gradient-to-b from-zinc-600 to-zinc-900">Proven reliability.</span>
       </h2>
-      <p class="mt-4 text-lg text-zinc-600">
-        Powerful features designed for modern teams and professionals.
+      <p class="text-lg text-zinc-600">
+        Engineered for speed, security, and simplicity. A modern file system for today's needs.
       </p>
     </div>
 
     <!-- Bento Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {features.map((feature) => (
-        <div class="group relative bg-zinc-50 hover:bg-white border border-zinc-100 hover:border-primary-200 rounded-2xl p-6 transition-all duration-300 hover:shadow-lg hover:shadow-primary-100/50">
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-6 auto-rows-[minmax(0,auto)]">
+      {features.map((feature, i) => (
+        <div class={`
+          group relative p-8 rounded-3xl border border-zinc-200 bg-white/80 backdrop-blur-sm 
+          hover:bg-white hover:border-primary-200 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary-100/20
+          ${i === 0 || i === 3 ? 'md:col-span-4' : 'md:col-span-2'}
+          ${i === 1 || i === 4 ? 'md:col-span-2' : ''}
+        `}>
+          <!-- Glow Reveal on Hover -->
+          <div class="absolute inset-0 bg-gradient-to-br from-primary-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          
           <!-- Icon -->
-          <div class="w-12 h-12 bg-primary-100 group-hover:bg-primary-500 rounded-xl flex items-center justify-center transition-colors duration-300">
-            <svg class="w-6 h-6 text-primary-600 group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <div class="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center mb-6 ring-1 ring-primary-100 group-hover:scale-110 transition-transform duration-300 relative z-10">
+            <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d={iconPaths[feature.icon]} />
             </svg>
           </div>
 
           <!-- Content -->
-          <h3 class="mt-4 text-lg font-semibold text-zinc-900">{feature.title}</h3>
-          <p class="mt-2 text-zinc-600 text-sm leading-relaxed">{feature.description}</p>
-
-          <!-- Hover Arrow -->
-          <div class="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity">
-            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
+          <div class="relative z-10">
+            <h3 class="text-xl font-bold text-zinc-900 mb-3 group-hover:text-primary-700 transition-colors">{feature.title}</h3>
+            <p class="text-zinc-600 group-hover:text-zinc-700 transition-colors leading-relaxed">
+              {feature.description}
+            </p>
           </div>
         </div>
       ))}

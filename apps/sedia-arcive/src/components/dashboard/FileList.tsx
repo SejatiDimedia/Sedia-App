@@ -216,7 +216,7 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                             {/* Share Button */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); setShareTarget({ id: file.id, name: file.name }); }}

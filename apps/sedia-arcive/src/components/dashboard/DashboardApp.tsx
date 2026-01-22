@@ -13,6 +13,7 @@ export default function DashboardApp() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -76,9 +77,18 @@ export default function DashboardApp() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Sidebar activePage="dashboard" onCollapsedChange={setSidebarCollapsed} />
-            <div className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
-                <Header title="Dashboard" />
+            <Sidebar
+                activePage="dashboard"
+                onCollapsedChange={setSidebarCollapsed}
+                mobileMenuOpen={mobileMenuOpen}
+                onMobileClose={() => setMobileMenuOpen(false)}
+            />
+
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-16" : "md:ml-64"} ml-0`}>
+                <Header
+                    title="Dashboard"
+                    onMobileMenuOpen={() => setMobileMenuOpen(true)}
+                />
                 <main className="p-6">
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

@@ -24,7 +24,7 @@ export default function ActivityLog({ refreshTrigger = 0 }: ActivityLogProps) {
                 const response = await fetch("/api/activity?limit=10");
                 if (response.ok) {
                     const data = await response.json();
-                    setActivities(data.activities || []);
+                    setActivities(data.activities?.slice(0, 10) || []);
                 }
             } catch (err) {
                 console.error("Failed to fetch activities:", err);

@@ -4,12 +4,21 @@ import Header from "./Header";
 
 export default function TeamApp() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Sidebar activePage="team" onCollapsedChange={setSidebarCollapsed} />
-            <div className={`transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}>
-                <Header title="Team" />
+            <Sidebar
+                activePage="team"
+                onCollapsedChange={setSidebarCollapsed}
+                mobileMenuOpen={mobileMenuOpen}
+                onMobileClose={() => setMobileMenuOpen(false)}
+            />
+            <div className={`transition-all duration-300 ${sidebarCollapsed ? "md:ml-16" : "md:ml-64"} ml-0`}>
+                <Header
+                    title="Team"
+                    onMobileMenuOpen={() => setMobileMenuOpen(true)}
+                />
                 <main className="p-6">
                     <div className="bg-white border border-gray-200 rounded-2xl p-12 shadow-sm text-center">
                         <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-sky-100 flex items-center justify-center">
