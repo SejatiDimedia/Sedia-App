@@ -1,8 +1,8 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
 import vercel from '@astrojs/vercel';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
+import { resolve } from 'path';
 
 // https://astro.build/config
 export default defineConfig({
@@ -11,6 +11,12 @@ export default defineConfig({
   integrations: [react()],
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        '@neondatabase/serverless': resolve(process.cwd(), 'node_modules/@neondatabase/serverless'),
+        'drizzle-orm': resolve(process.cwd(), 'node_modules/drizzle-orm')
+      }
+    }
   }
 });
