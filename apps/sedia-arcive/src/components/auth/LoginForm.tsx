@@ -29,28 +29,11 @@ export default function LoginForm() {
                 {/* Logo */}
                 <div className="text-center mb-10">
                     <a href="/" className="inline-flex items-center gap-3 group">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-sky-500 to-emerald-500 rounded-xl blur opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-                            <div className="relative w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center shadow-2xl">
-                                <svg
-                                    className="w-7 h-7 text-sky-500 group-hover:text-emerald-400 transition-colors duration-300"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth={1.5}
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"
-                                    />
-                                </svg>
-                            </div>
-                        </div>
-                        <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">
-                            SediaArcive
-                        </span>
+                        <a href="/" className="inline-flex items-center gap-0.5 text-4xl tracking-tight leading-none group hover:scale-105 transition-transform duration-300">
+                            <span className="font-extrabold text-sky-500">Sedia</span>
+                            <span className="font-normal text-zinc-400">Arcive</span>
+                            <span className="text-sky-500 font-bold mb-2 text-5xl">.</span>
+                        </a>
                     </a>
                     <p className="mt-4 text-zinc-400 text-sm">Welcome back! Please sign in to continue.</p>
                 </div>
