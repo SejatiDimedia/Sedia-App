@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { auth } from "../../../lib/auth";
-import { db, folder, eq, and, desc } from "@shared-db";
+import { db, folder, folderAccess, eq, and, or, desc, sql } from "@shared-db";
+
 import { nanoid } from "nanoid";
 import { logActivity } from "../../../lib/activity";
 
@@ -21,26 +22,39 @@ export const GET: APIRoute = async ({ request }) => {
         const parentId = url.searchParams.get("parentId");
 
         // Build query conditions
-        const conditions = [eq(folder.userId, session.user.id)];
+        // User is owner OR User has been granted access
+        const accessCondition = or(
+            eq(folder.userId, session.user.id),
+            eq(folderAccess.sharedWithUserId, session.user.id)
+        );
+
+        const conditions = [accessCondition];
 
         if (parentId) {
             conditions.push(eq(folder.parentId, parentId));
         } else {
-            // Root level folders (parentId is null)
-            // Note: Drizzle doesn't have isNull in the same way, we use raw SQL or handle differently
-            // For simplicity, we'll fetch all and filter, or use a workaround
+            // For root folders, we want folders with no parent
+            conditions.push(sql`${folder.parentId} IS NULL`);
         }
 
         const folders = await db
-            .select()
+            .selectDistinct({
+                id: folder.id,
+                name: folder.name,
+                parentId: folder.parentId,
+                userId: folder.userId,
+                createdAt: folder.createdAt,
+                updatedAt: folder.updatedAt,
+            })
             .from(folder)
+            .leftJoin(folderAccess, eq(folder.id, folderAccess.folderId))
             .where(and(...conditions))
             .orderBy(desc(folder.createdAt));
 
-        // Filter for root folders if no parentId specified
-        const filteredFolders = parentId
-            ? folders
-            : folders.filter(f => f.parentId === null);
+        const filteredFolders = folders.map(f => ({
+            ...f,
+            isShared: f.userId !== session.user.id
+        }));
 
         return new Response(JSON.stringify({ folders: filteredFolders }), {
             status: 200,

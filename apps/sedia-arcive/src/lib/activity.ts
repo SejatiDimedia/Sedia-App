@@ -5,7 +5,10 @@ export type ActivityAction =
     | "delete"
     | "create_folder"
     | "delete_folder"
-    | "move";
+    | "move"
+    | "restore"
+    | "permanent_delete"
+    | "share";
 
 export type TargetType = "file" | "folder";
 

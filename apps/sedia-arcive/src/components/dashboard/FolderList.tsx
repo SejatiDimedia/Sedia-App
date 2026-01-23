@@ -7,6 +7,7 @@ interface FolderItem {
     name: string;
     parentId: string | null;
     createdAt: string;
+    isShared?: boolean;
 }
 
 interface FolderListProps {
@@ -194,14 +195,27 @@ export default function FolderList({ parentId, onFolderClick, refreshTrigger, on
                     >
                         {/* Folder Icon */}
                         <div className="flex flex-col items-center gap-3">
-                            <div className="w-16 h-16 rounded-2xl bg-sky-100 flex items-center justify-center text-sky-600 transition-colors group-hover:bg-sky-200">
+                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors group-hover:bg-opacity-80 ${folder.isShared ? "bg-amber-100 text-amber-500" : "bg-sky-100 text-sky-600"}`}>
                                 <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M10 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-8l-2-2z" />
+                                    {folder.isShared && (
+                                        <g transform="translate(14, 14) scale(0.4)">
+                                            <circle cx="12" cy="12" r="10" fill="white" />
+                                            <path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                                        </g>
+                                    )}
                                 </svg>
                             </div>
-                            <p className="text-sm font-medium text-gray-700 truncate max-w-full text-center group-hover:text-gray-900 transition-colors" title={folder.name}>
-                                {folder.name}
-                            </p>
+                            <div className="text-center w-full">
+                                <p className="text-sm font-medium text-gray-700 truncate max-w-full group-hover:text-gray-900 transition-colors" title={folder.name}>
+                                    {folder.name}
+                                </p>
+                                {folder.isShared && (
+                                    <span className="inline-block mt-0.5 px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full">
+                                        Shared
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Action Buttons */}

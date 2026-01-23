@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import FilePreviewModal from "./FilePreviewModal";
 import ShareModal from "./ShareModal";
 import ConfirmationModal from "./ConfirmationModal";
+import { useDownload } from "./DownloadManager";
 
 interface FileItem {
     id: string;
@@ -10,6 +11,8 @@ interface FileItem {
     size: number;
     url: string;
     createdAt: string;
+    folderId: string | null;
+    folderName: string | null;
 }
 
 interface FileListProps {
@@ -18,13 +21,21 @@ interface FileListProps {
     onDeleteComplete?: () => void;
 }
 
+
+
 export default function FileList({ refreshTrigger, folderId, onDeleteComplete }: FileListProps) {
     const [files, setFiles] = useState<FileItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
-    const [shareTarget, setShareTarget] = useState<{ id: string; name: string } | null>(null);
+    const [shareTarget, setShareTarget] = useState<{ id?: string; name: string; ids?: string[] } | null>(null);
+
+    // Selection State
+    const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+
+    // Download hook
+    const { startDownload } = useDownload();
 
     const fetchFiles = async () => {
         try {
@@ -40,6 +51,8 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
             }
 
             setFiles(data.files);
+            // Clear selection on refresh/folder change
+            setSelectedFiles(new Set());
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load files");
         } finally {
@@ -51,48 +64,117 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
         fetchFiles();
     }, [refreshTrigger, folderId]);
 
-    // State for deletion confirmation
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
+    // Delete Confirmation State
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        isBulk: boolean;
+        targetId?: string;
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        isBulk: false,
+    });
 
     const handleDeleteClick = (e: React.MouseEvent, file: FileItem) => {
         e.stopPropagation();
-        setDeleteConfirmation({ id: file.id, name: file.name });
+        setConfirmState({
+            isOpen: true,
+            title: "Delete File",
+            message: `Are you sure you want to delete "${file.name}"?`,
+            isBulk: false,
+            targetId: file.id
+        });
+    };
+
+    const handleBulkDeleteClick = () => {
+        setConfirmState({
+            isOpen: true,
+            title: "Delete Selected Files",
+            message: `Are you sure you want to delete ${selectedFiles.size} selected file(s)?`,
+            isBulk: true
+        });
+    };
+
+    const handleBulkShareClick = () => {
+        if (selectedFiles.size === 0) return;
+        setShareTarget({
+            ids: Array.from(selectedFiles),
+            name: `${selectedFiles.size} files`
+        });
     };
 
     const confirmDelete = async () => {
-        if (!deleteConfirmation) return;
+        const idsToDelete = confirmState.isBulk ? Array.from(selectedFiles) : [confirmState.targetId!];
 
-        setDeletingId(deleteConfirmation.id);
         try {
-            const response = await fetch("/api/files", {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ fileId: deleteConfirmation.id }),
-            });
-
-            if (!response.ok) {
-                throw new Error("Failed to delete file");
+            // Optimistic update
+            if (confirmState.isBulk) {
+                setDeletingId("bulk");
+            } else {
+                setDeletingId(confirmState.targetId!);
             }
 
-            setFiles((prev) => prev.filter((f) => f.id !== deleteConfirmation.id));
+            await Promise.all(idsToDelete.map(id =>
+                fetch("/api/files", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileId: id }),
+                }).then(res => { if (!res.ok) throw new Error("Failed"); })
+            ));
+
+            setFiles((prev) => prev.filter((f) => !idsToDelete.includes(f.id)));
+            setSelectedFiles((prev) => {
+                const next = new Set(prev);
+                idsToDelete.forEach(id => next.delete(id));
+                return next;
+            });
+
             if (onDeleteComplete) onDeleteComplete();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Delete failed");
+            setError("Some files failed to delete");
         } finally {
             setDeletingId(null);
-            setDeleteConfirmation(null);
+            setConfirmState(prev => ({ ...prev, isOpen: false }));
         }
     };
 
     const handleDownload = (e: React.MouseEvent, file: FileItem) => {
         e.stopPropagation();
-        const link = document.createElement("a");
-        link.href = file.url;
-        link.download = file.name;
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        startDownload(file.url, file.name);
+    };
+
+    const handleBulkDownload = () => {
+        if (selectedFiles.size === 0) return;
+        const filesToDownload = files.filter(f => selectedFiles.has(f.id));
+
+        // Queue all files for download
+        filesToDownload.forEach(file => {
+            startDownload(file.url, file.name);
+        });
+    };
+
+    const toggleSelection = (e: React.MouseEvent, fileId: string) => {
+        e.stopPropagation();
+        setSelectedFiles((prev) => {
+            const next = new Set(prev);
+            if (next.has(fileId)) {
+                next.delete(fileId);
+            } else {
+                next.add(fileId);
+            }
+            return next;
+        });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedFiles.size === files.length) {
+            setSelectedFiles(new Set());
+        } else {
+            setSelectedFiles(new Set(files.map(f => f.id)));
+        }
     };
 
     const formatSize = (bytes: number) => {
@@ -134,6 +216,20 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
         );
     };
 
+    // Custom Checkbox Component
+    const Checkbox = ({ checked }: { checked: boolean }) => (
+        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 ${checked
+            ? "bg-sky-500 border-sky-500"
+            : "bg-white border-gray-300 hover:border-gray-400 group-hover:border-gray-400"
+            }`}>
+            {checked && (
+                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+            )}
+        </div>
+    );
+
     if (isLoading) {
         return (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -171,6 +267,58 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
 
     return (
         <>
+            {/* Bulk Actions Bar */}
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={toggleSelectAll}
+                        className="flex items-center gap-2 group cursor-pointer"
+                    >
+                        <Checkbox checked={selectedFiles.size > 0 && selectedFiles.size === files.length} />
+                        <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                            {selectedFiles.size > 0 ? `${selectedFiles.size} selected` : 'Select All'}
+                        </span>
+                    </button>
+
+                    {selectedFiles.size > 0 && (
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 animate-fade-in-left pl-2 border-l border-gray-200 ml-2">
+                                {/* Bulk Delete */}
+                                <button
+                                    onClick={handleBulkDeleteClick}
+                                    className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1.5"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete
+                                </button>
+                                {/* Bulk Share */}
+                                <button
+                                    onClick={handleBulkShareClick}
+                                    className="px-3 py-1.5 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors flex items-center gap-1.5"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                    </svg>
+                                    Share
+                                </button>
+                                {/* Bulk Download */}
+                                <button
+                                    onClick={handleBulkDownload}
+                                    className="px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50 hover:bg-sky-100 rounded-lg transition-colors flex items-center gap-1.5"
+                                >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {files.map((file) => (
                     <div
@@ -184,11 +332,19 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
                             }));
                             e.dataTransfer.effectAllowed = "move";
                         }}
-                        className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors shadow-sm hover:shadow-md cursor-pointer active:cursor-grabbing active:scale-95 transition-transform"
+                        className={`group relative bg-white border rounded-xl p-4 transition-all shadow-sm hover:shadow-md cursor-pointer active:cursor-grabbing active:scale-95 transition-transform ${selectedFiles.has(file.id) ? "border-sky-500 ring-1 ring-sky-500 bg-sky-50" : "border-gray-200 hover:border-gray-300"}`}
                         onClick={() => setPreviewFile(file)}
                     >
+                        {/* Checkbox (Visible on hover or selected) */}
+                        <div
+                            className={`absolute top-2 left-2 z-10 ${selectedFiles.has(file.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity cursor-pointer`}
+                            onClick={(e) => toggleSelection(e, file.id)}
+                        >
+                            <Checkbox checked={selectedFiles.has(file.id)} />
+                        </div>
+
                         {/* Preview / Icon */}
-                        <div className="block">
+                        <div className="block mt-2">
                             {file.mimeType.startsWith("image/") ? (
                                 <img
                                     src={file.url}
@@ -210,17 +366,25 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
                             <p className="text-sm font-medium text-gray-900 truncate" title={file.name}>
                                 {file.name}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                                {formatSize(file.size)}
-                            </p>
+                            <div className="flex items-center justify-between mt-1">
+                                <p className="text-xs text-gray-500">
+                                    {formatSize(file.size)}
+                                </p>
+                                {/* Folder Location Indicator */}
+                                {!folderId && file.folderName && (
+                                    <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[80px]" title={`In ${file.folderName}`}>
+                                        {file.folderName}
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="absolute top-2 right-2 flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             {/* Share Button */}
                             <button
                                 onClick={(e) => { e.stopPropagation(); setShareTarget({ id: file.id, name: file.name }); }}
-                                className="p-2 bg-green-100 text-green-600 hover:bg-green-200 rounded-lg transition-colors shadow-sm"
+                                className="p-1.5 bg-green-100 text-green-600 hover:bg-green-200 rounded-lg transition-colors shadow-sm"
                                 title="Share"
                             >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -230,7 +394,7 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
                             {/* Download Button */}
                             <button
                                 onClick={(e) => handleDownload(e, file)}
-                                className="p-2 bg-sky-100 text-sky-600 hover:bg-sky-200 rounded-lg transition-colors shadow-sm"
+                                className="p-1.5 bg-sky-100 text-sky-600 hover:bg-sky-200 rounded-lg transition-colors shadow-sm"
                                 title="Download"
                             >
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -240,18 +404,13 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
                             {/* Delete Button */}
                             <button
                                 onClick={(e) => handleDeleteClick(e, file)}
-                                disabled={deletingId === file.id}
-                                className="p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+                                className="p-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors shadow-sm"
                                 title="Delete"
                             >
-                                {deletingId === file.id ? (
-                                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                )}
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -271,17 +430,18 @@ export default function FileList({ refreshTrigger, folderId, onDeleteComplete }:
                 onClose={() => setShareTarget(null)}
                 targetType="file"
                 targetId={shareTarget?.id || ""}
+                targetIds={shareTarget?.ids}
                 targetName={shareTarget?.name || ""}
             />
 
             {/* Delete Confirmation Modal */}
             <ConfirmationModal
-                isOpen={!!deleteConfirmation}
-                onClose={() => setDeleteConfirmation(null)}
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
                 onConfirm={confirmDelete}
-                title="Delete File"
-                message={`Are you sure you want to delete "${deleteConfirmation?.name}"? This action cannot be undone.`}
-                confirmText="Delete"
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.isBulk ? `Delete ${selectedFiles.size} Files` : "Delete"}
                 isDangerous={true}
                 isLoading={!!deletingId}
             />

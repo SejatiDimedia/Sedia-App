@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { auth } from "../../../lib/auth";
 import { deleteFile, getSignedUrl } from "../../../lib/storage";
-import { db, file, eq, and, desc } from "@shared-db";
+import { db, file, folder, eq, and, desc } from "@shared-db";
 import { decreaseStorageUsed } from "../../../lib/permissions";
 import { logActivity } from "../../../lib/activity";
 
@@ -37,21 +37,51 @@ export const GET: APIRoute = async ({ request, url }) => {
 
         if (folderId) {
             files = await db
-                .select()
+                .select({
+                    id: file.id,
+                    name: file.name,
+                    mimeType: file.mimeType,
+                    size: file.size,
+                    r2Key: file.r2Key,
+                    folderId: file.folderId,
+                    userId: file.userId,
+                    createdAt: file.createdAt,
+                    updatedAt: file.updatedAt,
+                    folderName: folder.name
+                })
                 .from(file)
+                .leftJoin(folder, eq(file.folderId, folder.id))
                 .where(
                     and(
                         eq(file.userId, session.user.id),
-                        eq(file.folderId, folderId)
+                        eq(file.folderId, folderId),
+                        eq(file.isDeleted, false)
                     )
                 )
-                .orderBy(desc(file.createdAt)) as FileRecord[];
+                .orderBy(desc(file.createdAt)) as any[]; // Cast to any to avoid type mismatch with partial selection
         } else {
             files = await db
-                .select()
+                .select({
+                    id: file.id,
+                    name: file.name,
+                    mimeType: file.mimeType,
+                    size: file.size,
+                    r2Key: file.r2Key,
+                    folderId: file.folderId,
+                    userId: file.userId,
+                    createdAt: file.createdAt,
+                    updatedAt: file.updatedAt,
+                    folderName: folder.name
+                })
                 .from(file)
-                .where(eq(file.userId, session.user.id))
-                .orderBy(desc(file.createdAt)) as FileRecord[];
+                .leftJoin(folder, eq(file.folderId, folder.id))
+                .where(
+                    and(
+                        eq(file.userId, session.user.id),
+                        eq(file.isDeleted, false)
+                    )
+                )
+                .orderBy(desc(file.createdAt)) as any[];
         }
 
         // Add signed URLs for each file
@@ -75,7 +105,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 };
 
-// DELETE: Delete a file
+// DELETE: Soft-delete a file (move to trash)
 export const DELETE: APIRoute = async ({ request }) => {
     try {
         const session = await auth.api.getSession({
@@ -98,7 +128,7 @@ export const DELETE: APIRoute = async ({ request }) => {
             );
         }
 
-        // Get file to check ownership and get r2Key
+        // Get file to check ownership
         const fileRecords = await db
             .select()
             .from(file)
@@ -118,14 +148,15 @@ export const DELETE: APIRoute = async ({ request }) => {
             );
         }
 
-        // Delete from R2
-        await deleteFile(fileRecord.r2Key);
-
-        // Delete from database
-        await db.delete(file).where(eq(file.id, fileId));
-
-        // Decrease storage used
-        await decreaseStorageUsed(session.user.id, fileRecord.size);
+        // Soft-delete: move to trash
+        await db
+            .update(file)
+            .set({
+                isDeleted: true,
+                deletedAt: new Date(),
+                updatedAt: new Date(),
+            })
+            .where(eq(file.id, fileId));
 
         // Log activity
         await logActivity({

@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { auth } from "../../../lib/auth";
 import { uploadFile, generateFileKey } from "../../../lib/storage";
-import { db, file } from "@shared-db";
+import { db, file, folder, folderAccess, eq, and } from "@shared-db";
 import { nanoid } from "nanoid";
 import { getUserPermission, validateUpload, updateStorageUsed } from "../../../lib/permissions";
 import { logActivity } from "../../../lib/activity";
@@ -40,6 +40,36 @@ export const POST: APIRoute = async ({ request }) => {
                 JSON.stringify({ error: validation.error }),
                 { status: 403 }
             );
+        }
+
+        // Validate folder access if uploading to a folder
+        if (folderId) {
+            // Check if folder is owned by user
+            const ownedFolder = await db
+                .select()
+                .from(folder)
+                .where(and(eq(folder.id, folderId), eq(folder.userId, session.user.id)))
+                .limit(1);
+
+            if (ownedFolder.length === 0) {
+                // Check if folder is shared with user with edit permission
+                const sharedAccess = await db
+                    .select()
+                    .from(folderAccess)
+                    .where(and(
+                        eq(folderAccess.folderId, folderId),
+                        eq(folderAccess.sharedWithUserId, session.user.id),
+                        eq(folderAccess.permission, "edit")
+                    ))
+                    .limit(1);
+
+                if (sharedAccess.length === 0) {
+                    return new Response(
+                        JSON.stringify({ error: "You do not have permission to upload to this folder" }),
+                        { status: 403 }
+                    );
+                }
+            }
         }
 
         // Generate unique key for R2
