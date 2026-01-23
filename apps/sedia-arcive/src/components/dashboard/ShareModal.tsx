@@ -190,7 +190,8 @@ export default function ShareModal({ isOpen, onClose, targetType, targetId, targ
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    fileId: targetId,
+                    fileId: targetType === "file" ? targetId : undefined,
+                    folderId: targetType === "folder" ? targetId : undefined,
                     userId
                 }),
             });

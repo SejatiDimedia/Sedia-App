@@ -43,6 +43,20 @@
       "when": 1769178236229,
       "tag": "0005_real_prima",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769181319533,
+      "tag": "0006_next_bromley",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1769182925163,
+      "tag": "0007_dear_puppet_master",
+      "breakpoints": true
     }
   ]
 }

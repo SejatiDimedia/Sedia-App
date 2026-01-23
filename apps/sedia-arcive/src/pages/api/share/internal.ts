@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { auth } from "../../../lib/auth";
 import { db, file, fileAccess, user, folder, folderAccess, eq, and } from "@shared-db";
 import { logActivity } from "../../../lib/activity";
+import { createNotification } from "../../../lib/notifications";
 
 // Helper: Share a single file with a user
 async function shareFileWithUser(
@@ -225,6 +226,50 @@ export const POST: APIRoute = async ({ request }) => {
             metadata: { sharedWith: email, permission, filesShared: filesToShare.length },
         });
 
+        // Send Notification & Email
+        // Send Notification & Email
+        // Fetch target name if not available in scope (or refactor to capture it earlier)
+        let itemName = "content";
+        if (folderId) {
+            const folderInfo = await db.select().from(folder).where(eq(folder.id, folderId));
+            if (folderInfo.length > 0) itemName = `folder "${folderInfo[0].name}"`;
+            else itemName = "a folder";
+        } else if (fileIds && fileIds.length > 0) {
+            itemName = `${filesToShare.length} files`;
+        } else if (filesToShare.length === 1) {
+            itemName = `file "${filesToShare[0].name}"`;
+        }
+
+        const itemType = folderId ? "folder" : "file";
+        const link = folderId ? `/dashboard/shared?folderId=${folderId}` : `/dashboard/shared`; // Or deep link to file viewer if we had one
+
+        await createNotification({
+            userId: targetUser.id,
+            type: folderId ? 'share_folder' : 'share_file',
+            title: `New Shared ${folderId ? 'Folder' : 'File'}`,
+            message: `${session.user.name} shared ${itemName} with you.`,
+            link,
+            sendEmailNotification: true,
+            emailSubject: `${session.user.name} shared ${itemName} with you on Sedia Arcive`,
+            emailHtml: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #0f172a;">New Shared Content</h2>
+                    <p style="color: #475569; font-size: 16px;">
+                        <strong>${session.user.name}</strong> has invited you to collaborate on ${itemName}.
+                    </p>
+                    <div style="margin: 24px 0;">
+                        <a href="${process.env.PUBLIC_APP_URL || 'http://localhost:4321'}${link}" 
+                           style="display: inline-block; padding: 12px 24px; background-color: #0ea5e9; color: white; text-decoration: none; border-radius: 8px; font-weight: 500;">
+                            Open in Sedia Arcive
+                        </a>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 14px;">
+                        You received this email because you have an account on Sedia Arcive.
+                    </p>
+                </div>
+            `
+        });
+
         return new Response(
             JSON.stringify({
                 success: true,
@@ -242,7 +287,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 };
 
-// DELETE: Remove file access
+// DELETE: Remove file or folder access
 export const DELETE: APIRoute = async ({ request }) => {
     try {
         const session = await auth.api.getSession({
@@ -256,42 +301,75 @@ export const DELETE: APIRoute = async ({ request }) => {
             );
         }
 
-        const { fileId, userId } = await request.json();
+        const { fileId, folderId, userId } = await request.json();
 
-        if (!fileId || !userId) {
+        if ((!fileId && !folderId) || !userId) {
             return new Response(
-                JSON.stringify({ error: "File ID and user ID are required" }),
+                JSON.stringify({ error: "File ID (or Folder ID) and user ID are required" }),
                 { status: 400 }
             );
         }
 
-        // Check if file belongs to current user
-        const fileRecords = await db
-            .select()
-            .from(file)
-            .where(
-                and(
-                    eq(file.id, fileId),
-                    eq(file.userId, session.user.id)
-                )
-            );
+        // Case 1: Unshare File
+        if (fileId) {
+            // Check if file belongs to current user
+            const fileRecords = await db
+                .select()
+                .from(file)
+                .where(
+                    and(
+                        eq(file.id, fileId),
+                        eq(file.userId, session.user.id)
+                    )
+                );
 
-        if (!fileRecords.length) {
-            return new Response(
-                JSON.stringify({ error: "File not found or you don't have permission" }),
-                { status: 404 }
-            );
+            if (!fileRecords.length) {
+                return new Response(
+                    JSON.stringify({ error: "File not found or you don't have permission" }),
+                    { status: 404 }
+                );
+            }
+
+            // Remove access
+            await db
+                .delete(fileAccess)
+                .where(
+                    and(
+                        eq(fileAccess.fileId, fileId),
+                        eq(fileAccess.sharedWithUserId, userId)
+                    )
+                );
         }
+        // Case 2: Unshare Folder
+        else if (folderId) {
+            // Check if folder belongs to current user
+            const folderRecords = await db
+                .select()
+                .from(folder)
+                .where(
+                    and(
+                        eq(folder.id, folderId),
+                        eq(folder.userId, session.user.id)
+                    )
+                );
 
-        // Remove access
-        await db
-            .delete(fileAccess)
-            .where(
-                and(
-                    eq(fileAccess.fileId, fileId),
-                    eq(fileAccess.sharedWithUserId, userId)
-                )
-            );
+            if (!folderRecords.length) {
+                return new Response(
+                    JSON.stringify({ error: "Folder not found or you don't have permission" }),
+                    { status: 404 }
+                );
+            }
+
+            // Remove access
+            await db
+                .delete(folderAccess)
+                .where(
+                    and(
+                        eq(folderAccess.folderId, folderId),
+                        eq(folderAccess.sharedWithUserId, userId)
+                    )
+                );
+        }
 
         return new Response(
             JSON.stringify({ success: true }),

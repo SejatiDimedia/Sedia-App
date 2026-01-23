@@ -98,6 +98,22 @@ export const shareLink = sediaArcive.table("share_link", {
 });
 
 // ============================================
+// Notifications
+// ============================================
+
+export const notification = sediaArcive.table("notification", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id").notNull(),
+    type: text("type").notNull(), // 'share_file', 'share_folder', 'download', 'system'
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    isRead: boolean("is_read").notNull().default(false),
+    link: text("link"), // Optional action link
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ============================================
 // Relations
 // ============================================
 
@@ -167,6 +183,13 @@ export const activityLogRelations = relations(activityLog, ({ one }) => ({
 export const shareLinkRelations = relations(shareLink, ({ one }) => ({
     creator: one(user, {
         fields: [shareLink.createdBy],
+        references: [user.id],
+    }),
+}));
+
+export const notificationRelations = relations(notification, ({ one }) => ({
+    user: one(user, {
+        fields: [notification.userId],
         references: [user.id],
     }),
 }));
