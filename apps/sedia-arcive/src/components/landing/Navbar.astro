@@ -6,21 +6,25 @@ import Button from "../ui/Button.astro";
   class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
   id="main-header"
 >
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+  <div
+    class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-4 transition-all"
+  >
     <nav
-      class="bg-white/90 backdrop-blur-2xl border border-white/50 ring-1 ring-zinc-200/50 rounded-full px-5 py-3 shadow-xl shadow-zinc-200/20 flex items-center justify-between"
+      class="bg-white/90 backdrop-blur-2xl border border-white/50 ring-1 ring-zinc-200/50 rounded-full px-4 py-2 sm:px-5 sm:py-3 shadow-xl shadow-zinc-200/20 flex items-center justify-between"
     >
       <!-- Brand -->
       <a
         href="/"
-        class="flex items-center gap-0.5 text-xl tracking-tight leading-none group select-none"
+        class="flex items-center gap-0.5 text-lg sm:text-xl tracking-tight leading-none group select-none"
       >
         <span class="font-extrabold text-sky-600">Sedia</span>
         <span
           class="font-medium text-slate-600 group-hover:text-slate-900 transition-colors"
           >Arcive</span
         >
-        <span class="text-sky-500 font-bold mb-2 text-2xl animate-pulse">.</span
+        <span
+          class="text-sky-500 font-bold mb-1.5 sm:mb-2 text-xl sm:text-2xl animate-pulse"
+          >.</span
         >
       </a>
 
@@ -66,7 +70,7 @@ import Button from "../ui/Button.astro";
           href="/dashboard"
           variant="primary"
           size="sm"
-          class="shadow-lg shadow-primary-500/20"
+          class="shadow-lg shadow-primary-500/20 !rounded-full"
         >
           Get Started
         </Button>
