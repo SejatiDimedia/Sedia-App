@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { auth } from "../../../lib/auth";
 import { deleteFile, getSignedUrl } from "../../../lib/storage";
 import { db, file, folder, eq, and, desc } from "@shared-db";
+import { isNull } from "drizzle-orm";
 import { decreaseStorageUsed } from "../../../lib/permissions";
 import { logActivity } from "../../../lib/activity";
 
@@ -32,57 +33,44 @@ export const GET: APIRoute = async ({ request, url }) => {
         }
 
         const folderId = url.searchParams.get("folderId");
+        const starredOnly = url.searchParams.get("starred") === "true";
 
         let files: FileRecord[];
 
+        const baseConditions = [
+            eq(file.userId, session.user.id),
+            eq(file.isDeleted, false)
+        ];
+
         if (folderId) {
-            files = await db
-                .select({
-                    id: file.id,
-                    name: file.name,
-                    mimeType: file.mimeType,
-                    size: file.size,
-                    r2Key: file.r2Key,
-                    folderId: file.folderId,
-                    userId: file.userId,
-                    createdAt: file.createdAt,
-                    updatedAt: file.updatedAt,
-                    folderName: folder.name
-                })
-                .from(file)
-                .leftJoin(folder, eq(file.folderId, folder.id))
-                .where(
-                    and(
-                        eq(file.userId, session.user.id),
-                        eq(file.folderId, folderId),
-                        eq(file.isDeleted, false)
-                    )
-                )
-                .orderBy(desc(file.createdAt)) as any[]; // Cast to any to avoid type mismatch with partial selection
-        } else {
-            files = await db
-                .select({
-                    id: file.id,
-                    name: file.name,
-                    mimeType: file.mimeType,
-                    size: file.size,
-                    r2Key: file.r2Key,
-                    folderId: file.folderId,
-                    userId: file.userId,
-                    createdAt: file.createdAt,
-                    updatedAt: file.updatedAt,
-                    folderName: folder.name
-                })
-                .from(file)
-                .leftJoin(folder, eq(file.folderId, folder.id))
-                .where(
-                    and(
-                        eq(file.userId, session.user.id),
-                        eq(file.isDeleted, false)
-                    )
-                )
-                .orderBy(desc(file.createdAt)) as any[];
+            baseConditions.push(eq(file.folderId, folderId));
+        } else if (!starredOnly) {
+            // Root view: Show only files with NO folder
+            baseConditions.push(isNull(file.folderId));
         }
+
+        if (starredOnly) {
+            baseConditions.push(eq(file.isStarred, true));
+        }
+
+        files = await db
+            .select({
+                id: file.id,
+                name: file.name,
+                mimeType: file.mimeType,
+                size: file.size,
+                r2Key: file.r2Key,
+                folderId: file.folderId,
+                userId: file.userId,
+                isStarred: file.isStarred,
+                createdAt: file.createdAt,
+                updatedAt: file.updatedAt,
+                folderName: folder.name
+            })
+            .from(file)
+            .leftJoin(folder, eq(file.folderId, folder.id))
+            .where(and(...baseConditions))
+            .orderBy(desc(file.createdAt)) as any[];
 
         // Add signed URLs for each file
         const filesWithUrls = await Promise.all(
@@ -100,6 +88,81 @@ export const GET: APIRoute = async ({ request, url }) => {
         console.error("List files error:", error);
         return new Response(
             JSON.stringify({ error: "Failed to list files" }),
+            { status: 500 }
+        );
+    }
+};
+
+// PATCH: Update file (e.g. toggle star or rename)
+export const PATCH: APIRoute = async ({ request }) => {
+    try {
+        const session = await auth.api.getSession({
+            headers: request.headers,
+        });
+
+        if (!session) {
+            return new Response(
+                JSON.stringify({ error: "Unauthorized" }),
+                { status: 401 }
+            );
+        }
+
+        const { fileId, isStarred, name } = await request.json();
+
+        if (!fileId) {
+            return new Response(
+                JSON.stringify({ error: "File ID required" }),
+                { status: 400 }
+            );
+        }
+
+        // Check ownership
+        const fileRecord = await db
+            .select()
+            .from(file)
+            .where(and(eq(file.id, fileId), eq(file.userId, session.user.id)))
+            .limit(1);
+
+        if (!fileRecord.length) {
+            return new Response(
+                JSON.stringify({ error: "File not found" }),
+                { status: 404 }
+            );
+        }
+
+        // Prepare update object
+        const updateData: any = { updatedAt: new Date() };
+        if (typeof isStarred === "boolean") updateData.isStarred = isStarred;
+        if (name && typeof name === "string" && name.trim().length > 0) {
+            updateData.name = name.trim();
+        }
+
+        // Update
+        await db
+            .update(file)
+            .set(updateData)
+            .where(eq(file.id, fileId));
+
+        // Log activity if renamed
+        if (updateData.name && updateData.name !== fileRecord[0].name) {
+            await logActivity({
+                userId: session.user.id,
+                action: "rename",
+                targetType: "file",
+                targetId: fileId,
+                targetName: updateData.name,
+                metadata: { oldName: fileRecord[0].name }
+            });
+        }
+
+        return new Response(
+            JSON.stringify({ success: true, ...updateData }),
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Update file error:", error);
+        return new Response(
+            JSON.stringify({ error: "Failed to update file" }),
             { status: 500 }
         );
     }

@@ -26,6 +26,7 @@ export default function AdminApp() {
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [highlightId, setHighlightId] = useState<string | null>(null);
 
     const fetchUsers = async () => {
         try {
@@ -47,7 +48,26 @@ export default function AdminApp() {
 
     useEffect(() => {
         fetchUsers();
+
+        // Check for highlight param
+        const params = new URLSearchParams(window.location.search);
+        const highlight = params.get("highlight");
+        if (highlight) {
+            setHighlightId(highlight);
+        }
     }, []);
+
+    // Scroll to highlighted user when users are loaded
+    useEffect(() => {
+        if (highlightId && users.length > 0) {
+            const el = document.getElementById(`user-${highlightId}`);
+            if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                // Remove highlight after 5 seconds
+                setTimeout(() => setHighlightId(null), 5000);
+            }
+        }
+    }, [highlightId, users]);
 
     const toggleUploadEnabled = async (userId: string, currentValue: boolean) => {
         setUpdatingId(userId);
@@ -145,7 +165,11 @@ export default function AdminApp() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
                                         {users.map((u) => (
-                                            <tr key={u.id} className="hover:bg-gray-50">
+                                            <tr
+                                                key={u.id}
+                                                id={`user-${u.id}`}
+                                                className={`hover:bg-gray-50 transition-colors ${highlightId === u.id ? "bg-amber-50" : ""}`}
+                                            >
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
                                                         {u.image ? (

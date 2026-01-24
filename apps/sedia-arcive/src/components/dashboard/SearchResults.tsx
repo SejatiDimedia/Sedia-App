@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import FilePreviewModal from "./FilePreviewModal";
+import SearchFilter from "./SearchFilter";
 
 interface FileResult {
     id: string;
@@ -27,6 +28,7 @@ export default function SearchResults({ onFolderClick }: SearchResultsProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [previewFile, setPreviewFile] = useState<FileResult | null>(null);
+    const [filters, setFilters] = useState({ type: "all", starred: false, date: "all" });
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +44,9 @@ export default function SearchResults({ onFolderClick }: SearchResultsProps) {
 
     useEffect(() => {
         const debounce = setTimeout(async () => {
-            if (query.length < 2) {
+            const hasFilters = filters.type !== "all" || filters.starred || filters.date !== "all";
+
+            if (query.length < 2 && !hasFilters) {
                 setFiles([]);
                 setFolders([]);
                 return;
@@ -50,7 +54,13 @@ export default function SearchResults({ onFolderClick }: SearchResultsProps) {
 
             setIsLoading(true);
             try {
-                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const params = new URLSearchParams();
+                if (query) params.set("q", query);
+                if (filters.type !== "all") params.set("type", filters.type);
+                if (filters.starred) params.set("starred", "true");
+                if (filters.date !== "all") params.set("date", filters.date);
+
+                const response = await fetch(`/api/search?${params}`);
                 const data = await response.json();
                 if (response.ok) {
                     setFiles(data.files || []);
@@ -65,7 +75,7 @@ export default function SearchResults({ onFolderClick }: SearchResultsProps) {
         }, 300);
 
         return () => clearTimeout(debounce);
-    }, [query]);
+    }, [query, filters]);
 
     const handleFileClick = (file: FileResult) => {
         // Redirect to files page - the file is in root if no folderId in search data
@@ -129,75 +139,86 @@ export default function SearchResults({ onFolderClick }: SearchResultsProps) {
 
     return (
         <>
-            <div ref={containerRef} className="relative hidden md:block">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => hasResults && setIsOpen(true)}
-                    placeholder="Search files..."
-                    className="w-64 pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
-                />
-                {isLoading && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <div className="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                )}
+            <div className="hidden md:flex items-center gap-2">
+                <div ref={containerRef} className="relative">
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onFocus={() => {
+                            const hasFilters = filters.type !== "all" || filters.starred || filters.date !== "all";
+                            if ((query.length >= 2 || hasFilters) && (files.length > 0 || folders.length > 0)) {
+                                setIsOpen(true);
+                            }
+                        }}
+                        placeholder="Search files..."
+                        className="w-64 pl-10 pr-10 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                    />
 
-                {/* Results Dropdown */}
-                {isOpen && query.length >= 2 && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 overflow-y-auto z-50">
-                        {!hasResults && !isLoading && (
-                            <div className="p-4 text-center text-gray-500 text-sm">
-                                No results found for "{query}"
-                            </div>
-                        )}
+                    {isLoading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    )}
 
-                        {folders.length > 0 && (
-                            <div>
-                                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase bg-gray-50">
-                                    Folders
+                    {/* Results Dropdown */}
+                    {isOpen && (query.length >= 2 || filters.type !== "all" || filters.starred || filters.date !== "all") && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 overflow-y-auto z-50">
+                            {!hasResults && !isLoading && (
+                                <div className="p-4 text-center text-gray-500 text-sm">
+                                    No results found for "{query}"
                                 </div>
-                                {folders.map((folder) => (
-                                    <button
-                                        key={folder.id}
-                                        onClick={() => handleFolderClick(folder)}
-                                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
-                                    >
-                                        <svg className="w-5 h-5 text-sky-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M10 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-8l-2-2z" />
-                                        </svg>
-                                        <span className="text-sm text-gray-900 truncate">{folder.name}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                            )}
 
-                        {files.length > 0 && (
-                            <div>
-                                <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase bg-gray-50">
-                                    Files
+                            {folders.length > 0 && (
+                                <div>
+                                    <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase bg-gray-50">
+                                        Folders
+                                    </div>
+                                    {folders.map((folder) => (
+                                        <button
+                                            key={folder.id}
+                                            onClick={() => handleFolderClick(folder)}
+                                            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
+                                        >
+                                            <svg className="w-5 h-5 text-sky-500" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M10 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-8l-2-2z" />
+                                            </svg>
+                                            <span className="text-sm text-gray-900 truncate">{folder.name}</span>
+                                        </button>
+                                    ))}
                                 </div>
-                                {files.map((file) => (
-                                    <button
-                                        key={file.id}
-                                        onClick={() => handleFileClick(file)}
-                                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
-                                    >
-                                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">
-                                            {getFileIcon(file.mimeType)}
-                                        </div>
-                                        <span className="text-sm text-gray-900 truncate">{file.name}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
+                            )}
+
+                            {files.length > 0 && (
+                                <div>
+                                    <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase bg-gray-50">
+                                        Files
+                                    </div>
+                                    {files.map((file) => (
+                                        <button
+                                            key={file.id}
+                                            onClick={() => handleFileClick(file)}
+                                            className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left"
+                                        >
+                                            <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center">
+                                                {getFileIcon(file.mimeType)}
+                                            </div>
+                                            <span className="text-sm text-gray-900 truncate">{file.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Filter Button - Moved Outside */}
+                <SearchFilter filters={filters} onChange={setFilters} />
             </div>
 
             {/* Preview Modal */}

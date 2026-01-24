@@ -1,0 +1,8 @@
+---
+import DashboardLayout from "../../layouts/DashboardLayout.astro";
+import StarredApp from "../../components/dashboard/StarredApp";
+---
+
+<DashboardLayout title="Starred Files | Sedia Arcive">
+    <StarredApp client:only="react" />
+</DashboardLayout>

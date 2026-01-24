@@ -1,0 +1,92 @@
+---
+const faqs = [
+    {
+        question: "Is SediaArcive safe to use?",
+        answer: "Absolutely. We use industry-standard encryption for data in transit and at rest. Your files are stored using Cloudflare R2, ensuring enterprise-grade durability and security.",
+    },
+    {
+        question: "What is the file size limit?",
+        answer: "For the free tier, you can upload files up to 100MB each. Pro users enjoy unlimited file sizes, perfect for 4K video or large raw assets.",
+    },
+    {
+        question: "Can I share folders with non-users?",
+        answer: "Yes! You can generate public links for files or folders. You can also set expiration dates or password protection on shared links for added security.",
+    },
+    {
+        question: "How does the 'Trash' recovery work?",
+        answer: "Deleted files are moved to the Trash and kept for 30 days. You can restore them anytime within this period before they are permanently removed.",
+    },
+    {
+        question: "Can I collaborate with my team?",
+        answer: "Definitely. You can invite team members to specific folders with granular permissions (View only, Edit, or Admin) to keep everyone in sync.",
+    },
+];
+---
+
+<section id="faq" class="py-32 bg-white relative overflow-hidden">
+    <!-- Subtle Background Pattern -->
+    <div
+        class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30 mask-image:radial-gradient(ellipse_at_center,black_70%,transparent_100%)"
+    >
+    </div>
+
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <span
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-700/10 mb-6"
+            >
+                Support
+            </span>
+            <h2 class="text-4xl font-bold text-zinc-900 tracking-tight mb-4">
+                Frequently asked questions
+            </h2>
+            <p class="text-lg text-zinc-600">
+                Everything you need to know about the product and billing.
+            </p>
+        </div>
+
+        <!-- FAQ Items -->
+        <div class="space-y-4">
+            {
+                faqs.map((faq) => (
+                    <details class="group bg-zinc-50/50 hover:bg-white border border-zinc-200 rounded-2xl overflow-hidden transition-all duration-300 open:bg-white open:ring-1 open:ring-primary-500 open:border-primary-500 open:shadow-lg">
+                        <summary class="flex justify-between items-center p-6 cursor-pointer list-none">
+                            <span class="text-lg font-semibold text-zinc-900 group-hover:text-primary-600 transition-colors">
+                                {faq.question}
+                            </span>
+                            <span class="ml-6 flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-white border border-zinc-200 text-zinc-400 group-hover:border-primary-200 group-hover:text-primary-500 transition-all duration-300 group-open:bg-primary-500 group-open:border-primary-500 group-open:text-white group-open:rotate-45">
+                                <svg
+                                    class="w-5 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                    />
+                                </svg>
+                            </span>
+                        </summary>
+                        <div class="px-6 pb-6 text-zinc-600 leading-relaxed animate-fade-in">
+                            <p>{faq.answer}</p>
+                        </div>
+                    </details>
+                ))
+            }
+        </div>
+    </div>
+</section>
+
+<style>
+    /* Smooth open animation fix for details element if needed, though standard usually works fine for simple text */
+    details > summary {
+        list-style: none;
+    }
+    details > summary::-webkit-details-marker {
+        display: none;
+    }
+</style>

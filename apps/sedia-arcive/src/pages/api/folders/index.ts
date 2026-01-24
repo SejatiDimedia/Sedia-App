@@ -20,6 +20,7 @@ export const GET: APIRoute = async ({ request }) => {
 
         const url = new URL(request.url);
         const parentId = url.searchParams.get("parentId");
+        const starredOnly = url.searchParams.get("starred") === "true";
 
         // Build query conditions
         // User is owner OR User has been granted access
@@ -30,11 +31,16 @@ export const GET: APIRoute = async ({ request }) => {
 
         const conditions = [accessCondition];
 
-        if (parentId) {
+        if (starredOnly) {
+            conditions.push(eq(folder.isStarred, true));
+        } else if (parentId) {
             conditions.push(eq(folder.parentId, parentId));
         } else {
-            // For root folders, we want folders with no parent
-            conditions.push(sql`${folder.parentId} IS NULL`);
+            // For root folders, we want folders with no parent (unless we are listing ALL starred folders)
+            // If listing starred, we ignore hierarchy and list all starred folders regardless of parent
+            if (!starredOnly) {
+                conditions.push(sql`${folder.parentId} IS NULL`);
+            }
         }
 
         const folders = await db
@@ -43,6 +49,7 @@ export const GET: APIRoute = async ({ request }) => {
                 name: folder.name,
                 parentId: folder.parentId,
                 userId: folder.userId,
+                isStarred: folder.isStarred,
                 createdAt: folder.createdAt,
                 updatedAt: folder.updatedAt,
             })
@@ -63,6 +70,80 @@ export const GET: APIRoute = async ({ request }) => {
     } catch (error) {
         console.error("List folders error:", error);
         return new Response(JSON.stringify({ error: "Failed to list folders" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+        });
+    }
+};
+
+// PATCH: Update folder (e.g. toggle star or rename)
+export const PATCH: APIRoute = async ({ request }) => {
+    try {
+        const session = await auth.api.getSession({
+            headers: request.headers,
+        });
+
+        if (!session) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                status: 401,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
+        const { folderId, isStarred, name } = await request.json();
+
+        if (!folderId) {
+            return new Response(JSON.stringify({ error: "Folder ID required" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
+        // Verify folder exists and belongs to user
+        const existingFolder = await db
+            .select()
+            .from(folder)
+            .where(and(eq(folder.id, folderId), eq(folder.userId, session.user.id)))
+            .limit(1);
+
+        if (existingFolder.length === 0) {
+            return new Response(JSON.stringify({ error: "Folder not found" }), {
+                status: 404,
+                headers: { "Content-Type": "application/json" },
+            });
+        }
+
+        // Prepare update object
+        const updateData: any = { updatedAt: new Date() };
+        if (typeof isStarred === "boolean") updateData.isStarred = isStarred;
+        if (name && typeof name === "string" && name.trim().length > 0) {
+            updateData.name = name.trim();
+        }
+
+        await db
+            .update(folder)
+            .set(updateData)
+            .where(eq(folder.id, folderId));
+
+        // Log activity if renamed
+        if (updateData.name && updateData.name !== existingFolder[0].name) {
+            await logActivity({
+                userId: session.user.id,
+                action: "rename",
+                targetType: "folder",
+                targetId: folderId,
+                targetName: updateData.name,
+                metadata: { oldName: existingFolder[0].name }
+            });
+        }
+
+        return new Response(JSON.stringify({ success: true, ...updateData }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        });
+    } catch (error) {
+        console.error("Update folder error:", error);
+        return new Response(JSON.stringify({ error: "Failed to update folder" }), {
             status: 500,
             headers: { "Content-Type": "application/json" },
         });

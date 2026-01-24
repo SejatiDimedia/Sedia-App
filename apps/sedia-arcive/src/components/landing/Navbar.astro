@@ -3,51 +3,88 @@ import Button from "../ui/Button.astro";
 ---
 
 <header
-  class="fixed top-4 md:top-6 left-0 right-0 z-50 flex justify-center px-4"
+  class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+  id="main-header"
 >
-  <nav
-    class="bg-white/80 backdrop-blur-xl border border-zinc-200/50 rounded-full px-4 py-2 md:px-6 md:py-3 shadow-lg shadow-zinc-200/20 ring-1 ring-zinc-900/5 transition-all"
-  >
-    <div class="flex items-center gap-4 md:gap-8">
-      <!-- Logo -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <nav
+      class="bg-white/90 backdrop-blur-2xl border border-white/50 ring-1 ring-zinc-200/50 rounded-full px-5 py-3 shadow-xl shadow-zinc-200/20 flex items-center justify-between"
+    >
+      <!-- Brand -->
       <a
         href="/"
-        class="flex items-center gap-0.5 text-lg md:text-xl tracking-tight leading-none group"
+        class="flex items-center gap-0.5 text-xl tracking-tight leading-none group select-none"
       >
         <span class="font-extrabold text-sky-600">Sedia</span>
         <span
-          class="font-normal text-slate-600 group-hover:text-slate-800 transition-colors"
+          class="font-medium text-slate-600 group-hover:text-slate-900 transition-colors"
           >Arcive</span
         >
-        <span class="text-sky-500 font-bold mb-1.5 md:mb-2 text-xl md:text-2xl"
-          >.</span
+        <span class="text-sky-500 font-bold mb-2 text-2xl animate-pulse">.</span
         >
       </a>
 
-      <!-- Nav Links -->
-      <div class="hidden md:flex items-center gap-1">
+      <!-- Desktop Links -->
+      <div class="hidden md:flex items-center gap-6">
         <a
           href="#features"
-          class="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-full transition-all"
-          >Features</a
+          class="text-sm font-medium text-zinc-600 hover:text-sky-600 transition-colors relative group"
         >
+          Features
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-sky-600 transition-all group-hover:w-full"
+          ></span>
+        </a>
         <a
-          href="#about"
-          class="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-full transition-all"
-          >About</a
+          href="#how-it-works"
+          class="text-sm font-medium text-zinc-600 hover:text-sky-600 transition-colors relative group"
         >
+          How it Works
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-sky-600 transition-all group-hover:w-full"
+          ></span>
+        </a>
+        <a
+          href="#faq"
+          class="text-sm font-medium text-zinc-600 hover:text-sky-600 transition-colors relative group"
+        >
+          FAQ
+          <span
+            class="absolute -bottom-1 left-0 w-0 h-0.5 bg-sky-600 transition-all group-hover:w-full"
+          ></span>
+        </a>
       </div>
 
-      <!-- CTA -->
-      <div
-        class="flex items-center gap-3 pl-3 md:pl-4 border-l border-zinc-200"
-      >
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
         <a
           href="/login"
-          class="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+          class="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors px-2"
           >Sign In</a
         >
+        <Button
+          href="/dashboard"
+          variant="primary"
+          size="sm"
+          class="shadow-lg shadow-primary-500/20"
+        >
+          Get Started
+        </Button>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </div>
 </header>
+
+<script>
+  // Add scroll effect
+  const header = document.getElementById("main-header");
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 20) {
+      header?.classList.add("py-2");
+      header?.classList.remove("py-4");
+    } else {
+      header?.classList.add("py-4");
+      header?.classList.remove("py-2");
+    }
+  });
+</script>

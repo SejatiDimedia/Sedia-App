@@ -1,0 +1,62 @@
+---
+const testimonials = [
+  {
+    quote: "SediaArcive has completely transformed how our team shares files. It's fast, intuitive, and the folder organization is a game changer.",
+    author: "Sarah Chen",
+    role: "Product Manager at TechFlow",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+  },
+  {
+    quote: "The interface is beautiful and the performance is incredible. Finally, a file manager that doesn't feel like it's from the 90s.",
+    author: "Marcus Rodriguez",
+    role: "Freelance Designer",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus",
+  },
+  {
+    quote: "Security was our top priority, and SediaArcive delivered. The R2 integration gives us peace of mind knowing our data is safe.",
+    author: "Emily Watson",
+    role: "CTO at StartupX",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
+  },
+];
+---
+
+<section id="testimonials" class="py-24 bg-zinc-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="text-center max-w-2xl mx-auto mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold text-zinc-900 tracking-tight">
+        Loved by teams everywhere
+      </h2>
+      <p class="mt-4 text-lg text-zinc-600">
+        Don't just take our word for it. Here's what others have to say about SediaArcive.
+      </p>
+    </div>
+
+    <!-- Testimonials Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {testimonials.map((t) => (
+        <div class="bg-white p-8 rounded-2xl border border-zinc-100 shadow-sm hover:shadow-md transition-shadow relative">
+          <!-- Quote Icon -->
+          <div class="absolute top-6 right-8 text-primary-100">
+            <svg class="w-12 h-12 transform rotate-180" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H15.017C14.4647 8 14.017 8.44772 14.017 9V11C14.017 11.5523 13.5693 12 13.017 12H12.017V5H22.017V15C22.017 18.3137 19.3307 21 16.017 21H14.017ZM5.0166 21L5.0166 18C5.0166 16.8954 5.91203 16 7.0166 16H10.0166C10.5689 16 11.0166 15.5523 11.0166 15V9C11.0166 8.44772 10.5689 8 10.0166 8H6.0166C5.46432 8 5.0166 8.44772 5.0166 9V11C5.0166 11.5523 4.56889 12 4.0166 12H3.0166V5H13.0166V15C13.0166 18.3137 10.3303 21 7.0166 21H5.0166Z" />
+            </svg>
+          </div>
+
+          <div class="relative z-10">
+            <p class="text-zinc-600 mb-6 italic leading-relaxed">"{t.quote}"</p>
+            
+            <div class="flex items-center gap-4">
+              <img src={t.avatar} alt={t.author} class="w-12 h-12 rounded-full bg-zinc-100" />
+              <div>
+                <h4 class="font-bold text-zinc-900">{t.author}</h4>
+                <p class="text-xs font-medium text-zinc-500 uppercase tracking-wide">{t.role}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

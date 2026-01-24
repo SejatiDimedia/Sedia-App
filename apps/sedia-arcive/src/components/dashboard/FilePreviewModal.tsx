@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useDownload } from "./DownloadManager";
 
 interface FilePreviewModalProps {
     isOpen: boolean;
@@ -34,14 +35,12 @@ export default function FilePreviewModal({ isOpen, onClose, file }: FilePreviewM
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     };
 
+    const { startDownload } = useDownload();
+
     const handleDownload = () => {
-        const link = document.createElement("a");
-        link.href = file.url;
-        link.download = file.name;
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (file) {
+            startDownload(file.url, file.name);
+        }
     };
 
     return (

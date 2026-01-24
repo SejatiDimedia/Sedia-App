@@ -17,6 +17,7 @@ export const folder = sediaArcive.table("folder", {
     name: text("name").notNull(),
     parentId: text("parent_id"), // null for root folders
     userId: text("user_id").notNull(),
+    isStarred: boolean("is_starred").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -29,6 +30,7 @@ export const file = sediaArcive.table("file", {
     r2Key: text("r2_key").notNull(), // Cloudflare R2 storage key
     folderId: text("folder_id"), // null for root files
     userId: text("user_id").notNull(),
+    isStarred: boolean("is_starred").notNull().default(false),
     // Soft-delete fields for Trash feature
     isDeleted: boolean("is_deleted").notNull().default(false),
     deletedAt: timestamp("deleted_at"),
