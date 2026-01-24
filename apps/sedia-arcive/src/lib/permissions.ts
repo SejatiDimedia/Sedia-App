@@ -1,4 +1,4 @@
-import { db, appPermission, eq, and } from "@shared-db";
+import { db, appPermission, eq, and, sql } from "@shared-db";
 
 const APP_ID = "sedia-arcive";
 const DEFAULT_STORAGE_LIMIT = 524288000; // 500 MB
@@ -11,6 +11,7 @@ export interface UserPermission {
     role: string;
     uploadEnabled: boolean;
     storageLimit: number;
+    maxFileSize?: number;
     storageUsed: number;
 }
 
@@ -31,7 +32,22 @@ export async function getUserPermission(userId: string): Promise<UserPermission>
         .limit(1);
 
     if (existing.length > 0) {
-        return existing[0] as UserPermission;
+        const p = existing[0] as UserPermission;
+
+        // Fetch max_file_size manually
+        try {
+            const raw = await db.execute(sql`SELECT max_file_size FROM sedia_auth.app_permission WHERE id = ${p.id}`);
+            if (raw.rows.length > 0 && raw.rows[0].max_file_size) {
+                p.maxFileSize = Number(raw.rows[0].max_file_size);
+            } else {
+                p.maxFileSize = MAX_FILE_SIZE;
+            }
+        } catch (e) {
+            console.error("Failed to fetch max_file_size:", e);
+            p.maxFileSize = MAX_FILE_SIZE;
+        }
+
+        return p;
     }
 
     // Create new permission record with defaults
@@ -43,11 +59,14 @@ export async function getUserPermission(userId: string): Promise<UserPermission>
             role: "user",
             uploadEnabled: false,
             storageLimit: DEFAULT_STORAGE_LIMIT,
+            // maxFileSize: MAX_FILE_SIZE,
             storageUsed: 0,
         })
         .returning();
 
-    return newPermission[0] as UserPermission;
+    const p = newPermission[0] as UserPermission;
+    p.maxFileSize = MAX_FILE_SIZE;
+    return p;
 }
 
 /**
@@ -103,11 +122,12 @@ export function validateUpload(permission: UserPermission, fileSize: number): { 
         };
     }
 
-    // Check file size limit (100 MB)
-    if (fileSize > MAX_FILE_SIZE) {
+    // Check file size limit
+    const limit = permission.maxFileSize || MAX_FILE_SIZE;
+    if (fileSize > limit) {
         return {
             valid: false,
-            error: `Ukuran file melebihi batas maksimal ${MAX_FILE_SIZE / (1024 * 1024)} MB per file.`,
+            error: `File size exceeds the maximum limit of ${limit / (1024 * 1024)} MB per file.`,
         };
     }
 
@@ -117,7 +137,7 @@ export function validateUpload(permission: UserPermission, fileSize: number): { 
         const remaining = permission.storageLimit - permission.storageUsed;
         return {
             valid: false,
-            error: `Kuota penyimpanan tidak cukup. Tersisa: ${(remaining / (1024 * 1024)).toFixed(1)} MB.`,
+            error: `Insufficient storage quota. Remaining: ${(remaining / (1024 * 1024)).toFixed(1)} MB.`,
         };
     }
 

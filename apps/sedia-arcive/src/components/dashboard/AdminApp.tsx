@@ -7,6 +7,7 @@ interface UserPermission {
     role: string;
     uploadEnabled: boolean;
     storageLimit: number;
+    maxFileSize: number;
     storageUsed: number;
 }
 
@@ -27,6 +28,14 @@ export default function AdminApp() {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [highlightId, setHighlightId] = useState<string | null>(null);
+
+    // Storage editing state
+    const [editingStorageId, setEditingStorageId] = useState<string | null>(null);
+    const [newStorageLimit, setNewStorageLimit] = useState<string>("");
+
+    // Max Upload editing state
+    const [editingMaxUploadId, setEditingMaxUploadId] = useState<string | null>(null);
+    const [newMaxUpload, setNewMaxUpload] = useState<string>("");
 
     const fetchUsers = async () => {
         try {
@@ -91,6 +100,66 @@ export default function AdminApp() {
         }
     };
 
+    const startEditingStorage = (userId: string, currentBytes: number) => {
+        setEditingStorageId(userId);
+        // Convert bytes to MB for editing
+        setNewStorageLimit((currentBytes / (1024 * 1024)).toFixed(0));
+    };
+
+    const saveStorageLimit = async (userId: string) => {
+        setUpdatingId(userId);
+        try {
+            const limitBytes = parseFloat(newStorageLimit) * 1024 * 1024;
+            const response = await fetch("/api/admin/users", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, storageLimit: limitBytes }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to update storage limit");
+            }
+
+            setEditingStorageId(null);
+            await fetchUsers();
+        } catch (err) {
+            console.error("Update error:", err);
+            alert("Failed to update storage limit");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const startEditingMaxUpload = (userId: string, currentBytes: number) => {
+        setEditingMaxUploadId(userId);
+        // Convert bytes to MB for editing
+        setNewMaxUpload((currentBytes / (1024 * 1024)).toFixed(0));
+    };
+
+    const saveMaxUpload = async (userId: string) => {
+        setUpdatingId(userId);
+        try {
+            const maxBytes = parseFloat(newMaxUpload) * 1024 * 1024;
+            const response = await fetch("/api/admin/users", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, maxFileSize: maxBytes }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to update max file size");
+            }
+
+            setEditingMaxUploadId(null);
+            await fetchUsers();
+        } catch (err) {
+            console.error("Update error:", err);
+            alert("Failed to update max file size");
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     const formatSize = (bytes: number) => {
         if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -141,7 +210,7 @@ export default function AdminApp() {
                     <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                         <div className="p-6 border-b border-gray-100">
                             <h2 className="text-lg font-semibold text-gray-900">User List</h2>
-                            <p className="text-sm text-gray-500 mt-1">Manage upload access for each user.</p>
+                            <p className="text-sm text-gray-500 mt-1">Manage upload access and storage limits for each user.</p>
                         </div>
 
                         {isLoading ? (
@@ -158,7 +227,8 @@ export default function AdminApp() {
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Storage</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Storage (Used / Limit)</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Upload</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Upload Access</th>
                                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                                         </tr>
@@ -190,7 +260,86 @@ export default function AdminApp() {
                                                 <td className="px-6 py-4 text-sm text-gray-500">{u.email}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-500">
                                                     {u.permission ? (
-                                                        <span>{formatSize(u.permission.storageUsed)} / {formatSize(u.permission.storageLimit)}</span>
+                                                        editingStorageId === u.id ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                                                                    value={newStorageLimit}
+                                                                    onChange={(e) => setNewStorageLimit(e.target.value)}
+                                                                    placeholder="MB"
+                                                                />
+                                                                <span className="text-xs text-gray-500">MB</span>
+                                                                <button
+                                                                    onClick={() => saveStorageLimit(u.id)}
+                                                                    className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                                                    title="Save"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setEditingStorageId(null)}
+                                                                    className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                                                    title="Cancel"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2 group">
+                                                                <span>{formatSize(u.permission.storageUsed)} <span className="text-gray-400">/</span> {formatSize(u.permission.storageLimit)}</span>
+                                                                <button
+                                                                    onClick={() => startEditingStorage(u.id, u.permission!.storageLimit)}
+                                                                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-sky-600 transition-all"
+                                                                    title="Edit Limit"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    ) : (
+                                                        <span className="text-gray-400">—</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-gray-500">
+                                                    {u.permission ? (
+                                                        editingMaxUploadId === u.id ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                                                                    value={newMaxUpload}
+                                                                    onChange={(e) => setNewMaxUpload(e.target.value)}
+                                                                    placeholder="MB"
+                                                                />
+                                                                <span className="text-xs text-gray-500">MB</span>
+                                                                <button
+                                                                    onClick={() => saveMaxUpload(u.id)}
+                                                                    className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                                                    title="Save"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setEditingMaxUploadId(null)}
+                                                                    className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                                                    title="Cancel"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center gap-2 group">
+                                                                <span>{u.permission.maxFileSize ? formatSize(u.permission.maxFileSize) : "100 MB"}</span>
+                                                                <button
+                                                                    onClick={() => startEditingMaxUpload(u.id, u.permission!.maxFileSize || 104857600)}
+                                                                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-sky-600 transition-all"
+                                                                    title="Edit Max Upload"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                                </button>
+                                                            </div>
+                                                        )
                                                     ) : (
                                                         <span className="text-gray-400">—</span>
                                                     )}

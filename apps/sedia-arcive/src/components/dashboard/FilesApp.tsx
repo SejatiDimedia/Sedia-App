@@ -19,6 +19,7 @@ interface BreadcrumbItem {
 interface PermissionData {
     uploadEnabled: boolean;
     role: string;
+    maxFileSize: number;
 }
 
 export default function FilesApp() {
@@ -61,6 +62,7 @@ export default function FilesApp() {
                     setPermission({
                         uploadEnabled: data.uploadEnabled ?? false,
                         role: data.role || "user",
+                        maxFileSize: data.maxFileSize,
                     });
                 }
             } catch (err) {
@@ -224,7 +226,11 @@ export default function FilesApp() {
                                 {canUpload && (
                                     <div>
                                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload Files</h2>
-                                        <FileUploader onUploadComplete={handleUploadComplete} folderId={currentFolderId} />
+                                        <FileUploader
+                                            onUploadComplete={handleUploadComplete}
+                                            folderId={currentFolderId}
+                                            maxFileSize={permission?.maxFileSize}
+                                        />
                                     </div>
                                 )}
 

@@ -239,14 +239,12 @@ export default function TrashApp() {
         else if (action === "empty") {
             setActionLoading("all");
             try {
-                // Delete all files
-                for (const file of files) {
-                    await fetch("/api/trash", {
-                        method: "DELETE",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ fileId: file.id }),
-                    });
-                }
+                // Bulk delete via API
+                await fetch("/api/trash", {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ emptyTrash: true }),
+                });
                 setFiles([]);
                 setSelectedFiles(new Set());
             } catch (err) {

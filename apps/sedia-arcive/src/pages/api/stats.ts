@@ -45,6 +45,7 @@ export const GET: APIRoute = async ({ request }) => {
             storageLimit: permission.storageLimit,
             storageUsed: permission.storageUsed,
             storageRemaining: permission.storageLimit - permission.storageUsed,
+            maxFileSize: permission.maxFileSize ?? 104857600,
             role: permission.role,
         };
 

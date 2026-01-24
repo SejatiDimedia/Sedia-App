@@ -1,8 +1,10 @@
+
 import { useState, useCallback } from "react";
 
 interface FileUploaderProps {
     onUploadComplete?: () => void;
     folderId?: string | null;
+    maxFileSize?: number;
 }
 
 interface QueuedFile {
@@ -13,7 +15,7 @@ interface QueuedFile {
     error?: string;
 }
 
-export default function FileUploader({ onUploadComplete, folderId }: FileUploaderProps) {
+export default function FileUploader({ onUploadComplete, folderId, maxFileSize = 104857600 }: FileUploaderProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [queuedFiles, setQueuedFiles] = useState<QueuedFile[]>([]);
     const [isUploading, setIsUploading] = useState(false);
@@ -28,13 +30,34 @@ export default function FileUploader({ onUploadComplete, folderId }: FileUploade
         setIsDragging(false);
     }, []);
 
+    const formatSize = (bytes: number) => {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
     const addFilesToQueue = (files: File[]) => {
-        const newFiles: QueuedFile[] = files.map((file) => ({
-            file,
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            status: "pending" as const,
-            progress: 0,
-        }));
+        const newFiles: QueuedFile[] = [];
+
+        files.forEach((file) => {
+            if (file.size > maxFileSize) {
+                newFiles.push({
+                    file,
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    status: "error" as const,
+                    progress: 0,
+                    error: `File exceeds limit of ${formatSize(maxFileSize)}`,
+                });
+            } else {
+                newFiles.push({
+                    file,
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    status: "pending" as const,
+                    progress: 0,
+                });
+            }
+        });
+
         setQueuedFiles((prev) => [...prev, ...newFiles]);
     };
 
@@ -43,6 +66,9 @@ export default function FileUploader({ onUploadComplete, folderId }: FileUploade
     };
 
     const uploadFile = async (queuedFile: QueuedFile): Promise<boolean> => {
+        // Skip files that are already in error state (like size limit exceeded)
+        if (queuedFile.status === "error") return false;
+
         const { file, id } = queuedFile;
 
         setQueuedFiles((prev) =>
@@ -138,19 +164,13 @@ export default function FileUploader({ onUploadComplete, folderId }: FileUploade
             const files = Array.from(e.dataTransfer.files);
             addFilesToQueue(files);
         },
-        []
+        [maxFileSize] // Depend on maxFileSize to ensure closure captures latest value
     );
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         addFilesToQueue(files);
         e.target.value = ""; // Reset input
-    };
-
-    const formatSize = (bytes: number) => {
-        if (bytes < 1024) return `${bytes} B`;
-        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     };
 
     const pendingCount = queuedFiles.filter((f) => f.status === "pending").length;
@@ -313,7 +333,7 @@ export default function FileUploader({ onUploadComplete, folderId }: FileUploade
             )}
 
             {/* Max file size note */}
-            <p className="text-xs text-gray-400 text-center mt-3">Maximum 100 MB per file</p>
+            <p className="text-xs text-gray-400 text-center mt-3">Maximum {formatSize(maxFileSize)} per file</p>
         </div>
     );
 }

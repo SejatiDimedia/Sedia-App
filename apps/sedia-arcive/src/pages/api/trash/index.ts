@@ -156,7 +156,55 @@ export const DELETE: APIRoute = async ({ request }) => {
             );
         }
 
-        const { fileId } = await request.json();
+        const { fileId, emptyTrash } = await request.json();
+
+        // HANDLE EMPTY TRASH
+        if (emptyTrash) {
+            // Get all deleted files for user
+            const allTrashedFiles = await db
+                .select()
+                .from(file)
+                .where(
+                    and(
+                        eq(file.userId, session.user.id),
+                        eq(file.isDeleted, true)
+                    )
+                ) as FileRecord[];
+
+            if (allTrashedFiles.length === 0) {
+                return new Response(JSON.stringify({ success: true }), { status: 200 });
+            }
+
+            // Delete from R2 in parallel chunks
+            const deletePromises = allTrashedFiles.map(f => deleteFile(f.r2Key));
+            await Promise.allSettled(deletePromises);
+
+            // Calculate total size freed
+            const totalSize = allTrashedFiles.reduce((acc, f) => acc + f.size, 0);
+
+            // Delete from DB
+            await db.delete(file).where(
+                and(
+                    eq(file.userId, session.user.id),
+                    eq(file.isDeleted, true)
+                )
+            );
+
+            // Update storage usage
+            await decreaseStorageUsed(session.user.id, totalSize);
+
+            // Log activity
+            await logActivity({
+                userId: session.user.id,
+                action: "empty_trash",
+                targetType: "file",
+                targetId: "bulk",
+                targetName: `${allTrashedFiles.length} files`,
+                metadata: { freedBytes: totalSize, count: allTrashedFiles.length }
+            });
+
+            return new Response(JSON.stringify({ success: true }), { status: 200 });
+        }
 
         if (!fileId) {
             return new Response(

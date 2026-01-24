@@ -8,7 +8,9 @@ export type ActivityAction =
     | "move"
     | "restore"
     | "permanent_delete"
-    | "share";
+    | "share"
+    | "empty_trash"
+    | "rename";
 
 export type TargetType = "file" | "folder";
 

@@ -91,6 +91,7 @@ export const appPermission = sediaAuth.table("app_permission", {
     role: text("role").notNull().default("user"), // 'user' | 'admin'
     uploadEnabled: boolean("upload_enabled").notNull().default(false),
     storageLimit: bigint("storage_limit", { mode: "number" }).notNull().default(524288000), // 500 MB
+    // maxFileSize: bigint("max_file_size", { mode: "number" }).notNull().default(104857600), // 100 MB
     storageUsed: bigint("storage_used", { mode: "number" }).notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

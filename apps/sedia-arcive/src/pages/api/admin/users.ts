@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { auth } from "../../../lib/auth";
-import { db, appPermission, user, eq, and } from "@shared-db";
+import { db, appPermission, user, eq, and, sql } from "@shared-db";
 
 const APP_ID = "sedia-arcive";
 
@@ -13,6 +13,16 @@ export const GET: APIRoute = async ({ request }) => {
 
         if (!session) {
             return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+        }
+
+        // AUTO-MIGRATION FIX: Ensure max_file_size column exists
+        try {
+            await db.execute(sql`
+                ALTER TABLE "sedia_auth"."app_permission" 
+                ADD COLUMN IF NOT EXISTS "max_file_size" bigint DEFAULT 104857600 NOT NULL
+            `);
+        } catch (e) {
+            console.error("Auto-migration failed:", e);
         }
 
         // Check if user is admin
@@ -48,9 +58,22 @@ export const GET: APIRoute = async ({ request }) => {
             .from(appPermission)
             .where(eq(appPermission.appId, APP_ID));
 
+        // Fetch max_file_size using raw SQL to bypass schema sync issues
+        let rawPermissions: any = { rows: [] };
+        try {
+            rawPermissions = await db.execute(sql`
+                SELECT user_id, max_file_size FROM sedia_auth.app_permission WHERE app_id = ${APP_ID}
+            `);
+        } catch (e) {
+            console.error("Failed to fetch raw permissions (max_file_size likely missing):", e);
+            // Fallback to empty rows, UI will use default
+        }
+
         // Merge users with permissions
         const usersWithPermissions = users.map((u) => {
             const perm = permissions.find((p) => p.userId === u.id);
+            const rawPerm = rawPermissions.rows.find((p: any) => p.user_id === u.id) as any;
+
             return {
                 ...u,
                 permission: perm ? {
@@ -58,6 +81,7 @@ export const GET: APIRoute = async ({ request }) => {
                     role: perm.role,
                     uploadEnabled: perm.uploadEnabled,
                     storageLimit: perm.storageLimit,
+                    maxFileSize: rawPerm?.max_file_size ? Number(rawPerm.max_file_size) : 104857600, // Safe Fallback
                     storageUsed: perm.storageUsed,
                 } : null,
             };
@@ -100,7 +124,7 @@ export const PATCH: APIRoute = async ({ request }) => {
             return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), { status: 403 });
         }
 
-        const { userId, uploadEnabled } = await request.json();
+        const { userId, uploadEnabled, storageLimit, maxFileSize } = await request.json();
 
         if (!userId) {
             return new Response(JSON.stringify({ error: "User ID required" }), { status: 400 });
@@ -124,15 +148,31 @@ export const PATCH: APIRoute = async ({ request }) => {
                 appId: APP_ID,
                 role: "user",
                 uploadEnabled: uploadEnabled ?? false,
-                storageLimit: 524288000,
+                storageLimit: storageLimit ?? 524288000,
+                // maxFileSize: maxFileSize ?? 104857600, // Safe mode: Insert default via Drizzle (since column is removed from schema)
                 storageUsed: 0,
             });
+
+            // Update max_file_size manually if needed and provided
+            if (maxFileSize !== undefined) {
+                try {
+                    await db.execute(sql`
+                        UPDATE sedia_auth.app_permission 
+                        SET max_file_size = ${maxFileSize} 
+                        WHERE user_id = ${userId} AND app_id = ${APP_ID}
+                    `);
+                } catch (e) {
+                    console.error("Failed to update max_file_size (column likely missing using different schema?):", e);
+                }
+            }
         } else {
             // Update existing permission
             await db
                 .update(appPermission)
                 .set({
                     uploadEnabled: uploadEnabled ?? existing[0].uploadEnabled,
+                    storageLimit: storageLimit ?? existing[0].storageLimit,
+                    // maxFileSize: maxFileSize ?? existing[0].maxFileSize,
                     updatedAt: new Date(),
                 })
                 .where(
@@ -141,6 +181,18 @@ export const PATCH: APIRoute = async ({ request }) => {
                         eq(appPermission.appId, APP_ID)
                     )
                 );
+
+            if (maxFileSize !== undefined) {
+                try {
+                    await db.execute(sql`
+                        UPDATE sedia_auth.app_permission 
+                        SET max_file_size = ${maxFileSize} 
+                        WHERE user_id = ${userId} AND app_id = ${APP_ID}
+                    `);
+                } catch (e) {
+                    console.error("Failed to update max_file_size:", e);
+                }
+            }
         }
 
         return new Response(JSON.stringify({ success: true }), {
