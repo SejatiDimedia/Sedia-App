@@ -5,57 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1769003221292,
-      "tag": "0000_sticky_wolverine",
+      "when": 1769933434022,
+      "tag": "0000_fuzzy_lady_ursula",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1769076686151,
-      "tag": "0001_simple_harpoon",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1769079201301,
-      "tag": "0002_illegal_red_ghost",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1769081674696,
-      "tag": "0003_messy_wither",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1769172353973,
-      "tag": "0004_youthful_landau",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1769178236229,
-      "tag": "0005_real_prima",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1769181319533,
-      "tag": "0006_next_bromley",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1769182925163,
-      "tag": "0007_dear_puppet_master",
+      "when": 1769936041287,
+      "tag": "0001_fair_enchantress",
       "breakpoints": true
     }
   ]

@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1769786065773,
+      "tag": "0000_little_miss_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769788907167,
+      "tag": "0001_unknown_mojo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769829030920,
+      "tag": "0002_tiresome_krista_starr",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769842514022,
+      "tag": "0003_real_manta",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1769866030174,
+      "tag": "0004_bouncy_naoko",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1769873277913,
+      "tag": "0005_salty_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769949368462,
+      "tag": "0006_salty_wasp",
+      "breakpoints": true
+    }
+  ]
+}

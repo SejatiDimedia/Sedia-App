@@ -4,11 +4,13 @@ import { drizzle, NeonHttpDatabase } from "drizzle-orm/neon-http";
 // Import all schemas
 import * as authSchema from "./schema/auth-schema";
 import * as arciveSchema from "./schema/sedia-arcive";
+import * as posSchema from "./schema/sedia-pos";
 
 // Combined schema type
 const combinedSchema = {
     ...authSchema,
     ...arciveSchema,
+    ...posSchema,
 };
 
 // Lazy database instance
@@ -52,6 +54,7 @@ export const db = new Proxy({} as NeonHttpDatabase<typeof combinedSchema>, {
 // Re-export schemas for convenience
 export * from "./schema/auth-schema";
 export * from "./schema/sedia-arcive";
+export * from "./schema/sedia-pos";
 
 // Re-export drizzle-orm operators for consistent typing
 export { eq, and, or, desc, asc, sql, sql as sqlOp } from "drizzle-orm";

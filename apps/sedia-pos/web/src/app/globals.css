@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Define Primary Colors mapping to variables */
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  /* Define Secondary Colors mapping */
+  --color-secondary-50: var(--secondary-50);
+  --color-secondary-100: var(--secondary-100);
+  --color-secondary-200: var(--secondary-200);
+  --color-secondary-300: var(--secondary-300);
+  --color-secondary-400: var(--secondary-400);
+  --color-secondary-500: var(--secondary-500);
+  --color-secondary-600: var(--secondary-600);
+  --color-secondary-700: var(--secondary-700);
+  --color-secondary-800: var(--secondary-800);
+  --color-secondary-900: var(--secondary-900);
+  --color-secondary-950: var(--secondary-950);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Sedia Brand Colors (Deep Teal Palette) - Corrected from Reference */
+  --primary-50: #edf7f7;
+  --primary-100: #dbefef;
+  --primary-200: #b8dfdf;
+  --primary-300: #94d0cf;
+  --primary-400: #5fb9b7;
+  --primary-500: #377f7e;
+  /* Main Brand Color */
+  --primary-600: #2e6a69;
+  /* Hover States */
+  --primary-700: #255554;
+  --primary-800: #1b3f3f;
+  --primary-900: #122a2a;
+  --primary-950: #091515;
+
+  /* Sedia Accent Colors (Gold/Yellow Palette) */
+  --secondary-50: #fefbf5;
+  --secondary-100: #fdf7e6;
+  --secondary-200: #fbe8b6;
+  --secondary-300: #f8d985;
+  --secondary-400: #f6cc5e;
+  --secondary-500: #f5c23c;
+  /* Accent/Action Color */
+  --secondary-600: #f2b30c;
+  --secondary-700: #c28f09;
+  --secondary-800: #916b07;
+  --secondary-900: #614704;
+  --secondary-950: #302302;
+}
+
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
