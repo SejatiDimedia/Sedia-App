@@ -36,10 +36,23 @@ export async function POST(
             return NextResponse.json({ error: "Shift already closed" }, { status: 400 });
         }
 
+        // Check for any shift that started AFTER this one to set an upper bound
+        const [nextShift] = await db
+            .select()
+            .from(posSchema.shifts)
+            .where(
+                and(
+                    eq(posSchema.shifts.outletId, shift.outletId || ""),
+                    sql`${posSchema.shifts.startTime} > ${shift.startTime}`
+                )
+            )
+            .orderBy(posSchema.shifts.startTime)
+            .limit(1);
+
+        const endTimeLimit = nextShift ? nextShift.startTime : new Date();
+
         // Calculate expected cash from transactions during shift
         // Only count CASH transactions
-        // Note: In real app, we need to join with paymentMethods to check type='cash'
-        // For now, assuming paymentMethod='Cash' string check
         const transactions = await db
             .select({
                 total: sql<number>`sum(cast(${posSchema.transactions.totalAmount} as numeric))`
@@ -50,15 +63,17 @@ export async function POST(
                     eq(posSchema.transactions.outletId, shift.outletId || ""),
                     // Only transactions created AFTER shift start
                     sql`${posSchema.transactions.createdAt} >= ${shift.startTime}`,
+                    // AND before the next shift starts (or now)
+                    sql`${posSchema.transactions.createdAt} < ${endTimeLimit}`,
                     // Only CASH transactions
                     sql`lower(${posSchema.transactions.paymentMethod}) = 'cash'`
                 )
             );
 
-        const cashSales = transactions[0]?.total || 0;
-        const startCash = parseFloat(shift.startingCash);
+        const cashSales = Number(transactions[0]?.total) || 0;
+        const startCash = Number(shift.startingCash);
         const expectedCash = startCash + cashSales;
-        const actualEndingCash = parseFloat(endingCash);
+        const actualEndingCash = Number(endingCash);
         const difference = actualEndingCash - expectedCash;
 
         // Close shift

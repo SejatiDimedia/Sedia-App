@@ -31,9 +31,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 notes: posSchema.stockOpnameItems.notes,
                 productName: posSchema.products.name,
                 productSku: posSchema.products.sku,
+                variantId: posSchema.stockOpnameItems.variantId,
+                variantName: posSchema.productVariants.name,
             })
             .from(posSchema.stockOpnameItems)
             .leftJoin(posSchema.products, eq(posSchema.stockOpnameItems.productId, posSchema.products.id))
+            .leftJoin(posSchema.productVariants, eq(posSchema.stockOpnameItems.variantId, posSchema.productVariants.id))
             .where(eq(posSchema.stockOpnameItems.opnameId, id));
 
         const response = {
@@ -47,8 +50,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
                 notes: item.notes,
                 product: {
                     name: item.productName || '',
-                    sku: item.productSku || ''
-                }
+                    sku: item.productSku || '',
+                },
+                variant: item.variantId ? {
+                    id: item.variantId,
+                    name: item.variantName || '',
+                    sku: null
+                } : null
             }))
         };
 

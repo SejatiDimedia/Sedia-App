@@ -52,14 +52,15 @@ export default function ManagerAuthModal({ visible, onClose, onSuccess, actionDe
             const employee = await validatePin(currentOutlet.id, pinCode);
             console.log('[ManagerAuthModal] validatePin response:', employee);
             const employeeRole = employee?.role?.toLowerCase() || '';
-            console.log('[ManagerAuthModal] Role check:', employeeRole, 'isManager:', employeeRole === 'manager', 'isOwner:', employeeRole === 'owner');
-            const isAuthorized = employeeRole === 'manager' || employeeRole === 'owner' || employeeRole === 'admin';
+            console.log('[ManagerAuthModal] Role check:', employeeRole, 'fullRole:', employee?.role);
+            const isAuthorized = employeeRole === 'manager' || employeeRole === 'owner' || employeeRole === 'admin' || employeeRole === 'manager/owner';
+            console.log('[ManagerAuthModal] isAuthorized:', isAuthorized);
 
             if (employee && isAuthorized) {
                 setPinCode('');
                 onSuccess();
             } else if (employee) {
-                setError('Hanya Manager/Owner yang diizinkan.');
+                setError(`Peran ${employee.role} tidak diizinkan.`);
             } else {
                 setError('PIN Salah.');
             }

@@ -9,12 +9,38 @@ import { useEmployeeStore } from './src/store/employeeStore';
 import POSScreen from './src/screens/POSScreen';
 import CartScreen from './src/screens/CartScreen';
 import CheckoutScreen from './src/screens/CheckoutScreen';
-import RegisterScreen from './src/screens/RegisterScreen';
+
 import OutletPickerScreen from './src/screens/OutletPickerScreen';
 import PinEntryScreen from './src/screens/PinEntryScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ToastProvider } from './src/components/Toast';
+import Drawer from './src/components/Drawer';
+import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
+import ProductManagementScreen from './src/screens/ProductManagementScreen';
+import ShiftReportScreen from './src/screens/ShiftReportScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
+import CustomerManagementScreen from './src/screens/CustomerManagementScreen';
+import EmployeeManagementScreen from './src/screens/EmployeeManagementScreen';
+import InventoryScreen from './src/screens/InventoryScreen';
+import StockOpnameScreen from './src/screens/StockOpnameScreen';
+import OutletManagementScreen from './src/screens/OutletManagementScreen';
+import CategoryManagementScreen from './src/screens/CategoryManagementScreen';
+import StockOpnameListScreen from './src/screens/StockOpnameListScreen';
 
-type Screen = 'login' | 'register' | 'outlet_picker' | 'pin_entry' | 'pos' | 'cart' | 'checkout';
+
+import StockOpnameDetailScreen from './src/screens/StockOpnameDetailScreen';
+import ReportsScreen from './src/screens/ReportsScreen';
+import TaxManagementScreen from './src/screens/TaxManagementScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import StockOpnameCreateScreen from './src/screens/StockOpnameCreateScreen';
+import SuppliersScreen from './src/screens/SuppliersScreen';
+import SupplierFormScreen from './src/screens/SupplierFormScreen';
+import PurchaseOrdersScreen from './src/screens/PurchaseOrdersScreen';
+import PurchaseOrderFormScreen from './src/screens/PurchaseOrderFormScreen';
+import PurchaseOrderDetailScreen from './src/screens/PurchaseOrderDetailScreen';
+
+type Screen = 'login' | 'outlet_picker' | 'pin_entry' | 'dashboard' | 'pos' | 'cart' | 'checkout' | 'transactions' | 'products' | 'shifts' | 'customers' | 'employees' | 'inventory' | 'stock_opname' | 'stock_opname_create' | 'stock_opname_detail' | 'outlets' | 'activity' | 'categories' | 'reports' | 'tax' | 'settings' | 'suppliers' | 'supplier_form' | 'purchase_orders' | 'purchase_order_form' | 'purchase_order_detail';
 
 function SyncIndicator({ status, isOnline }: { status: string; isOnline: boolean }) {
   const getStatusColor = () => {
@@ -51,9 +77,10 @@ function SyncIndicator({ status, isOnline }: { status: string; isOnline: boolean
   );
 }
 
-function LoginScreen({ onLoginSuccess, onGoToRegister }: { onLoginSuccess: () => void; onGoToRegister: () => void }) {
+function LoginScreen({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const { isOnline, syncStatus, syncAll, lastSyncedAt } = useSync();
   const { login, isLoading, error } = useAuthStore();
+  const { currentOutlet } = useOutletStore();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
 
@@ -84,7 +111,15 @@ function LoginScreen({ onLoginSuccess, onGoToRegister }: { onLoginSuccess: () =>
           <SyncIndicator status={syncStatus} isOnline={isOnline} />
 
           {/* Brand Logo */}
-          <View className="mb-6 flex h-28 w-28 items-center justify-center rounded-[32px] bg-primary-600 shadow-2xl shadow-primary-500/30">
+          <View
+            className="mb-6 flex h-28 w-28 items-center justify-center rounded-[32px] shadow-2xl"
+            style={{
+              backgroundColor: currentOutlet?.primaryColor || '#0f766e', // teal-700 fallback
+              shadowColor: currentOutlet?.primaryColor || '#0f766e',
+              shadowOpacity: 0.3,
+              shadowRadius: 10,
+            }}
+          >
             <MaterialCommunityIcons name="storefront-outline" size={48} color="white" />
           </View>
 
@@ -135,25 +170,21 @@ function LoginScreen({ onLoginSuccess, onGoToRegister }: { onLoginSuccess: () =>
             <TouchableOpacity
               onPress={handleLogin}
               disabled={isLoading}
-              className={`flex-row w-full items-center justify-center gap-2 rounded-2xl py-4 shadow-lg shadow-secondary-500/20 active:opacity-90 ${isLoading ? 'bg-secondary-300' : 'bg-secondary-500'
-                }`}
+              className={`flex-row w-full items-center justify-center gap-2 rounded-2xl py-4 shadow-lg active:opacity-90`}
+              style={{
+                backgroundColor: currentOutlet?.primaryColor || '#f2b30c', // Default secondary gold
+                shadowColor: currentOutlet?.primaryColor || '#f2b30c',
+                shadowOpacity: 0.2,
+                shadowRadius: 5
+              }}
             >
-              {isLoading ? <ActivityIndicator color="#18181b" /> : <MaterialCommunityIcons name="login" size={20} color="#18181b" />}
-              <Text className="text-base font-bold text-zinc-900">
+              {isLoading ? <ActivityIndicator color="#18181b" /> : <MaterialCommunityIcons name="login" size={20} color="white" />}
+              <Text className="text-base font-bold text-white">
                 {isLoading ? 'Masuk...' : 'Masuk ke POS'}
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={onGoToRegister}
-              disabled={isLoading}
-              className="flex-row w-full items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white py-4 shadow-sm active:bg-zinc-50  "
-            >
-              <MaterialCommunityIcons name="account-plus-outline" size={20} color={isOnline ? "#18181b" : "#a1a1aa"} />
-              <Text className="text-base font-semibold text-zinc-900 ">
-                Daftar Akun Baru
-              </Text>
-            </TouchableOpacity>
+
           </View>
 
           <Text className="mt-8 text-xs font-medium text-zinc-400">
@@ -165,8 +196,7 @@ function LoginScreen({ onLoginSuccess, onGoToRegister }: { onLoginSuccess: () =>
   );
 }
 
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ToastProvider } from './src/components/Toast';
+// Toast and SafeArea providers are now imported at the top
 
 export default function App() {
   return (
@@ -184,6 +214,12 @@ function AppContent() {
   const { currentOutlet, setCurrentOutlet } = useOutletStore();
   const { currentEmployee, clearEmployee } = useEmployeeStore();
 
+  // Initialize sync engine globally
+  useSync();
+
+  const [currentParams, setCurrentParams] = React.useState<any>(null);
+  const [isDrawerVisible, setIsDrawerVisible] = React.useState(false);
+
   React.useEffect(() => {
     // Check for persisted session on mount
     checkSession();
@@ -192,11 +228,11 @@ function AppContent() {
   React.useEffect(() => {
     // Redirect logic based on auth state
     if (user && currentScreen === 'login') {
-      // If logged in, go to outlet picker (or PIN if outlet selected, or POS if employee logged in)
+      // If logged in, go to outlet picker (or PIN if outlet selected, or Dashboard if employee logged in)
       if (currentOutlet && currentEmployee) {
-        setCurrentScreen('pos');
+        setCurrentScreen('dashboard');
       } else if (currentOutlet) {
-        setCurrentScreen('pin_entry');
+        setCurrentScreen('dashboard');
       } else {
         setCurrentScreen('outlet_picker');
       }
@@ -212,11 +248,11 @@ function AppContent() {
 
   const handleOutletSelected = (outlet: Outlet) => {
     setCurrentOutlet(outlet);
-    setCurrentScreen('pin_entry');
+    setCurrentScreen('dashboard');
   };
 
   const handlePinSuccess = () => {
-    setCurrentScreen('pos');
+    setCurrentScreen('dashboard');
   };
 
   const navigateTo = (screen: Screen) => setCurrentScreen(screen);
@@ -230,60 +266,253 @@ function AppContent() {
     );
   }
 
-  switch (currentScreen) {
-    case 'outlet_picker':
-      return (
-        <OutletPickerScreen
-          onOutletSelected={handleOutletSelected}
-          onLogout={handleLogout}
-        />
-      );
-    case 'pin_entry':
-      return (
-        <PinEntryScreen
-          onPinSuccess={handlePinSuccess}
-          onBack={() => navigateTo('outlet_picker')}
-        />
-      );
-    case 'pos':
-      return (
-        <POSScreen
-          onViewCart={() => navigateTo('cart')}
-          onSwitchOutlet={() => {
-            clearEmployee();
-            setCurrentOutlet(null);
-            navigateTo('outlet_picker');
-          }}
-          onLogout={handleLogout}
-        />
-      );
-    case 'cart':
-      return (
-        <CartScreen
-          onBack={() => navigateTo('pos')}
-          onCheckout={() => navigateTo('checkout')}
-        />
-      );
-    case 'checkout':
-      return (
-        <CheckoutScreen
-          onBack={() => navigateTo('cart')}
-          onComplete={() => navigateTo('pos')}
-        />
-      );
-    case 'register':
-      return (
-        <RegisterScreen
-          onBack={() => navigateTo('login')}
-          onRegisterSuccess={() => navigateTo('outlet_picker')}
-        />
-      );
-    default:
-      return (
-        <LoginScreen
-          onLoginSuccess={() => navigateTo('outlet_picker')}
-          onGoToRegister={() => navigateTo('register')}
-        />
-      );
-  }
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'outlet_picker':
+        return (
+          <OutletPickerScreen
+            onOutletSelected={handleOutletSelected}
+            onLogout={handleLogout}
+          />
+        );
+      case 'pin_entry':
+        return (
+          <PinEntryScreen
+            onPinSuccess={handlePinSuccess}
+            onBack={() => navigateTo('outlet_picker')}
+          />
+        );
+      case 'dashboard':
+        return (
+
+          <DashboardScreen
+            onNavigate={navigateTo}
+            onOpenDrawer={() => {
+              console.log('[App] Opening drawer from Dashboard');
+              setIsDrawerVisible(true);
+            }}
+          />
+        );
+      case 'customers':
+        return (
+          <CustomerManagementScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'employees':
+        return (
+          <EmployeeManagementScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'outlets':
+        return (
+          <OutletManagementScreen
+            onBack={() => navigateTo('dashboard')}
+          />
+        );
+      case 'pos':
+        return (
+          <POSScreen
+            onViewCart={() => navigateTo('cart')}
+            onOpenDrawer={() => {
+              console.log('[App] Opening drawer from POS');
+              setIsDrawerVisible(true);
+            }}
+            onSwitchOutlet={() => {
+              clearEmployee();
+              setCurrentOutlet(null);
+              navigateTo('outlet_picker');
+            }}
+            onLogout={handleLogout}
+          />
+        );
+      case 'cart':
+        return (
+          <CartScreen
+            onBack={() => navigateTo('pos')}
+            onCheckout={() => navigateTo('checkout')}
+          />
+        );
+      case 'checkout':
+        return (
+          <CheckoutScreen
+            onBack={() => navigateTo('cart')}
+            onComplete={() => navigateTo('pos')} // Complete goes to POS for next order
+          />
+        );
+      case 'transactions':
+        return (
+          <TransactionHistoryScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'products':
+        return (
+          <ProductManagementScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+
+
+      case 'shifts':
+        return (
+          <ShiftReportScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'reports':
+        return (
+          <ReportsScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'activity':
+        // Fallback or placeholder for screens not yet fully implemented as standalone
+        return (
+          <DashboardScreen
+            onNavigate={navigateTo}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'categories':
+        return (
+          <CategoryManagementScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'stock_opname': // List (Map 'stock_opname' from Drawer ID)
+        return (
+          <StockOpnameListScreen
+            onNavigate={(screen, params) => {
+              if (params) setCurrentParams(params);
+              navigateTo(screen as Screen);
+            }}
+            onBack={() => navigateTo('dashboard')}
+          />
+        );
+      case 'stock_opname_create':
+        return (
+          <StockOpnameCreateScreen
+            onNavigate={(screen, params) => {
+              if (params) setCurrentParams(params);
+              navigateTo(screen as Screen);
+            }}
+            onBack={() => navigateTo('stock_opname')}
+          />
+        );
+      case 'stock_opname_detail':
+        return (
+          <StockOpnameDetailScreen
+            opnameId={currentParams?.opnameId}
+            onBack={() => navigateTo('stock_opname')}
+          />
+        );
+      case 'inventory':
+        return (
+          <InventoryScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'tax':
+        return (
+          <TaxManagementScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'settings':
+        return (
+          <SettingsScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+
+        return (
+          <SettingsScreen
+            onBack={() => navigateTo('dashboard')}
+            onOpenDrawer={() => setIsDrawerVisible(true)}
+          />
+        );
+      case 'suppliers':
+        return (
+          <SuppliersScreen
+            onNavigate={(screen, params) => {
+              if (params) setCurrentParams(params);
+              navigateTo(screen as Screen);
+            }}
+            onBack={() => navigateTo('dashboard')}
+          />
+        );
+      case 'supplier_form':
+        return (
+          <SupplierFormScreen
+            supplier={currentParams?.supplier}
+            onBack={() => navigateTo('suppliers')}
+          />
+        );
+      case 'purchase_orders':
+        return (
+          <PurchaseOrdersScreen
+            onNavigate={(screen, params) => {
+              if (params) setCurrentParams(params);
+              navigateTo(screen as Screen);
+            }}
+            onBack={() => navigateTo('dashboard')}
+          />
+        );
+      case 'purchase_order_form':
+        return (
+          <PurchaseOrderFormScreen
+            onBack={() => navigateTo('purchase_orders')}
+          />
+        );
+      case 'purchase_order_detail':
+        return (
+          <PurchaseOrderDetailScreen
+            poId={currentParams?.poId}
+            onBack={() => navigateTo('purchase_orders')}
+          />
+        );
+
+      default:
+        // Only show Login if not logged in
+        if (user) {
+          return (
+            <DashboardScreen
+              onNavigate={navigateTo}
+              onOpenDrawer={() => setIsDrawerVisible(true)}
+            />
+          );
+        }
+        return (
+          <LoginScreen
+            onLoginSuccess={() => navigateTo('outlet_picker')}
+          />
+        );
+    }
+  };
+
+  return (
+    <View className="flex-1 bg-zinc-50">
+      <StatusBar style="dark" />
+      {renderScreen()}
+      <Drawer
+        visible={isDrawerVisible}
+        onClose={() => setIsDrawerVisible(false)}
+        currentScreen={currentScreen}
+        onNavigate={navigateTo}
+        onLogout={handleLogout}
+      />
+    </View>
+  );
 }

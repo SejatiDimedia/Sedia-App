@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db, posSchema } from "@/lib/db";
-import { eq, and, sql, lt } from "drizzle-orm";
+import { eq, and, sql, lt, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getOutlets } from "@/actions/outlets";
 
 // GET /api/inventory - Get products with stock levels
 export async function GET(request: Request) {
@@ -15,41 +16,57 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const outlets = await getOutlets();
+        const allowedOutletIds = outlets.map(o => o.id);
+
+        if (allowedOutletIds.length === 0) {
+            return NextResponse.json({ error: "Forbidden: No outlets assigned" }, { status: 403 });
+        }
+
         const { searchParams } = new URL(request.url);
-        const outletId = searchParams.get("outletId");
+        const requestedOutletId = searchParams.get("outletId");
         const lowStockOnly = searchParams.get("lowStock") === "true";
         const minStockThreshold = parseInt(searchParams.get("minStock") || "5");
 
         // Build conditions
         const conditions = [eq(posSchema.products.isActive, true)];
 
-        if (outletId) {
-            conditions.push(eq(posSchema.products.outletId, outletId));
+        if (requestedOutletId) {
+            // Verify access
+            if (!allowedOutletIds.includes(requestedOutletId)) {
+                return NextResponse.json({ error: "Forbidden: Access to this outlet denied" }, { status: 403 });
+            }
+            conditions.push(eq(posSchema.products.outletId, requestedOutletId));
+        } else {
+            // No specific outlet requested, limit to allowed outlets
+            conditions.push(inArray(posSchema.products.outletId, allowedOutletIds));
         }
 
         if (lowStockOnly) {
             conditions.push(lt(posSchema.products.stock, minStockThreshold));
         }
 
-        const products = await db
-            .select({
-                id: posSchema.products.id,
-                name: posSchema.products.name,
-                sku: posSchema.products.sku,
-                stock: posSchema.products.stock,
-                trackStock: posSchema.products.trackStock,
-                price: posSchema.products.price,
-                outletId: posSchema.products.outletId,
-            })
-            .from(posSchema.products)
-            .where(and(...conditions))
-            .orderBy(posSchema.products.stock);
+        try {
+            const products = await db.query.products.findMany({
+                where: and(...conditions),
+                with: {
+                    variants: {
+                        where: eq(posSchema.productVariants.isActive, true)
+                    }
+                },
+                orderBy: (p, { asc }) => [asc(p.stock)],
+            });
 
-        return NextResponse.json(products);
+            return NextResponse.json(products);
+        } catch (queryErr) {
+            console.error("[Inventory API] Query failed:", queryErr);
+            throw queryErr;
+        }
     } catch (error) {
-        console.error("Error fetching inventory:", error);
+        console.error("[Inventory API] Failed to fetch inventory:", error);
+        const message = error instanceof Error ? error.message : "Unknown error";
         return NextResponse.json(
-            { error: "Failed to fetch inventory" },
+            { error: "Failed to fetch inventory", detail: message },
             { status: 500 }
         );
     }
@@ -66,8 +83,16 @@ export async function PATCH(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // Check outlet permission
+        const outlets = await getOutlets();
+        const allowedOutletIds = outlets.map(o => o.id);
+
+        if (allowedOutletIds.length === 0) {
+            return NextResponse.json({ error: "Forbidden: No outlets assigned" }, { status: 403 });
+        }
+
         const body = await request.json();
-        const { productId, adjustment, type, notes } = body;
+        const { productId, variantId, adjustment, type, notes } = body;
 
         if (!productId || adjustment === undefined) {
             return NextResponse.json(
@@ -84,6 +109,50 @@ export async function PATCH(request: Request) {
 
         if (!product) {
             return NextResponse.json({ error: "Product not found" }, { status: 404 });
+        }
+
+        // Verify write access to this outlet
+        if (!allowedOutletIds.includes(product.outletId)) {
+            return NextResponse.json({ error: "Forbidden: No permission to modify this outlet's inventory" }, { status: 403 });
+        }
+
+        if (variantId) {
+            // Get current variant
+            const [variant] = await db
+                .select()
+                .from(posSchema.productVariants)
+                .where(eq(posSchema.productVariants.id, variantId));
+
+            if (!variant) {
+                return NextResponse.json({ error: "Variant not found" }, { status: 404 });
+            }
+
+            const newStock = (variant.stock || 0) + adjustment;
+
+            // Update variant stock
+            await db
+                .update(posSchema.productVariants)
+                .set({ stock: newStock })
+                .where(eq(posSchema.productVariants.id, variantId));
+
+            // Log the adjustment
+            await db.insert(posSchema.inventoryLogs).values({
+                outletId: product.outletId,
+                productId: productId,
+                variantId: variantId,
+                type: type || "adjustment",
+                quantity: adjustment,
+                notes: notes || `Stock adjusted by ${adjustment > 0 ? "+" : ""}${adjustment} (Variant: ${variant.name})`,
+                createdBy: session.user.id,
+            });
+
+            return NextResponse.json({
+                success: true,
+                productId,
+                variantId,
+                previousStock: variant.stock,
+                newStock,
+            });
         }
 
         const newStock = product.stock + adjustment;

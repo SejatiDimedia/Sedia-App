@@ -1,15 +1,24 @@
 import '../../global.css';
 import React from 'react';
-import { Text, View, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { Text, View, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert, Image, useWindowDimensions } from 'react-native';
+import CartScreen from './CartScreen';
+import CheckoutScreen from './CheckoutScreen';
 import { useCartStore, HeldOrder } from '../store/cartStore';
 import { useOutletStore } from '../store/outletStore';
 import { useShiftStore } from '../store/shiftStore';
 import { useEmployeeStore } from '../store/employeeStore';
+import { useAuthStore } from '../store/authStore';
 import { useLoyaltyStore } from '../store/loyaltyStore';
 import { API_URL } from '../config/api';
-import { LocalProduct } from '../db/client';
+import { LocalProduct, LocalProductVariant } from '../db/client';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Modal, ScrollView } from 'react-native';
+import { useSync } from '../hooks/useSync';
+
+interface Category {
+    id: string;
+    name: string;
+}
 
 function formatCurrency(amount: number): string {
     return `Rp ${amount.toLocaleString('id-ID')}`;
@@ -18,52 +27,70 @@ function formatCurrency(amount: number): string {
 interface ProductCardProps {
     product: LocalProduct;
     onAdd: () => void;
+    isTablet: boolean;
+    currentOutlet: any; // Add prop
 }
 
-function ProductCard({ product, onAdd }: ProductCardProps) {
-    // Map product names to icons for demo purposes
-    const getIconName = (name: string) => {
-        const nameLower = name.toLowerCase();
-        if (nameLower.includes('kopi') || nameLower.includes('cappuccino') || nameLower.includes('coffee')) return 'coffee';
-        if (nameLower.includes('teh') || nameLower.includes('jeruk') || nameLower.includes('tea')) return 'cup';
-        if (nameLower.includes('nasi') || nameLower.includes('ayam') || nameLower.includes('rice')) return 'food';
-        if (nameLower.includes('mie') || nameLower.includes('noodle')) return 'noodles';
-        if (nameLower.includes('roti') || nameLower.includes('bread')) return 'bread-slice';
-        return 'food-variant';
-    };
-
+function ProductCard({ product, onAdd, isTablet, currentOutlet }: ProductCardProps) {
     return (
         <TouchableOpacity
             onPress={onAdd}
-            className="m-1.5 flex-1 overflow-hidden rounded-2xl bg-white shadow-sm active:bg-zinc-50 "
-            style={{ minWidth: 150, maxWidth: '48%' }}
+            activeOpacity={0.9}
+            className={`m-2 overflow-hidden rounded-[32px] bg-white border border-zinc-100 shadow-xl shadow-zinc-200/50 ${isTablet ? 'h-[280px]' : 'h-[240px]'}`}
         >
-            <View className="h-32 w-full items-center justify-center bg-zinc-100 ">
-                <MaterialCommunityIcons
-                    name={getIconName(product.name) as any}
-                    size={48}
-                    color="#377f7e" // Primary color
-                />
+            <View className={`w-full items-center justify-center bg-zinc-50 overflow-hidden ${isTablet ? 'h-44' : 'h-36'}`}>
+                {(product.imageUrl || (product as any).image_url) ? (
+                    <Image
+                        source={{ uri: product.imageUrl || (product as any).image_url }}
+                        className="h-full w-full"
+                        resizeMode="cover"
+                    />
+                ) : (
+                    <View
+                        className="bg-zinc-100 p-6 rounded-full"
+                        style={{ backgroundColor: (currentOutlet?.primaryColor || '#377f7e') + '10' }}
+                    >
+                        <MaterialCommunityIcons
+                            name="silverware-variant"
+                            size={isTablet ? 48 : 36}
+                            color={(currentOutlet?.primaryColor || '#377f7e') + '80'} // Primary color with some opacity
+                        />
+                    </View>
+                )}
             </View>
 
-            <View className="p-3">
-                <Text className="text-sm font-semibold text-zinc-900 " numberOfLines={1}>
-                    {product.name}
-                </Text>
-                <Text className="mt-1 text-xs font-bold text-primary-600 ">
-                    {formatCurrency(product.price)}
-                </Text>
-                <Text className="mt-0.5 text-xs text-zinc-400">
-                    Stok: {product.stock}
-                </Text>
+            <View className="p-5 flex-1 justify-between">
+                <View>
+                    <Text className="text-base font-extrabold text-zinc-900 leading-5" numberOfLines={2}>
+                        {product.name}
+                    </Text>
+                    {product.sku && (
+                        <Text className="text-[10px] text-zinc-400 mt-1 font-medium tracking-tighterUppercase">
+                            SKU: {product.sku}
+                        </Text>
+                    )}
+                </View>
+                <View className="flex-row items-end justify-between">
+                    <View>
+                        <Text className="text-xs text-zinc-400 font-bold mb-0.5">Price</Text>
+                        <Text className="text-lg font-black text-primary-600 tracking-tight" style={{ color: currentOutlet?.primaryColor || '#0f766e' }}>
+                            {product.variants && product.variants.length > 0 ? "Mulai " : ""}{formatCurrency(product.price)}
+                        </Text>
+                    </View>
+                    <View className="bg-secondary-100 px-3 py-1.5 rounded-2xl">
+                        <Text className="text-[10px] font-black text-secondary-700">
+                            {product.stock}
+                        </Text>
+                    </View>
+                </View>
             </View>
 
-            <TouchableOpacity
-                onPress={onAdd}
-                className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary-50 "
+            {/* Premium Add Indicator */}
+            <View
+                className="absolute top-4 right-4 h-10 w-10 items-center justify-center rounded-2xl bg-white/90 shadow-sm border border-white/50"
             >
-                <MaterialCommunityIcons name="plus" size={18} color="#377f7e" />
-            </TouchableOpacity>
+                <MaterialCommunityIcons name="plus" size={24} color={currentOutlet?.primaryColor || "#377f7e"} />
+            </View>
         </TouchableOpacity>
     );
 }
@@ -78,23 +105,34 @@ interface CartSummaryProps {
     itemCount: number;
     total: number;
     onViewCart: () => void;
+    currentOutlet: any;
 }
 
-function CartSummary({ itemCount, total, onViewCart }: CartSummaryProps) {
+function CartSummary({ itemCount, total, onViewCart, currentOutlet }: CartSummaryProps) {
     if (itemCount === 0) return null;
+
+    const primaryColor = currentOutlet?.primaryColor || '#0f766e';
+    const secondaryColor = currentOutlet?.secondaryColor || '#f59e0b';
 
     return (
         <View className="absolute bottom-8 left-4 right-4 gap-3">
             <TouchableOpacity
                 onPress={onViewCart}
                 className="flex-row items-center justify-between rounded-3xl bg-primary-600 px-6 py-4 shadow-2xl shadow-primary-500/40 active:scale-95"
+                style={{
+                    backgroundColor: primaryColor,
+                    shadowColor: primaryColor
+                }}
             >
                 <View className="flex-row items-center gap-4">
-                    <View className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary-500 shadow-sm border-2 border-primary-500">
-                        <Text className="text-base font-black text-primary-950">{itemCount}</Text>
+                    <View
+                        className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary-500 shadow-sm border-2 border-primary-500"
+                        style={{ backgroundColor: secondaryColor, borderColor: primaryColor }}
+                    >
+                        <Text className="text-base font-black text-white">{itemCount}</Text>
                     </View>
                     <View>
-                        <Text className="text-[10px] font-bold text-primary-100 uppercase tracking-tighter opacity-80">Total Pesanan</Text>
+                        <Text className="text-[10px] font-bold text-white uppercase tracking-tighter opacity-80">Total Pesanan</Text>
                         <Text className="text-lg font-black text-white">{formatCurrency(total)}</Text>
                     </View>
                 </View>
@@ -110,22 +148,33 @@ function CartSummary({ itemCount, total, onViewCart }: CartSummaryProps) {
 
 interface POSScreenProps {
     onViewCart: () => void;
+    onOpenDrawer: () => void;
     onSwitchOutlet?: () => void;
     onLogout?: () => void;
 }
 
-export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSScreenProps) {
+export default function POSScreen({ onViewCart, onOpenDrawer, onSwitchOutlet, onLogout }: POSScreenProps) {
     const [searchQuery, setSearchQuery] = React.useState('');
     const [showMenu, setShowMenu] = React.useState(false);
     const [products, setProducts] = React.useState<LocalProduct[]>([]);
+    const [categories, setCategories] = React.useState<Category[]>([]);
+    const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null);
     const [isLoadingProducts, setIsLoadingProducts] = React.useState(true);
+    const [showVariantModal, setShowVariantModal] = React.useState(false);
+    const [selectedProductForVariant, setSelectedProductForVariant] = React.useState<LocalProduct | null>(null);
+    const { width } = useWindowDimensions();
+    const isTablet = width >= 768;
+    const numColumns = isTablet ? 3 : 2;
+
     const { addItem, getTotal, getItemCount, heldOrders, resumeOrder, deleteHeldOrder, fetchHeldOrders, clearCart, items } = useCartStore();
-    const { currentOutlet } = useOutletStore();
-    const { currentEmployee } = useEmployeeStore();
+    const currentOutlet = useOutletStore(state => state.currentOutlet);
+    const currentEmployee = useEmployeeStore(state => state.currentEmployee);
     const { activeShift, fetchActiveShift, openShift, closeShift, shiftReconciliation, setShiftReconciliation } = useShiftStore();
     const { fetchLoyaltyData } = useLoyaltyStore();
+    const { isOnline } = useSync();
 
     const [showHeldOrdersModal, setShowHeldOrdersModal] = React.useState(false);
+    const [sidebarView, setSidebarView] = React.useState<'cart' | 'checkout'>('cart');
 
     // Shift States
     const [showShiftModal, setShowShiftModal] = React.useState(false);
@@ -134,6 +183,7 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
     const [endingCash, setEndingCash] = React.useState('');
     const [shiftNotes, setShiftNotes] = React.useState('');
     const [isProcessingShift, setIsProcessingShift] = React.useState(false);
+    const [selectedEmployeeId, setSelectedEmployeeId] = React.useState<string>('');
 
     // Fetch products and active shift
     React.useEffect(() => {
@@ -155,7 +205,11 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                         name: p.name,
                         price: parseFloat(p.price),
                         stock: p.stock,
+                        categoryId: p.categoryId,
                         track_stock: p.trackStock ? 1 : 0,
+                        imageUrl: p.imageUrl,
+                        isActive: p.isActive,
+                        variants: p.variants,
                     })));
                 }
 
@@ -163,8 +217,20 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                 fetchActiveShift(currentOutlet.id);
                 fetchLoyaltyData(currentOutlet.id);
                 fetchHeldOrders(currentOutlet.id);
+                useOutletStore.getState().fetchTaxSettings(currentOutlet.id);
+                useOutletStore.getState().fetchPaymentMethods(currentOutlet.id);
+                useEmployeeStore.getState().fetchEmployees(currentOutlet.id);
+
+                // Fetch categories
+                const catResponse = await fetch(`${API_URL}/categories?outletId=${currentOutlet.id}`, {
+                    credentials: 'include',
+                });
+                if (catResponse.ok) {
+                    const catData = await catResponse.json();
+                    setCategories(catData || []);
+                }
             } catch (error) {
-                console.error('Failed to fetch products:', error);
+                console.error('Failed to fetch data:', error);
             } finally {
                 setIsLoadingProducts(false);
             }
@@ -176,15 +242,29 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
         }
     }, [currentOutlet?.id]);
 
-    const filteredProducts = products.filter((product) =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredProducts = products.filter((product) => {
+        // DEBUG: Check if colors are present
+        console.log('[POSScreen] Filter render. Current Outlet:', JSON.stringify(currentOutlet, null, 2));
 
-    const handleAddProduct = (product: LocalProduct) => {
-        const itemInCart = useCartStore.getState().items.find(i => i.productId === product.id);
+        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = !selectedCategoryId || product.categoryId === selectedCategoryId;
+        return matchesSearch && matchesCategory;
+    });
+
+    const handleAddProduct = (product: LocalProduct, variant?: LocalProductVariant) => {
+        if (!variant && product.variants && product.variants.length > 0) {
+            setSelectedProductForVariant(product);
+            setShowVariantModal(true);
+            return;
+        }
+
+        const itemInCart = useCartStore.getState().items.find(i =>
+            variant ? i.id === `${product.id}-${variant.id}` : i.id === product.id
+        );
         const currentQty = itemInCart?.quantity || 0;
+        const stockToCheck = variant ? variant.stock : product.stock;
 
-        if (currentQty >= product.stock) {
+        if (currentQty >= stockToCheck) {
             Alert.alert("Stok Habis", "Jumlah pesanan melebihi stok yang tersedia.");
             return;
         }
@@ -193,8 +273,12 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
             id: product.id,
             name: product.name,
             price: product.price,
-            stock: product.stock
-        });
+            stock: product.stock,
+            imageUrl: product.imageUrl,
+        }, variant);
+
+        setShowVariantModal(false);
+        setSelectedProductForVariant(null);
     };
 
 
@@ -243,42 +327,206 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
 
     return (
         <View className="flex-1 bg-zinc-50 ">
-            {/* Header */}
-            <View className="bg-primary-600 px-4 pb-6 pt-14 rounded-b-[32px] shadow-lg shadow-primary-500/20">
-                <View className="mb-4 flex-row items-center justify-between">
-                    <View>
-                        <Text className="text-2xl font-bold text-white">Menu</Text>
-                        <View className="flex-row items-center gap-1.5">
-                            <View className={`h-1.5 w-1.5 rounded-full ${activeShift ? 'bg-green-400' : 'bg-red-400'}`} />
-                            <Text className="text-primary-100 text-sm">
-                                {activeShift ? `Kasir: ${currentEmployee?.name}` : 'Shift Belum Dibuka'}
-                            </Text>
+            <View className={`flex-1 ${isTablet ? 'flex-row' : 'flex-col'}`}>
+                {/* Left Side: Product List */}
+                <View className={`${isTablet ? 'flex-[1.5]' : 'flex-1'} bg-[#fdfdfd]`}>
+                    {/* Header */}
+                    <View className="bg-white border-b border-zinc-100 px-6 pb-6 pt-14">
+                        <View className="mb-6 flex-row items-center justify-between">
+                            <View>
+                                <Text className="text-3xl font-black text-zinc-900 tracking-tight">Katalog Menu</Text>
+                                <View className="flex-row items-center gap-2 mt-1">
+                                    <View
+                                        key={activeShift ? 'active' : 'inactive'}
+                                        className={`h-2 w-2 rounded-full ${activeShift ? 'bg-green-500' : 'bg-red-500'}`}
+                                    />
+                                    <Text className="text-zinc-500 text-sm font-semibold">
+                                        {activeShift ? `Kasir: ${currentEmployee?.name || useAuthStore.getState().user?.name || 'Owner'}` : 'Shift Belum Dibuka'}
+                                    </Text>
+                                </View>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    console.log('[POSScreen] Menu button pressed');
+                                    onOpenDrawer();
+                                }}
+                                className="h-12 w-12 items-center justify-center rounded-2xl bg-zinc-50 border border-zinc-100"
+                            >
+                                <MaterialCommunityIcons name="menu" size={24} color={currentOutlet?.primaryColor || "#18181b"} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Modern Search Bar */}
+                        <View className="flex-row items-center rounded-2xl bg-zinc-100 px-5 py-3 border border-zinc-200/50">
+                            <MaterialCommunityIcons name="magnify" size={24} color="#a1a1aa" />
+                            <TextInput
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                placeholder="Cari menu favorit kamu..."
+                                placeholderTextColor="#a1a1aa"
+                                className="flex-1 px-4 text-base font-semibold text-zinc-900"
+                            />
+                            {searchQuery.length > 0 && (
+                                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                                    <MaterialCommunityIcons name="close-circle" size={20} color="#a1a1aa" />
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </View>
-                    <TouchableOpacity
-                        onPress={() => setShowMenu(!showMenu)}
-                        className="h-10 w-10 items-center justify-center rounded-full bg-white/20"
-                    >
-                        <MaterialCommunityIcons name="menu" size={20} color="white" />
-                    </TouchableOpacity>
-                </View>
 
-                {/* Search Bar */}
-                <View className="flex-row items-center rounded-2xl bg-white px-4 py-2 shadow-sm">
-                    <MaterialCommunityIcons name="magnify" size={22} color="#9ca3af" />
-                    <TextInput
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        placeholder="Cari makanan atau minuman..."
-                        placeholderTextColor="#9ca3af"
-                        className="flex-1 px-3 py-2 text-base text-zinc-900"
-                    />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery('')}>
-                            <MaterialCommunityIcons name="close-circle" size={18} color="#9ca3af" />
-                        </TouchableOpacity>
+                    {/* Main Content: Shift Check */}
+                    {!activeShift && !isLoadingProducts ? (
+                        <View className="flex-1 items-center justify-center px-8">
+                            <View className="bg-white p-8 rounded-[32px] shadow-2xl shadow-zinc-200/50 w-full items-center border border-zinc-100">
+                                <View className="h-24 w-24 bg-red-50 rounded-full items-center justify-center mb-6 border-4 border-red-100">
+                                    <MaterialCommunityIcons name="store-clock-outline" size={48} color="#ef4444" />
+                                </View>
+
+                                <Text className="text-2xl font-black text-zinc-900 text-center mb-3">
+                                    Shift Belum Dibuka
+                                </Text>
+
+                                <Text className="text-zinc-500 text-center font-medium leading-6 mb-8">
+                                    Silakan buka shift terlebih dahulu untuk mulai melakukan transaksi penjualan di outlet ini.
+                                </Text>
+
+                                <TouchableOpacity
+                                    onPress={() => setShowShiftModal(true)}
+                                    className="w-full py-4 rounded-2xl flex-row items-center justify-center gap-3 shadow-lg shadow-primary-500/30 active:scale-95 transition-all"
+                                    style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e' }}
+                                >
+                                    <MaterialCommunityIcons name="login-variant" size={24} color="white" />
+                                    <Text className="text-white text-lg font-bold">Buka Shift Sekarang</Text>
+                                </TouchableOpacity>
+
+                                {onLogout && (
+                                    <TouchableOpacity
+                                        onPress={onLogout}
+                                        className="mt-4 py-3"
+                                    >
+                                        <Text className="text-zinc-400 font-bold text-sm">Ganti Akun / Logout</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        </View>
+                    ) : (
+                        <>
+                            {/* Highly Stylized Category Selector */}
+                            {categories.length > 0 && (
+                                <View className="bg-white py-6 border-b border-zinc-50">
+                                    <ScrollView
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 4 }}
+                                    >
+                                        <TouchableOpacity
+                                            onPress={() => setSelectedCategoryId(null)}
+                                            activeOpacity={0.8}
+                                            className={`mr-4 overflow-hidden rounded-[24px] px-8 py-4 border ${selectedCategoryId === null ? 'border-transparent' : 'bg-white border-zinc-100'}`}
+                                            style={selectedCategoryId === null ? { backgroundColor: currentOutlet?.primaryColor || '#0f766e' } : {}}
+                                        >
+                                            <View className="flex-row items-center gap-3">
+                                                <MaterialCommunityIcons
+                                                    name="apps"
+                                                    size={20}
+                                                    color={selectedCategoryId === null ? '#ffffff' : '#a1a1aa'}
+                                                />
+                                                <Text className={`text-base font-black tracking-tight ${selectedCategoryId === null ? 'text-white' : 'text-zinc-500'}`}>
+                                                    Semua
+                                                </Text>
+                                                <View className={`ml-1 rounded-full px-2.5 py-1 ${selectedCategoryId === null ? 'bg-white/20' : 'bg-zinc-100'}`}>
+                                                    <Text className={`text-[10px] font-black ${selectedCategoryId === null ? 'text-white' : 'text-zinc-400'}`}>
+                                                        {products.length}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                        {categories.map((cat) => {
+                                            const count = products.filter(p => p.categoryId === cat.id).length;
+                                            const isActive = selectedCategoryId === cat.id;
+                                            return (
+                                                <TouchableOpacity
+                                                    key={cat.id}
+                                                    onPress={() => setSelectedCategoryId(cat.id)}
+                                                    activeOpacity={0.8}
+                                                    className={`mr-4 overflow-hidden rounded-[24px] px-8 py-4 border ${isActive ? 'border-transparent' : 'bg-white border-zinc-100'}`}
+                                                    style={isActive ? { backgroundColor: currentOutlet?.primaryColor || '#0f766e' } : {}}
+                                                >
+                                                    <View className="flex-row items-center gap-3">
+                                                        <Text className={`text-base font-black tracking-tight ${isActive ? 'text-white' : 'text-zinc-500'}`}>
+                                                            {cat.name}
+                                                        </Text>
+                                                        <View className={`ml-1 rounded-full px-2.5 py-1 ${isActive ? 'bg-white/20' : 'bg-zinc-100'}`}>
+                                                            <Text className={`text-[10px] font-black ${isActive ? 'text-white' : 'text-zinc-400'}`}>
+                                                                {count}
+                                                            </Text>
+                                                        </View>
+                                                    </View>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </ScrollView>
+                                </View>
+                            )}
+
+                            {/* Product Grid */}
+                            {isLoadingProducts ? (
+                                <View className="flex-1 items-center justify-center py-20">
+                                    <ActivityIndicator size="large" color="#377f7e" />
+                                    <Text className="mt-4 text-zinc-500">Memuat produk...</Text>
+                                </View>
+                            ) : (
+                                <FlatList
+                                    key={`grid-${numColumns}`} // Force re-render when column count changes
+                                    data={filteredProducts}
+                                    keyExtractor={(item) => item.id}
+                                    numColumns={numColumns}
+                                    contentContainerStyle={{ padding: 12, paddingBottom: isTablet ? 20 : 100, paddingTop: 16 }}
+                                    renderItem={({ item }) => (
+                                        <View style={{ width: isTablet ? '33.33%' : '50%' }}>
+                                            <ProductCard
+                                                product={item}
+                                                onAdd={() => handleAddProduct(item)}
+                                                isTablet={isTablet}
+                                                currentOutlet={currentOutlet}
+                                            />
+                                        </View>
+                                    )}
+                                    ListEmptyComponent={
+                                        <View className="flex-1 items-center justify-center py-20">
+                                            <MaterialCommunityIcons name="food-off" size={48} color="#d4d4d8" />
+                                            <Text className="mt-4 text-zinc-400">
+                                                {products.length === 0 ? 'Belum ada produk' : 'Produk tidak ditemukan'}
+                                            </Text>
+                                        </View>
+                                    }
+                                />
+                            )}
+                        </>
                     )}
                 </View>
+
+                {/* Right Side: Cart (Tablet Only) */}
+                {isTablet && (
+                    <View className="flex-1 border-l border-zinc-200 bg-white">
+                        {sidebarView === 'cart' ? (
+                            <CartScreen
+                                isSidebar
+                                onBack={() => { }} // No back on tablet sidebar
+                                onCheckout={() => setSidebarView('checkout')}
+                            />
+                        ) : (
+                            <CheckoutScreen
+                                isSidebar
+                                onBack={() => setSidebarView('cart')}
+                                onComplete={() => {
+                                    setSidebarView('cart');
+                                    // POS navigation complete logic is already handled by stores and clearCart inside CheckoutScreen
+                                }}
+                            />
+                        )}
+                    </View>
+                )}
             </View>
 
             {/* Dropdown Menu */}
@@ -315,8 +563,10 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                         <MaterialCommunityIcons name="pause-circle" size={20} color="#377f7e" />
                         <Text className="text-base text-zinc-900">Pesanan Ditahan</Text>
                         {heldOrders.length > 0 && (
-                            <View className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                                {heldOrders.length}
+                            <View className="bg-red-500 px-1.5 py-0.5 rounded-full">
+                                <Text className="text-white text-[10px] font-bold">
+                                    {heldOrders.length}
+                                </Text>
                             </View>
                         )}
                     </TouchableOpacity>
@@ -356,10 +606,10 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
             >
                 <View className="flex-1 items-center justify-center bg-black/60 px-4">
                     <View className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
-                        <View className="bg-primary-600 p-6 flex-row justify-between items-center">
+                        <View className="p-6 flex-row justify-between items-center" style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e' }}>
                             <View>
                                 <Text className="text-xl font-bold text-white">Buka Shift Kasir</Text>
-                                <Text className="text-primary-100 text-sm opacity-90">Modal awal laci kasir</Text>
+                                <Text className="text-white/80 text-sm opacity-90">Modal awal laci kasir</Text>
                             </View>
                             <TouchableOpacity onPress={() => setShowShiftModal(false)}>
                                 <MaterialCommunityIcons name="close" size={24} color="white" />
@@ -367,9 +617,27 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                         </View>
                         <View className="p-8">
                             <View className="mb-6">
-                                <Text className="text-sm font-bold text-primary-900 mb-2 uppercase tracking-wider">Kasir Aktif</Text>
-                                <View className="bg-zinc-100 p-4 rounded-xl border border-zinc-200">
-                                    <Text className="text-lg font-bold text-zinc-900">{currentEmployee?.name || '...'}</Text>
+                                <Text className="text-sm font-bold text-primary-900 mb-2 uppercase tracking-wider">Pilih Kasir Bertugas</Text>
+                                <View className="bg-zinc-100 rounded-xl border border-zinc-200 overflow-hidden">
+                                    <ScrollView className="max-h-40">
+                                        {useEmployeeStore.getState().employees.map((emp) => (
+                                            <TouchableOpacity
+                                                key={emp.id}
+                                                onPress={() => setSelectedEmployeeId(emp.id)}
+                                                className={`p-4 border-b border-zinc-200 flex-row items-center justify-between ${selectedEmployeeId === emp.id ? 'bg-primary-50' : 'bg-white'}`}
+                                            >
+                                                <Text className={`font-bold ${selectedEmployeeId === emp.id ? 'text-primary-700' : 'text-zinc-900'}`}>{emp.name}</Text>
+                                                {selectedEmployeeId === emp.id && (
+                                                    <MaterialCommunityIcons name="check-circle" size={20} color={currentOutlet?.primaryColor || "#377f7e"} />
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                        {useEmployeeStore.getState().employees.length === 0 && (
+                                            <View className="p-4 bg-white">
+                                                <Text className="text-zinc-500 italic">Tidak ada karyawan terdaftar.</Text>
+                                            </View>
+                                        )}
+                                    </ScrollView>
                                 </View>
                             </View>
                             <View className="mb-6">
@@ -389,19 +657,30 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
 
                             <TouchableOpacity
                                 onPress={async () => {
-                                    if (!currentOutlet?.id || !currentEmployee?.id) return;
+                                    if (!currentOutlet?.id) return;
+                                    // Use selected employee or fallback to current user/owner
+                                    const employeeId = selectedEmployeeId || currentEmployee?.id || useAuthStore.getState().user?.id;
+
+                                    if (!employeeId) {
+                                        Alert.alert("Erro", "Pilih kasir terlebih dahulu.");
+                                        return;
+                                    }
+
                                     setIsProcessingShift(true);
-                                    const success = await openShift(currentOutlet.id, currentEmployee.id, parseFloat(startingCash || '0'));
+                                    const success = await openShift(currentOutlet.id, employeeId, parseFloat(startingCash || '0'));
                                     setIsProcessingShift(false);
                                     if (success) {
                                         setShowShiftModal(false);
                                         setStartingCash('');
+                                        // Reset selection
+                                        setSelectedEmployeeId('');
                                     } else {
                                         Alert.alert("Gagal", "Gagal membuka shift. Silakan coba lagi.");
                                     }
                                 }}
                                 disabled={isProcessingShift}
-                                className="w-full bg-primary-600 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-primary-700"
+                                className="w-full py-4 rounded-2xl flex-row items-center justify-center gap-2 active:opacity-90"
+                                style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e' }}
                             >
                                 {isProcessingShift ? (
                                     <ActivityIndicator size="small" color="white" />
@@ -425,10 +704,10 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
             >
                 <View className="flex-1 items-center justify-center bg-black/60 px-4">
                     <View className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
-                        <View className="bg-amber-600 p-6 flex-row justify-between items-center">
+                        <View className="p-6 flex-row justify-between items-center" style={{ backgroundColor: currentOutlet?.secondaryColor || '#d97706' }}>
                             <View>
                                 <Text className="text-xl font-bold text-white">Tutup Shift</Text>
-                                <Text className="text-amber-100 text-sm opacity-90">Hitung uang fisik di laci</Text>
+                                <Text className="text-white/80 text-sm opacity-90">Hitung uang fisik di laci</Text>
                             </View>
                             <TouchableOpacity onPress={() => setShowCloseShiftModal(false)}>
                                 <MaterialCommunityIcons name="close" size={24} color="white" />
@@ -477,7 +756,8 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                                     }
                                 }}
                                 disabled={isProcessingShift}
-                                className="w-full bg-amber-600 py-4 rounded-2xl flex-row items-center justify-center gap-2 active:bg-amber-700"
+                                className="w-full py-4 rounded-2xl flex-row items-center justify-center gap-2 active:opacity-90"
+                                style={{ backgroundColor: currentOutlet?.secondaryColor || '#d97706' }}
                             >
                                 {isProcessingShift ? (
                                     <ActivityIndicator size="small" color="white" />
@@ -501,9 +781,9 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
             >
                 <View className="flex-1 items-center justify-center bg-black/60 px-4">
                     <View className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
-                        <View className="bg-primary-700 p-8">
+                        <View className="p-8" style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e' }}>
                             <Text className="text-2xl font-bold text-white">Laporan Rekonsiliasi</Text>
-                            <Text className="text-primary-100 text-sm opacity-90 mt-1">ID: {shiftReconciliation?.invoiceNumber || shiftReconciliation?.id?.slice(0, 8)}</Text>
+                            <Text className="text-white/90 text-sm mt-1">ID: {shiftReconciliation?.invoiceNumber || shiftReconciliation?.id?.slice(0, 8)}</Text>
                         </View>
                         <ScrollView className="p-8 max-h-[500px]">
                             <View className="bg-primary-50 rounded-2xl p-6 space-y-4">
@@ -520,7 +800,7 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                                     <Text className="text-lg font-bold text-zinc-950">{formatCurrency(parseFloat(shiftReconciliation?.summary?.expectedCash || '0'))}</Text>
                                 </View>
                                 <View className="flex-row justify-between border-b border-primary-100 py-3">
-                                    <Text className="font-bold text-primary-700">Total Uang Fisik</Text>
+                                    <Text className="font-bold" style={{ color: currentOutlet?.primaryColor || '#0f766e' }}>Total Uang Fisik</Text>
                                     <Text className="text-lg font-bold text-zinc-950">{formatCurrency(parseFloat(shiftReconciliation?.summary?.actualEndingCash || '0'))}</Text>
                                 </View>
                                 <View className={`flex-row justify-between rounded-xl p-4 mt-2 ${parseFloat(shiftReconciliation?.summary?.difference || '0') === 0 ? 'bg-green-100' : 'bg-red-100'}`}>
@@ -545,7 +825,8 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                                     setShiftReconciliation(null);
                                     setShowShiftModal(true);
                                 }}
-                                className="mt-8 bg-primary-600 py-4 rounded-2xl items-center shadow-lg shadow-primary-500/30 active:scale-95"
+                                className="mt-8 py-4 rounded-2xl items-center shadow-lg shadow-primary-500/30 active:scale-95"
+                                style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e' }}
                             >
                                 <Text className="text-white text-lg font-bold">Tutup & Buka Shift Baru</Text>
                             </TouchableOpacity>
@@ -569,11 +850,11 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
             >
                 <View className="flex-1 bg-black/60">
                     <View className="w-full h-2/3 bg-white rounded-t-[32px] mt-auto">
-                        <View className="bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-5 rounded-t-[32px]">
+                        <View className="px-6 py-5 rounded-t-[32px]" style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e' }}>
                             <View className="flex-row items-center justify-between">
                                 <View>
                                     <Text className="text-xl font-bold text-white">Pesanan Ditahan</Text>
-                                    <Text className="text-primary-100 text-sm opacity-90">{heldOrders.length} pesanan aktif</Text>
+                                    <Text className="text-white/90 text-sm opacity-90">{heldOrders.length} pesanan aktif</Text>
                                 </View>
                                 <TouchableOpacity
                                     onPress={() => setShowHeldOrdersModal(false)}
@@ -633,8 +914,8 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                                                 </View>
                                             ))}
                                             {item.items.length > 3 && (
-                                                <View className="bg-primary-50 px-2 py-1 rounded-lg border border-primary-200">
-                                                    <Text className="text-xs font-medium text-primary-700">
+                                                <View className="px-2 py-1 rounded-lg border" style={{ backgroundColor: (currentOutlet?.primaryColor || '#0f766e') + '15', borderColor: (currentOutlet?.primaryColor || '#0f766e') + '30' }}>
+                                                    <Text className="text-xs font-medium" style={{ color: currentOutlet?.primaryColor || '#0f766e' }}>
                                                         +{item.items.length - 3} lainnya
                                                     </Text>
                                                 </View>
@@ -672,7 +953,8 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                                                     e.stopPropagation();
                                                     handleResumeOrder(item);
                                                 }}
-                                                className="flex-row items-center gap-1.5 bg-primary-600 px-4 py-2 rounded-xl active:bg-primary-700"
+                                                className="flex-row items-center gap-1.5 px-4 py-2 rounded-xl active:opacity-90"
+                                                style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e' }}
                                             >
                                                 <MaterialCommunityIcons name="play" size={16} color="white" />
                                                 <Text className="text-sm font-bold text-white">Lanjutkan</Text>
@@ -695,38 +977,79 @@ export default function POSScreen({ onViewCart, onSwitchOutlet, onLogout }: POSS
                 </View>
             </Modal>
 
-            {/* Product Grid */}
-            {isLoadingProducts ? (
-                <View className="flex-1 items-center justify-center py-20">
-                    <ActivityIndicator size="large" color="#377f7e" />
-                    <Text className="mt-4 text-zinc-500">Memuat produk...</Text>
-                </View>
-            ) : (
-                <FlatList
-                    data={filteredProducts}
-                    keyExtractor={(item) => item.id}
-                    numColumns={2}
-                    contentContainerStyle={{ padding: 12, paddingBottom: 100, paddingTop: 16 }}
-                    renderItem={({ item }) => (
-                        <ProductCard product={item} onAdd={() => handleAddProduct(item)} />
-                    )}
-                    ListEmptyComponent={
-                        <View className="flex-1 items-center justify-center py-20">
-                            <MaterialCommunityIcons name="food-off" size={48} color="#d4d4d8" />
-                            <Text className="mt-4 text-zinc-400">
-                                {products.length === 0 ? 'Belum ada produk' : 'Produk tidak ditemukan'}
-                            </Text>
+            {/* Cart Summary Bar (Only on Mobile) */}
+            {/* Variant Selection Modal */}
+            <Modal
+                visible={showVariantModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowVariantModal(false)}
+            >
+                <View className="flex-1 items-center justify-center bg-black/50 px-4">
+                    <View className="w-full max-w-md rounded-3xl bg-white overflow-hidden shadow-xl">
+                        <View className="flex-row items-center justify-between border-b border-zinc-100 p-6">
+                            <View>
+                                <Text className="text-xl font-bold text-zinc-900">Pilih Varian</Text>
+                                <Text className="text-sm text-zinc-500">{selectedProductForVariant?.name}</Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setShowVariantModal(false);
+                                    setSelectedProductForVariant(null);
+                                }}
+                                className="rounded-xl p-2 bg-zinc-50"
+                            >
+                                <MaterialCommunityIcons name="close" size={24} color="#71717a" />
+                            </TouchableOpacity>
                         </View>
-                    }
+                        <ScrollView className="max-h-[60vh] p-6">
+                            <View className="gap-3 pb-6">
+                                {selectedProductForVariant?.variants?.filter(v => v.isActive).map((variant) => {
+                                    const finalPrice = (selectedProductForVariant?.price || 0) + parseFloat(variant.priceAdjustment);
+                                    return (
+                                        <TouchableOpacity
+                                            key={variant.id}
+                                            onPress={() => handleAddProduct(selectedProductForVariant!, variant)}
+                                            disabled={variant.stock <= 0}
+                                            className="flex-row items-center justify-between rounded-2xl border border-zinc-100 bg-white p-4 active:scale-95 disabled:opacity-50"
+                                        >
+                                            <View className="flex-row items-center gap-4">
+                                                <View className="h-12 w-12 items-center justify-center rounded-xl bg-primary-50">
+                                                    <MaterialCommunityIcons name="layers-outline" size={24} color={currentOutlet?.primaryColor || "#0f766e"} />
+                                                </View>
+                                                <View>
+                                                    <Text className="font-bold text-zinc-900">{variant.name}</Text>
+                                                    <Text className="text-xs text-zinc-500">Stok: {variant.stock}</Text>
+                                                </View>
+                                            </View>
+                                            <View className="items-end">
+                                                <Text className="font-black text-primary-600" style={{ color: currentOutlet?.primaryColor || "#0f766e" }}>
+                                                    {formatCurrency(finalPrice)}
+                                                </Text>
+                                                {parseFloat(variant.priceAdjustment) !== 0 && (
+                                                    <Text className="text-[10px] font-bold text-zinc-400">
+                                                        {parseFloat(variant.priceAdjustment) > 0 ? '+' : ''}{formatCurrency(parseFloat(variant.priceAdjustment))}
+                                                    </Text>
+                                                )}
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Cart Summary Bar (Only on Mobile) */}
+            {!isTablet && (
+                <CartSummary
+                    itemCount={getItemCount()}
+                    total={getTotal()}
+                    onViewCart={onViewCart}
+                    currentOutlet={currentOutlet}
                 />
             )}
-
-            {/* Cart Summary Bar */}
-            <CartSummary
-                itemCount={getItemCount()}
-                total={getTotal()}
-                onViewCart={onViewCart}
-            />
         </View>
     );
 }

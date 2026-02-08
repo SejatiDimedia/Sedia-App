@@ -29,7 +29,7 @@ export async function getEmployees(outletId: string) {
         with: {
             employee: {
                 with: {
-                    role: true,
+                    roleData: true,
                     employeeOutlets: {
                         with: {
                             outlet: true
@@ -45,7 +45,7 @@ export async function getEmployees(outletId: string) {
     const legacyEmployees = await db.query.employees.findMany({
         where: eq(employees.outletId, outletId),
         with: {
-            role: true,
+            roleData: true,
             employeeOutlets: {
                 with: {
                     outlet: true
@@ -127,7 +127,7 @@ export async function createEmployee(data: EmployeeInput) {
             outletId: primaryOutletId, // Legacy field for backward compat
             userId: userId,
             name: finalName,
-            role: data.role,
+            role: data.roleId ? "custom" : data.role,
             roleId: data.roleId,
             pinCode: data.pinCode,
             isActive: true,
@@ -170,8 +170,24 @@ export async function updateEmployee(id: string, data: Partial<EmployeeInput>) {
             updatedAt: new Date(),
         };
         if (data.name) employeeUpdateData.name = data.name;
-        if (data.role) employeeUpdateData.role = data.role;
-        if (data.roleId) employeeUpdateData.roleId = data.roleId;
+
+        console.log("updateEmployee - Incoming Data:", JSON.stringify(data, null, 2));
+
+        // If a Dynamic Role (roleId) is provided, we set roleId and mark generic "custom" role
+        // This prevents legacy string "cashier" from triggering fallback behavior
+        if (data.roleId) {
+            console.log("updateEmployee - Setting Custom Role:", data.roleId);
+            employeeUpdateData.roleId = data.roleId;
+            employeeUpdateData.role = "custom";
+        } else if (data.role) {
+            console.log("updateEmployee - Setting Legacy Role:", data.role);
+            // If explicit legacy role string is sent (and no roleId)
+            employeeUpdateData.role = data.role;
+            employeeUpdateData.roleId = null; // Clear roleId so it doesn't conflict
+        }
+
+        console.log("updateEmployee - Final Payload:", JSON.stringify(employeeUpdateData, null, 2));
+
         if (data.pinCode !== undefined) employeeUpdateData.pinCode = data.pinCode;
         if (data.isActive !== undefined) employeeUpdateData.isActive = data.isActive;
 

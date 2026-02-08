@@ -1,8 +1,46 @@
 import { NextResponse } from "next/server";
 import { db, posSchema } from "@/lib/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+
+async function isAuthorized(userId: string, outletId: string) {
+    // 1. Check if owner
+    const [outletOwner] = await db
+        .select()
+        .from(posSchema.outlets)
+        .where(
+            and(
+                eq(posSchema.outlets.id, outletId),
+                eq(posSchema.outlets.ownerId, userId)
+            )
+        );
+
+    if (outletOwner) return true;
+
+    // 2. Check if employee with manager/admin role for THIS outlet
+    const employee = await db.query.employees.findFirst({
+        where: and(
+            eq(posSchema.employees.userId, userId),
+            eq(posSchema.employees.isDeleted, false)
+        ),
+        with: {
+            employeeOutlets: {
+                where: eq(posSchema.employeeOutlets.outletId, outletId)
+            }
+        }
+    });
+
+    if (employee) {
+        // Check legacy single outlet assignment
+        if (employee.outletId === outletId) return true;
+        // Check multi-outlet assignment
+        const hasAccess = employee.employeeOutlets.some(eo => eo.outletId === outletId);
+        if (hasAccess) return true;
+    }
+
+    return false;
+}
 
 // GET /api/outlets/[id] - Get single outlet
 export async function GET(
@@ -19,19 +57,15 @@ export async function GET(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const authorized = await isAuthorized(session.user.id, id);
+        if (!authorized) {
+            return NextResponse.json({ error: "Outlet not found or access denied" }, { status: 404 });
+        }
+
         const [outlet] = await db
             .select()
             .from(posSchema.outlets)
-            .where(
-                and(
-                    eq(posSchema.outlets.id, id),
-                    eq(posSchema.outlets.ownerId, session.user.id)
-                )
-            );
-
-        if (!outlet) {
-            return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
-        }
+            .where(eq(posSchema.outlets.id, id));
 
         return NextResponse.json(outlet);
     } catch (error) {
@@ -58,8 +92,13 @@ export async function PUT(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const authorized = await isAuthorized(session.user.id, id);
+        if (!authorized) {
+            return NextResponse.json({ error: "Outlet not found or access denied" }, { status: 404 });
+        }
+
         const body = await request.json();
-        const { name, address, phone } = body;
+        const { name, address, phone, primaryColor, secondaryColor } = body;
 
         const [updatedOutlet] = await db
             .update(posSchema.outlets)
@@ -67,18 +106,11 @@ export async function PUT(
                 name,
                 address: address || null,
                 phone: phone || null,
+                primaryColor: primaryColor || undefined,
+                secondaryColor: secondaryColor || undefined,
             })
-            .where(
-                and(
-                    eq(posSchema.outlets.id, id),
-                    eq(posSchema.outlets.ownerId, session.user.id)
-                )
-            )
+            .where(eq(posSchema.outlets.id, id))
             .returning();
-
-        if (!updatedOutlet) {
-            return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
-        }
 
         return NextResponse.json(updatedOutlet);
     } catch (error) {
@@ -105,19 +137,14 @@ export async function DELETE(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const [deletedOutlet] = await db
-            .delete(posSchema.outlets)
-            .where(
-                and(
-                    eq(posSchema.outlets.id, id),
-                    eq(posSchema.outlets.ownerId, session.user.id)
-                )
-            )
-            .returning();
-
-        if (!deletedOutlet) {
-            return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
+        const authorized = await isAuthorized(session.user.id, id);
+        if (!authorized) {
+            return NextResponse.json({ error: "Outlet not found or access denied" }, { status: 404 });
         }
+
+        await db
+            .delete(posSchema.outlets)
+            .where(eq(posSchema.outlets.id, id));
 
         return NextResponse.json({ message: "Outlet deleted successfully" });
     } catch (error) {

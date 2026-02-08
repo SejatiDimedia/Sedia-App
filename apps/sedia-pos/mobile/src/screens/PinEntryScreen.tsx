@@ -1,6 +1,6 @@
 import '../../global.css';
 import React from 'react';
-import { Text, View, TouchableOpacity, Alert, Vibration } from 'react-native';
+import { Text, View, TouchableOpacity, Alert, Vibration, ScrollView } from 'react-native';
 import { useEmployeeStore } from '../store/employeeStore';
 import { useOutletStore } from '../store/outletStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -137,7 +137,7 @@ export default function PinEntryScreen({ onPinSuccess, onBack }: PinEntryScreenP
             </View>
 
             {/* Content */}
-            <View className="flex-1 items-center justify-center px-8 -mt-4">
+            <ScrollView contentContainerStyle={{ flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingBottom: 32 }}>
                 {/* Icon */}
                 <View className="mb-6 h-20 w-20 items-center justify-center rounded-3xl bg-primary-100 ">
                     <MaterialCommunityIcons name="lock-outline" size={40} color="#377f7e" />
@@ -194,7 +194,7 @@ export default function PinEntryScreen({ onPinSuccess, onBack }: PinEntryScreenP
                         {isLoading ? 'Memverifikasi...' : 'Masuk'}
                     </Text>
                 </TouchableOpacity>
-            </View>
+            </ScrollView>
         </View>
     );
 }

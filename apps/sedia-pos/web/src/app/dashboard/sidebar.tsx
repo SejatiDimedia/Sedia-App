@@ -22,7 +22,12 @@ import {
     PanelLeftClose,
     PanelLeftOpen,
     Percent,
+    ChevronDown,
+    Check,
+    Truck,
+    UsersRound,
 } from "lucide-react";
+import { useOutlet } from "@/providers/outlet-provider";
 
 interface DashboardSidebarProps {
     children: React.ReactNode;
@@ -37,13 +42,18 @@ const navItems = [
     { href: "/dashboard/outlets", label: "Outlet", icon: Store },
     { href: "/dashboard/employees", label: "Karyawan", icon: Users },
     { href: "/dashboard/products", label: "Produk", icon: Package },
+    { href: "/dashboard/categories", label: "Kategori", icon: LayoutDashboard }, // Using LayoutDashboard or Boxes? Boxes is used for inventory.
     { href: "/dashboard/inventory", label: "Inventaris", icon: Boxes },
+    { href: "/dashboard/suppliers", label: "Supplier", icon: Truck },
+    { href: "/dashboard/purchase-orders", label: "Purchase Orders", icon: ClipboardList },
     { href: "/dashboard/inventory/opname", label: "Stock Opname", icon: ClipboardList },
     { href: "/dashboard/transactions", label: "Transaksi", icon: BarChart3 },
     { href: "/dashboard/activity", label: "Log Aktivitas", icon: History },
     { href: "/dashboard/customers", label: "Pelanggan", icon: Users },
     { href: "/dashboard/reports", label: "Laporan", icon: BarChart3 },
+    { href: "/dashboard/shifts", label: "Laporan Shift", icon: History },
     { href: "/dashboard/tax", label: "Pajak & Biaya", icon: Percent },
+    { href: "/dashboard/users", label: "Manajemen User", icon: UsersRound, adminOnly: true },
     { href: "/dashboard/settings", label: "Pengaturan", icon: Settings },
 ];
 
@@ -54,6 +64,22 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [profileMenuOpen, setProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
+
+    // Outlet Context
+    const { outlets, activeOutlet, switchOutlet, isLoading } = useOutlet();
+    const [outletMenuOpen, setOutletMenuOpen] = useState(false);
+    const outletMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close outlet menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (outletMenuRef.current && !outletMenuRef.current.contains(event.target as Node)) {
+                setOutletMenuOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Close profile menu when clicking outside
     useEffect(() => {
@@ -68,63 +94,67 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
 
     // Filter nav items based on role
     const filteredNavItems = navItems.filter((item) => {
-        // 1. Admin/Owner Bypass
-        if (role === "admin" || role === "owner") return true;
+        const normalizedRole = role?.toLowerCase();
 
-        // 2. Dynamic Permission Check
-        if (permissions && permissions.length > 0) {
-            // Check specific permissions per route
-            // Define mapping
+        // Special restriction for Activity Log (Admin/Owner only)
+        if (item.href === "/dashboard/activity" && normalizedRole !== "admin" && normalizedRole !== "owner") {
+            return false;
+        }
+
+        // User Management is Admin-only
+        if ((item as any).adminOnly && normalizedRole !== "admin" && normalizedRole !== "owner") {
+            return false;
+        }
+
+        if (item.href === "/dashboard") return true;
+
+        // 1. Admin/Owner Bypass (Highest priority)
+        if (normalizedRole === "admin" || normalizedRole === "owner") return true;
+
+        // 2. Dynamic Permission Check (Primary source of truth for custom roles)
+        if (permissions && Array.isArray(permissions)) {
             const requiredPerms: Record<string, string> = {
                 "/pos": "access_pos",
                 "/dashboard/transactions": "access_pos",
                 "/dashboard/customers": "manage_customers",
                 "/dashboard/products": "manage_products",
+                "/dashboard/categories": "manage_products",
                 "/dashboard/inventory": "manage_inventory",
-                "/dashboard/inventory/opname": "manage_inventory",
+                "/dashboard/suppliers": "manage_suppliers",
+                "/dashboard/purchase-orders": "manage_purchase_orders",
+                "/dashboard/inventory/opname": "manage_stock_opname",
                 "/dashboard/employees": "manage_employees",
                 "/dashboard/reports": "view_reports",
-                "/dashboard/settings": "manage_settings",
+                "/dashboard/shifts": "view_reports",
                 "/dashboard/tax": "manage_tax",
-                // Outlet? Assume "manage_settings" or global
-                "/dashboard/outlets": "manage_settings",
-                "/dashboard/activity": "view_reports", // Using view_reports as proxy for activity log
+                "/dashboard/outlets": "manage_outlets",
+                "/dashboard/activity": "view_reports",
+                // Settings is now public (filtered internally)
             };
+
+            // Special case: Settings is always visible if user has any role/permissions
+            if (item.href === "/dashboard/settings") return true;
 
             const req = requiredPerms[item.href];
 
-            // If route needs permission, check it.
+            // If route needs permission, strictly check it.
             if (req) {
-                // Special case: customers can also be accessed by 'access_pos' usually?
-                // Let's stick to strict 'manage_customers' mapped in roles settings.
                 return permissions.includes(req);
             }
 
-            // Dashboard is usually always allowed or basic
-            if (item.href === "/dashboard") return true;
-
-            // If no specific requirement defined, maybe default deny or allow?
-            // Deny safe.
             return false;
         }
 
-        // 3. Fallback to Legacy Roles (if no permissions found)
-        if (role === "manager") {
-            return true;
-        }
+        // 3. Fallback to Legacy Roles (only if NO dynamic permissions array)
 
-        if (role === "cashier") {
-            const allowed = [
-                "/dashboard",
+
+        if (normalizedRole === "cashier" || normalizedRole === "kasir" || normalizedRole === "user") {
+            const allowedForCashier = [
                 "/pos",
                 "/dashboard/transactions",
-                // "/dashboard/customers", // Only if explicitly authorized? Legacy cashier had it.
-                // Let's keep legacy behavior for 'cashier' string role
-                "/dashboard/customers",
-                "/dashboard/products",
-                "/dashboard/inventory"
+                "/dashboard/settings"
             ];
-            return allowed.includes(item.href);
+            return allowedForCashier.includes(item.href);
         }
 
         return false;
@@ -193,6 +223,62 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
                         )}
                     </div>
 
+                    {/* Outlet Switcher */}
+                    {!isCollapsed && outlets.length > 0 && (
+                        <div className="px-3 py-2">
+                            <div className="relative" ref={outletMenuRef}>
+                                <button
+                                    onClick={() => outlets.length > 1 && setOutletMenuOpen(!outletMenuOpen)}
+                                    disabled={outlets.length <= 1}
+                                    className={`flex w-full items-center gap-2 rounded-xl border border-zinc-200 bg-white p-2 text-left shadow-sm transition-all hover:bg-zinc-50 ${outlets.length > 1 ? "cursor-pointer" : "cursor-default"
+                                        }`}
+                                >
+                                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
+                                        <Store className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="truncate text-xs font-medium text-zinc-500 uppercase">Outlet Aktif</p>
+                                        <p className="truncate text-sm font-bold text-zinc-900 leading-tight">
+                                            {activeOutlet?.name || "Pilih Outlet"}
+                                        </p>
+                                    </div>
+                                    {outlets.length > 1 && (
+                                        <ChevronDown className={`h-4 w-4 text-zinc-400 transition-transform ${outletMenuOpen ? "rotate-180" : ""}`} />
+                                    )}
+                                </button>
+
+                                {/* Dropdown */}
+                                {outletMenuOpen && (
+                                    <div className="absolute left-0 top-full z-50 mt-1 w-full animate-in fade-in zoom-in-95 duration-100">
+                                        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg ring-1 ring-black/5">
+                                            <div className="max-h-60 overflow-y-auto p-1">
+                                                {outlets.map((outlet) => (
+                                                    <button
+                                                        key={outlet.id}
+                                                        onClick={() => {
+                                                            switchOutlet(outlet.id);
+                                                            setOutletMenuOpen(false);
+                                                        }}
+                                                        disabled={isLoading}
+                                                        className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors ${activeOutlet?.id === outlet.id
+                                                            ? "bg-orange-50 text-orange-900"
+                                                            : "text-zinc-700 hover:bg-zinc-50"
+                                                            }`}
+                                                    >
+                                                        <span className="truncate font-medium">{outlet.name}</span>
+                                                        {activeOutlet?.id === outlet.id && (
+                                                            <Check className="h-4 w-4 text-orange-600" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Navigation */}
                     <nav className="flex-1 space-y-1 p-3 overflow-y-auto overflow-x-hidden pt-4">
                         {!isCollapsed && (
@@ -230,12 +316,12 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
                     </nav>
 
                 </div>
-            </aside>
+            </aside >
 
             {/* Main Content */}
-            <div className="flex flex-1 flex-col">
+            < div className="flex flex-1 flex-col" >
                 {/* Top Bar */}
-                <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-zinc-200 bg-white px-4 lg:px-6">
+                < header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-zinc-200 bg-white px-4 lg:px-6" >
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 lg:hidden"
@@ -283,11 +369,11 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
                             </div>
                         )}
                     </div>
-                </header>
+                </header >
 
                 {/* Page Content */}
-                <main className="flex-1 p-4 lg:p-6">{children}</main>
-            </div>
+                < main className="flex-1 p-4 lg:p-6" > {children}</main >
+            </div >
         </>
     );
 }

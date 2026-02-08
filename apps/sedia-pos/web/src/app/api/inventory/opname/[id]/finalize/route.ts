@@ -40,28 +40,53 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         // Process adjustments
         for (const item of adjustments) {
             if (item.difference) {
-                // Get current fresh stock
-                const freshProductResult = await db
-                    .select({ stock: posSchema.products.stock })
-                    .from(posSchema.products)
-                    .where(eq(posSchema.products.id, item.productId))
-                    .limit(1);
-
-                if (freshProductResult && freshProductResult.length > 0) {
-                    const freshProduct = freshProductResult[0];
-                    await db.update(posSchema.products)
-                        .set({ stock: freshProduct.stock + item.difference })
-                        .where(eq(posSchema.products.id, item.productId));
-
-                    // Log
-                    await db.insert(posSchema.inventoryLogs).values({
-                        outletId: opname.outletId,
-                        productId: item.productId,
-                        type: "adjustment",
-                        quantity: item.difference,
-                        notes: `Stock Opname (Diff: ${item.difference})`,
-                        createdBy: session.user.id
+                if (item.variantId) {
+                    // Update Variant Stock
+                    const freshVariant = await db.query.productVariants.findFirst({
+                        where: eq(posSchema.productVariants.id, item.variantId),
+                        columns: { stock: true, name: true }
                     });
+
+                    if (freshVariant) {
+                        await db.update(posSchema.productVariants)
+                            .set({ stock: (freshVariant.stock || 0) + item.difference })
+                            .where(eq(posSchema.productVariants.id, item.variantId));
+
+                        // Log
+                        await db.insert(posSchema.inventoryLogs).values({
+                            outletId: opname.outletId,
+                            productId: item.productId,
+                            variantId: item.variantId,
+                            type: "adjustment",
+                            quantity: item.difference,
+                            notes: `Stock Opname (Diff: ${item.difference}) (Variant: ${freshVariant.name})`,
+                            createdBy: session.user.id
+                        });
+                    }
+                } else {
+                    // Update Product Stock
+                    const freshProductResult = await db
+                        .select({ stock: posSchema.products.stock })
+                        .from(posSchema.products)
+                        .where(eq(posSchema.products.id, item.productId))
+                        .limit(1);
+
+                    if (freshProductResult && freshProductResult.length > 0) {
+                        const freshProduct = freshProductResult[0];
+                        await db.update(posSchema.products)
+                            .set({ stock: freshProduct.stock + item.difference })
+                            .where(eq(posSchema.products.id, item.productId));
+
+                        // Log
+                        await db.insert(posSchema.inventoryLogs).values({
+                            outletId: opname.outletId,
+                            productId: item.productId,
+                            type: "adjustment",
+                            quantity: item.difference,
+                            notes: `Stock Opname (Diff: ${item.difference})`,
+                            createdBy: session.user.id
+                        });
+                    }
                 }
             }
         }

@@ -65,28 +65,70 @@ export async function POST(request: Request) {
             conditions.push(eq(posSchema.products.categoryId, categoryId));
         }
 
-        const productsToCount = await db
-            .select()
-            .from(posSchema.products)
-            .where(and(...conditions));
+        const productsToCount = await db.query.products.findMany({
+            where: and(...conditions),
+            with: {
+                variants: {
+                    where: eq(posSchema.productVariants.isActive, true)
+                }
+            }
+        });
+
+        console.log(`[Opname API] Found ${productsToCount.length} products to count for outlet ${outletId}`);
 
         // 3. Insert Opname Items
-        if (productsToCount.length > 0) {
-            const items = productsToCount.map(p => ({
-                opnameId: opname.id,
-                productId: p.id,
-                systemStock: p.stock,
-                actualStock: null,
-                difference: null
-            }));
+        const itemsToInsert: {
+            opnameId: string;
+            productId: string;
+            variantId: string | null;
+            systemStock: number;
+            actualStock: number | null;
+            difference: number | null;
+        }[] = [];
 
-            await db.insert(posSchema.stockOpnameItems).values(items);
+        for (const p of productsToCount) {
+            if (p.variants && p.variants.length > 0) {
+                // If product has variants, snapshot each variant
+                for (const v of p.variants) {
+                    itemsToInsert.push({
+                        opnameId: opname.id,
+                        productId: p.id,
+                        variantId: v.id,
+                        systemStock: v.stock || 0,
+                        actualStock: null,
+                        difference: null
+                    });
+                }
+            } else {
+                // If no variants, snapshot the product itself
+                itemsToInsert.push({
+                    opnameId: opname.id,
+                    productId: p.id,
+                    variantId: null,
+                    systemStock: p.stock,
+                    actualStock: null,
+                    difference: null
+                });
+            }
         }
 
+        console.log(`[Opname API] Inserting ${itemsToInsert.length} items into Opname ${opname.id}`);
+
+        if (itemsToInsert.length > 0) {
+            try {
+                await db.insert(posSchema.stockOpnameItems).values(itemsToInsert as any);
+            } catch (insertErr) {
+                console.error("[Opname API] Failed to insert items:", insertErr);
+                throw insertErr;
+            }
+        }
+
+        console.log(`[Opname API] Successfully created opname ${opname.id}`);
         return NextResponse.json(opname, { status: 201 });
 
     } catch (error) {
-        console.error("Failed to create opname:", error);
-        return NextResponse.json({ error: "Failed to create stock opname" }, { status: 500 });
+        console.error("[Opname API] Failed to create opname:", error);
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return NextResponse.json({ error: "Failed to create stock opname", detail: message }, { status: 500 });
     }
 }

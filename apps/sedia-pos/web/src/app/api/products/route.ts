@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db, posSchema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { logActivity } from "@/lib/logging";
 
 // GET /api/products - Fetch all products
@@ -9,17 +9,25 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const outletId = searchParams.get("outletId");
 
-        let query;
+        let products;
         if (outletId) {
-            query = db
-                .select()
-                .from(posSchema.products)
-                .where(eq(posSchema.products.outletId, outletId));
+            products = await db.query.products.findMany({
+                where: and(
+                    eq(posSchema.products.outletId, outletId),
+                    eq(posSchema.products.isDeleted, false)
+                ),
+                with: {
+                    variants: true
+                }
+            });
         } else {
-            query = db.select().from(posSchema.products);
+            products = await db.query.products.findMany({
+                where: eq(posSchema.products.isDeleted, false),
+                with: {
+                    variants: true
+                }
+            });
         }
-
-        const products = await query;
 
         return NextResponse.json(products, {
             headers: {

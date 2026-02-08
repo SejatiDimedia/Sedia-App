@@ -11,6 +11,8 @@ import {
     Trash2,
     X,
 } from "lucide-react";
+import ConfirmationModal from "@/components/confirmation-modal";
+import { toast } from "react-hot-toast";
 
 interface Outlet {
     id: string;
@@ -26,6 +28,18 @@ export default function OutletsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingOutlet, setEditingOutlet] = useState<Outlet | null>(null);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: "primary" | "danger" | "warning";
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+    });
 
     // Form state
     const [formName, setFormName] = useState("");
@@ -50,6 +64,15 @@ export default function OutletsPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const showConfirm = (config: Omit<typeof confirmState, "isOpen">) => {
+        setConfirmState({ ...config, isOpen: true });
+    };
+
+    const handleConfirm = () => {
+        confirmState.onConfirm();
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
     };
 
     const handleOpenModal = (outlet?: Outlet) => {
@@ -119,16 +142,25 @@ export default function OutletsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Yakin ingin menghapus outlet ini?")) return;
-
-        try {
-            const res = await fetch(`/api/outlets/${id}`, { method: "DELETE" });
-            if (res.ok) {
-                fetchOutlets();
+        showConfirm({
+            title: "Hapus Outlet",
+            message: "Apakah Anda yakin ingin menghapus outlet ini? Semua data terkait outlet ini (Produk, Karyawan, Transaksi) mungkin akan terpengaruh.",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/outlets/${id}`, { method: "DELETE" });
+                    if (res.ok) {
+                        toast.success("Outlet berhasil dihapus");
+                        fetchOutlets();
+                    } else {
+                        toast.error("Gagal menghapus outlet");
+                    }
+                } catch (error) {
+                    console.error("Failed to delete outlet:", error);
+                    toast.error("Terjadi kesalahan sistem");
+                }
             }
-        } catch (error) {
-            console.error("Failed to delete outlet:", error);
-        }
+        });
     };
 
     const filteredOutlets = outlets.filter((outlet) =>
@@ -303,6 +335,16 @@ export default function OutletsPage() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={confirmState.isOpen}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                isLoading={isSaving}
+            />
         </div>
     );
 }

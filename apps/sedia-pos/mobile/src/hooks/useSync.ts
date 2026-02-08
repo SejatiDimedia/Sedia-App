@@ -16,6 +16,7 @@ interface UseSyncReturn {
     syncProducts: () => Promise<void>;
     syncCustomers: () => Promise<void>;
     syncPendingTransactions: () => Promise<void>;
+    syncOutlets: () => Promise<void>; // Added
     syncAll: () => Promise<void>;
 }
 
@@ -36,11 +37,16 @@ export function useSync(): UseSyncReturn {
             // Default to true if we can't determine (assume online)
             online = online ?? true;
 
+            const wasOffline = !isOnline;
             setIsOnline(online);
 
-            if (online && syncStatus === "offline") {
-                syncAll();
-            } else if (!online) {
+            // Trigger sync if we just came online OR if we are initializing and online
+            if (online) {
+                // If status is idle (initial) or we were offline, try to sync
+                if (syncStatus === "idle" || syncStatus === "offline" || wasOffline) {
+                    syncAll();
+                }
+            } else {
                 setSyncStatus("offline");
             }
         });
@@ -48,7 +54,20 @@ export function useSync(): UseSyncReturn {
         initializeDatabase();
 
         return () => unsubscribe();
-    }, []);
+    }, [syncStatus]); // Add syncStatus to dependency to re-evaluate if it changes (though mainly we rely on event listener)
+
+    // Sync outlets from backend
+    const syncOutlets = useCallback(async () => {
+        if (!isOnline) return;
+        try {
+            // We use the store's fetchOutlets action which handles the API call and state update
+            const { fetchOutlets } = require("../store/outletStore").useOutletStore.getState();
+            await fetchOutlets();
+            console.log("[Sync] Synced outlets configuration");
+        } catch (error) {
+            console.error("[Sync] Outlet sync failed:", error);
+        }
+    }, [isOnline]);
 
     // Sync products from backend to local storage
     const syncProducts = useCallback(async () => {
@@ -60,7 +79,7 @@ export function useSync(): UseSyncReturn {
         try {
             setSyncStatus("syncing");
 
-            // Fetch real products from backend API
+            // Fetch real products from backend API (with variants key expected)
             const response = await fetch(`${API_BASE_URL}/products`);
 
             if (!response.ok) {
@@ -76,13 +95,31 @@ export function useSync(): UseSyncReturn {
                     name: product.name,
                     price: parseFloat(product.price),
                     stock: product.stock || 0,
+                    imageUrl: product.imageUrl,
                     isActive: product.isActive ?? true,
                     syncedAt: new Date(),
+                    categoryId: product.categoryId,
                 };
                 await db.products.upsert(localProduct);
+
+                // Sync Variants if available
+                if (product.variants && Array.isArray(product.variants)) {
+                    for (const variant of product.variants) {
+                        await db.productVariants.upsert({
+                            id: variant.id,
+                            productId: product.id,
+                            name: variant.name,
+                            sku: variant.sku,
+                            priceAdjustment: String(variant.priceAdjustment || "0"),
+                            stock: variant.stock || 0,
+                            isActive: variant.isActive ?? true,
+                            syncedAt: new Date()
+                        });
+                    }
+                }
             }
 
-            console.log(`[Sync] Synced ${products.length} products from backend`);
+            console.log(`[Sync] Synced ${products.length} products (with variants) from backend`);
             setLastSyncedAt(new Date());
             setSyncStatus("synced");
         } catch (error) {
@@ -91,12 +128,6 @@ export function useSync(): UseSyncReturn {
             const mockProducts: LocalProduct[] = [
                 { id: "mock-1", name: "Kopi Susu", price: 18000, stock: 50, isActive: true },
                 { id: "mock-2", name: "Es Teh Manis", price: 8000, stock: 100, isActive: true },
-                { id: "mock-3", name: "Nasi Goreng", price: 25000, stock: 30, isActive: true },
-                { id: "mock-4", name: "Mie Goreng", price: 22000, stock: 25, isActive: true },
-                { id: "mock-5", name: "Ayam Geprek", price: 28000, stock: 20, isActive: true },
-                { id: "mock-6", name: "Es Jeruk", price: 10000, stock: 80, isActive: true },
-                { id: "mock-7", name: "Roti Bakar", price: 15000, stock: 40, isActive: true },
-                { id: "mock-8", name: "Susu Coklat", price: 12000, stock: 35, isActive: true },
             ];
 
             for (const product of mockProducts) {
@@ -227,10 +258,11 @@ export function useSync(): UseSyncReturn {
 
     // Full sync (products + customers + transactions)
     const syncAll = useCallback(async () => {
+        await syncOutlets(); // Sync outlets first to get branding
         await syncProducts();
         await syncCustomers();
         await syncPendingTransactions();
-    }, [syncProducts, syncCustomers, syncPendingTransactions]);
+    }, [syncOutlets, syncProducts, syncCustomers, syncPendingTransactions]);
 
     return {
         isOnline,
@@ -239,6 +271,7 @@ export function useSync(): UseSyncReturn {
         syncProducts,
         syncCustomers,
         syncPendingTransactions,
+        syncOutlets,
         syncAll,
     };
 }

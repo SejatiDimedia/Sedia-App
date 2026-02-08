@@ -5,10 +5,11 @@ import { eq, and, or, inArray } from "drizzle-orm";
 // POST /api/employees/verify-pin - Verify employee PIN for mobile login
 export async function POST(request: Request) {
     try {
+        console.error("!!! VERIFY PIN HIT !!!"); // Force Visibility
         const body = await request.json();
         const { outletId, pinCode } = body;
 
-        console.log("[PIN Verify] Request:", { outletId, pinCode: pinCode ? "***" : "missing" });
+        console.error("[PIN Verify] Request:", { outletId, pinCode: pinCode ? "***" : "missing" });
 
         if (!outletId || !pinCode) {
             return NextResponse.json(
@@ -38,6 +39,8 @@ export async function POST(request: Request) {
                     name: posSchema.employees.name,
                     // Prefer dynamic role name, fallback to legacy role string
                     roleName: posSchema.roles.name,
+                    roleId: posSchema.employees.roleId, // Added roleId
+                    permissions: posSchema.roles.permissions,
                     legacyRole: posSchema.employees.role,
                     isActive: posSchema.employees.isActive,
                 })
@@ -60,6 +63,8 @@ export async function POST(request: Request) {
                     id: posSchema.employees.id,
                     name: posSchema.employees.name,
                     roleName: posSchema.roles.name,
+                    roleId: posSchema.employees.roleId, // Added roleId
+                    permissions: posSchema.roles.permissions,
                     legacyRole: posSchema.employees.role,
                     isActive: posSchema.employees.isActive,
                 })
@@ -83,17 +88,38 @@ export async function POST(request: Request) {
             );
         }
 
-        console.log("[PIN Verify] Success:", employee.name);
+        console.log("[PIN Verify] RAW DB RESULT:", JSON.stringify(employee, null, 2));
 
-        return NextResponse.json({
+        let parsedPermissions: string[] = [];
+        try {
+            if (typeof employee.permissions === 'string') {
+                parsedPermissions = JSON.parse(employee.permissions);
+            } else if (Array.isArray(employee.permissions)) {
+                parsedPermissions = employee.permissions;
+            }
+        } catch (e) {
+            console.error("[PIN Verify] Failed to parse permissions:", e);
+        }
+
+        console.log("[PIN Verify] Success:", { name: employee.name, roleId: employee.roleId, permsCount: parsedPermissions.length });
+
+        const finalResponse = {
             success: true,
             employee: {
                 id: employee.id,
                 name: employee.name,
+                roleId: employee.roleId, // Included in Response
                 // Use dynamic role name if available, otherwise legacy
                 role: employee.roleName || employee.legacyRole,
+                permissions: parsedPermissions,
+                _debug_hit_at: new Date().toLocaleTimeString(), // VISUAL PROOF
+                _server_tag: "LOCAL_V4"
             },
-        });
+        };
+
+        console.error("!!! VERIFY PIN - FINAL RESPONSE !!!", JSON.stringify(finalResponse, null, 2));
+
+        return NextResponse.json(finalResponse);
     } catch (error) {
         console.error("Error verifying PIN:", error);
         return NextResponse.json(

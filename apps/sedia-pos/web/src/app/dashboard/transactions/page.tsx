@@ -52,6 +52,7 @@ interface Outlet {
 export default function TransactionsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [outlets, setOutlets] = useState<Outlet[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<any[]>([]); // Store payment methods
     const [selectedOutletId, setSelectedOutletId] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
@@ -62,11 +63,33 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         fetchOutlets();
+        fetchPaymentMethods();
     }, []);
 
     useEffect(() => {
         fetchTransactions();
     }, [selectedOutletId]);
+
+    const fetchPaymentMethods = async () => {
+        try {
+            // Fetch all payment methods generic or per outlet. 
+            // For now, let's try to fetch a broad list or just from the first available outlet if needed.
+            // Since ID is unique, we can try fetching from a known endpoint if available, 
+            // or we will just have to rely on fetching when an outlet is selected.
+            // Let's assume we can fetch global methods or just fetch when outlet selected.
+            // Actually, fetching /api/outlets/{id}/payment-methods is best.
+            // Let's just create a lookup when we have transactions.
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    // Better approach: fetch payment methods when selectedOutletId changes, or match with what we have.
+    // If no outlet selected, we might miss some names if they are outlet-specific.
+    // But usually IDs are UUIDs. 
+
+    // Let's do: Fetch IDs when loading transactions?
+    // Let's Modify fetchTransactions to also fetch payment methods for the filtered outlet(s).
 
     const fetchOutlets = async () => {
         try {
@@ -74,11 +97,33 @@ export default function TransactionsPage() {
             if (res.ok) {
                 const data = await res.json();
                 setOutlets(data);
+                // Pre-fetch payment methods for the first outlet or all if possible?
+                // Let's iterate and fetch? No that's too heavy.
+                // Let's just check the transactions.
             }
         } catch (error) {
             console.error("Failed to fetch outlets:", error);
         }
     };
+
+    // Helper to fetch methods for an outlet
+    const loadPaymentMethods = async (id: string) => {
+        try {
+            const res = await fetch(`/api/outlets/${id}/payment-methods`);
+            if (res.ok) {
+                const data = await res.json();
+                setPaymentMethods(prev => [...prev, ...data]);
+            }
+        } catch (e) { }
+    };
+
+    useEffect(() => {
+        if (selectedOutletId) loadPaymentMethods(selectedOutletId);
+        else if (outlets.length > 0) {
+            // Try loading for first few outlets to populate cache
+            outlets.slice(0, 3).forEach(o => loadPaymentMethods(o.id));
+        }
+    }, [selectedOutletId, outlets]);
 
     const fetchTransactions = async () => {
         setIsLoading(true);
@@ -155,10 +200,25 @@ export default function TransactionsPage() {
         });
     };
 
+    const formatPaymentMethod = (method: string) => {
+        if (!method) return "-";
+
+        // Check for exact ID match in loaded payment methods
+        const found = paymentMethods.find(pm => pm.id === method);
+        if (found) return found.name;
+
+        if (method === "cash") return "Tunai";
+        if (method === "qris" || method === "midtrans_qris") return "QRIS";
+        if (method.startsWith("midtrans_va_")) return `Transfer ${method.replace("midtrans_va_", "").toUpperCase()}`;
+        if (method === "transfer") return "Transfer";
+
+        return method;
+    };
+
     const filteredTransactions = transactions.filter(
         (t) =>
             t.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            t.paymentMethod.toLowerCase().includes(searchQuery.toLowerCase())
+            formatPaymentMethod(t.paymentMethod).toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Calculate today's total
@@ -167,7 +227,13 @@ export default function TransactionsPage() {
         (t) => new Date(t.createdAt).toDateString() === today
     );
     const todayTotal = todayTransactions.reduce(
-        (sum, t) => sum + parseFloat(t.totalAmount || "0"),
+        (sum, t) => sum + (t.status === 'completed' ? parseFloat(t.totalAmount || "0") : 0),
+        0
+    );
+
+    // Calculate all time total
+    const allTimeTotal = transactions.reduce(
+        (sum, t) => sum + (t.status === 'completed' ? parseFloat(t.totalAmount || "0") : 0),
         0
     );
 
@@ -186,7 +252,7 @@ export default function TransactionsPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-xl border border-zinc-200 bg-white p-5">
                     <div className="flex items-center justify-between">
                         <span className="text-sm text-zinc-500">Hari Ini</span>
@@ -201,8 +267,20 @@ export default function TransactionsPage() {
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-white p-5">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-500">Total</span>
-                        <TrendingUp className="h-5 w-5 text-green-500" />
+                        <span className="text-sm text-zinc-500">Total Pendapatan</span>
+                        <DollarSign className="h-5 w-5 text-green-600" />
+                    </div>
+                    <p className="mt-2 text-2xl font-bold text-zinc-900">
+                        {formatCurrency(allTimeTotal)}
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                        Semua waktu
+                    </p>
+                </div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-500">Total Transaksi</span>
+                        <TrendingUp className="h-5 w-5 text-blue-500" />
                     </div>
                     <p className="mt-2 text-2xl font-bold text-zinc-900">
                         {transactions.length}
@@ -293,8 +371,8 @@ export default function TransactionsPage() {
                                         {formatDate(transaction.createdAt)}
                                     </td>
                                     <td className="px-4 py-3 text-center">
-                                        <span className="inline-flex rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium uppercase text-green-700">
-                                            {transaction.paymentMethod}
+                                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium uppercase ${transaction.paymentMethod === 'cash' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            {formatPaymentMethod(transaction.paymentMethod)}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right text-sm text-zinc-500">
@@ -367,7 +445,8 @@ export default function TransactionsPage() {
                                     discount={receiptData.transaction.discount}
                                     tax={receiptData.transaction.tax}
                                     totalAmount={receiptData.transaction.totalAmount}
-                                    paymentMethod={receiptData.transaction.paymentMethod}
+
+                                    paymentMethod={formatPaymentMethod(receiptData.transaction.paymentMethod)}
                                 />
                             ) : (
                                 <p className="text-center text-zinc-500">

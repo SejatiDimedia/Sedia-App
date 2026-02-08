@@ -14,6 +14,20 @@ export const localProducts = sqliteTable("products", {
     syncedAt: integer("synced_at", { mode: "timestamp" }),
 });
 
+// Local Product Variants Table
+export const localProductVariants = sqliteTable("product_variants", {
+    id: text("id").primaryKey(),
+    productId: text("product_id")
+        .notNull()
+        .references(() => localProducts.id),
+    name: text("name").notNull(),
+    sku: text("sku"),
+    priceAdjustment: text("price_adjustment").notNull(), // stored as string to match backend numeric
+    stock: integer("stock").default(0),
+    isActive: integer("is_active", { mode: "boolean" }).default(true),
+    syncedAt: integer("synced_at", { mode: "timestamp" }),
+});
+
 // Local Customers Table
 export const localCustomers = sqliteTable("customers", {
     id: text("id").primaryKey(),
@@ -49,6 +63,7 @@ export const localTransactionItems = sqliteTable("transaction_items", {
     productId: text("product_id")
         .notNull()
         .references(() => localProducts.id),
+    variantId: text("variant_id"), // Nullable
     quantity: integer("quantity").notNull(),
     unitPrice: real("unit_price").notNull(),
     subtotal: real("subtotal").notNull(),
@@ -67,6 +82,7 @@ export const localTransactionPayments = sqliteTable("transaction_payments", {
 
 // Export types for TypeScript
 export type LocalProduct = typeof localProducts.$inferSelect;
+export type LocalProductVariant = typeof localProductVariants.$inferSelect;
 export type LocalCustomer = typeof localCustomers.$inferSelect;
 export type LocalTransaction = typeof localTransactions.$inferSelect;
 export type LocalTransactionItem = typeof localTransactionItems.$inferSelect;

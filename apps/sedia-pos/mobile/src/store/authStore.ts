@@ -8,7 +8,12 @@ interface User {
     id: string;
     email: string;
     name: string;
+    role?: string;
+    roleId?: string | null;
+    permissions?: string[];
     image?: string;
+    _debug_perms?: string;
+    _debug_sync?: string;
 }
 
 interface AuthState {
@@ -59,6 +64,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Origin': API_URL.replace('/api', ''),
+                    'Referer': API_URL.replace('/api', ''),
                 },
                 credentials: 'include',
                 body: JSON.stringify({ email, password }),
@@ -80,7 +87,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             // Exhaustive token extraction for BetterAuth
             const token = data.session?.token || data.token || data.sessionToken || data.idToken;
-            const user = data.user;
+            const user = {
+                ...data.user,
+                role: data.session?.user?.role || data.user?.role,
+                roleId: data.session?.user?.roleId || data.user?.roleId,
+                permissions: data.session?.user?.permissions || data.user?.permissions || [],
+                _debug_perms: data.session?.user?._debug_perms || data.user?._debug_perms,
+                _debug_sync: data.session?.user?._debug_sync || data.user?._debug_sync
+            };
 
             if (!token) {
                 console.error("[AuthStore] No token found in successful login response. Data keys:", Object.keys(data));
@@ -89,6 +103,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             console.log("[AuthStore] Login successful, token acquired");
             await saveToken(token);
+
+            // Fetch Full Profile immediately (Force Sync)
+            try {
+                const profileRes = await fetch(`${API_URL}/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Origin': API_URL.replace('/api', ''),
+                    },
+                });
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    if (profileData.user) {
+                        // Merge profile data (roleId, permissions, etc)
+                        Object.assign(user, profileData.user);
+                        console.log("[AuthStore] Initial profile synced via /api/profile");
+                    }
+                }
+            } catch (e) {
+                console.warn("[AuthStore] Failed to sync profile on login:", e);
+            }
+
             set({ user, token, isLoading: false });
         } catch (error: any) {
             console.error("[AuthStore] Login error:", error);
@@ -104,6 +139,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Origin': API_URL.replace('/api', ''),
+                    'Referer': API_URL.replace('/api', ''),
                 },
                 body: JSON.stringify({ name, email, password }),
             });
@@ -143,16 +180,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         try {
             const token = await getToken();
             if (token) {
+                // 1. Check Session (Basic Auth)
                 const response = await fetch(`${API_URL}/auth/get-session`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Origin': API_URL.replace('/api', ''),
+                        'Referer': API_URL.replace('/api', ''),
                     },
                     credentials: 'include'
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    set({ token, user: data.user });
+                    let sessionUser = {
+                        ...data.user,
+                        role: data.session?.user?.role || data.user?.role
+                    };
+
+                    // 2. Fetch Full Profile (permissions included)
+                    try {
+                        const profileRes = await fetch(`${API_URL}/profile`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Origin': API_URL.replace('/api', ''),
+                            },
+                        });
+                        if (profileRes.ok) {
+                            const profileData = await profileRes.json();
+                            if (profileData.user) {
+                                sessionUser = { ...sessionUser, ...profileData.user };
+                                console.log("[AuthStore] Profile synced via /api/profile");
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("[AuthStore] Failed to sync profile:", e);
+                    }
+
+                    set({ token, user: sessionUser });
                 } else {
                     console.log("[AuthStore] Session expired or invalid");
                     await removeToken();

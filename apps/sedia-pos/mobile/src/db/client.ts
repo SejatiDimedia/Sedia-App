@@ -13,6 +13,18 @@ export interface LocalProduct {
     imageUrl?: string;
     isActive: boolean;
     syncedAt?: Date;
+    variants?: LocalProductVariant[];
+}
+
+export interface LocalProductVariant {
+    id: string;
+    productId: string;
+    name: string;
+    sku?: string | null;
+    priceAdjustment: string;
+    stock: number;
+    isActive: boolean;
+    syncedAt?: Date;
 }
 
 export interface LocalCustomer {
@@ -52,6 +64,7 @@ export interface LocalTransaction {
 // In-memory storage for web platform
 const memoryDb = {
     products: new Map<string, LocalProduct>(),
+    variants: new Map<string, LocalProductVariant>(),
     customers: new Map<string, LocalCustomer>(),
     transactions: new Map<string, LocalTransaction>(),
 };
@@ -60,16 +73,41 @@ const memoryDb = {
 export const db = {
     products: {
         getAll: async (): Promise<LocalProduct[]> => {
-            return Array.from(memoryDb.products.values());
+            const products = Array.from(memoryDb.products.values());
+            const variants = Array.from(memoryDb.variants.values());
+            return products.map(p => ({
+                ...p,
+                variants: variants.filter(v => v.productId === p.id)
+            }));
         },
         getById: async (id: string): Promise<LocalProduct | undefined> => {
-            return memoryDb.products.get(id);
+            const product = memoryDb.products.get(id);
+            if (!product) return undefined;
+            const variants = Array.from(memoryDb.variants.values()).filter(v => v.productId === id);
+            return {
+                ...product,
+                variants
+            };
         },
         upsert: async (product: LocalProduct): Promise<void> => {
             memoryDb.products.set(product.id, product);
         },
         clear: async (): Promise<void> => {
             memoryDb.products.clear();
+        },
+    },
+    productVariants: {
+        getAll: async (): Promise<LocalProductVariant[]> => {
+            return Array.from(memoryDb.variants.values());
+        },
+        getByProductId: async (productId: string): Promise<LocalProductVariant[]> => {
+            return db.productVariants.getAll().then(all => all.filter(v => v.productId === productId));
+        },
+        upsert: async (variant: LocalProductVariant): Promise<void> => {
+            memoryDb.variants.set(variant.id, variant);
+        },
+        clear: async (): Promise<void> => {
+            memoryDb.variants.clear();
         },
     },
     transactions: {

@@ -58,6 +58,7 @@ export async function GET(
                 quantity: item.quantity,
                 price: parseFloat(item.price || "0"),
                 total: parseFloat(item.total || "0"),
+                variant: item.variantName || undefined,
             })),
             outlet: outlet ? {
                 name: outlet.name,

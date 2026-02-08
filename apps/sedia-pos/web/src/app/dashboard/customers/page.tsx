@@ -13,6 +13,8 @@ import {
     Star,
     Coins,
 } from "lucide-react";
+import ConfirmationModal from "@/components/confirmation-modal";
+import { toast } from "react-hot-toast";
 
 interface Customer {
     id: string;
@@ -48,6 +50,18 @@ export default function CustomersPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [memberTiers, setMemberTiers] = useState<MemberTier[]>([]);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: "primary" | "danger" | "warning";
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+    });
 
     // Form state
     const [formName, setFormName] = useState("");
@@ -104,6 +118,15 @@ export default function CustomersPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const showConfirm = (config: Omit<typeof confirmState, "isOpen">) => {
+        setConfirmState({ ...config, isOpen: true });
+    };
+
+    const handleConfirm = () => {
+        confirmState.onConfirm();
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
     };
 
     const handleOpenModal = (customer?: Customer) => {
@@ -176,14 +199,25 @@ export default function CustomersPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Yakin ingin menghapus member ini?")) return;
-
-        try {
-            await fetch(`/api/customers/${id}`, { method: "DELETE" });
-            fetchCustomers();
-        } catch (error) {
-            console.error("Failed to delete customer:", error);
-        }
+        showConfirm({
+            title: "Hapus Member",
+            message: "Apakah Anda yakin ingin menghapus member ini? Data poin dan riwayat belanja akan tetap tersimpan di sistem namun member tidak lagi terdaftar.",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+                    if (res.ok) {
+                        toast.success("Member berhasil dihapus");
+                        fetchCustomers();
+                    } else {
+                        toast.error("Gagal menghapus member");
+                    }
+                } catch (error) {
+                    console.error("Failed to delete customer:", error);
+                    toast.error("Terjadi kesalahan sistem");
+                }
+            }
+        });
     };
 
     const formatCurrency = (value: string | number) => {
@@ -447,6 +481,16 @@ export default function CustomersPage() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={confirmState.isOpen}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                isLoading={isSaving}
+            />
         </div>
     );
 }

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Settings, Star, Gift, Coins, Loader2, Save, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { getOutlets } from "@/actions/outlets";
+import ConfirmationModal from "@/components/confirmation-modal";
+import { toast } from "react-hot-toast";
 
 interface Tier {
     id: string;
@@ -36,6 +38,18 @@ export default function LoyaltySettingsPage() {
     const [tiers, setTiers] = useState<Tier[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: "primary" | "danger" | "warning";
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+    });
 
     // New tier form
     const [showNewTier, setShowNewTier] = useState(false);
@@ -86,6 +100,15 @@ export default function LoyaltySettingsPage() {
         }
     };
 
+    const showConfirm = (config: Omit<typeof confirmState, "isOpen">) => {
+        setConfirmState({ ...config, isOpen: true });
+    };
+
+    const handleConfirm = () => {
+        confirmState.onConfirm();
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+    };
+
     const saveSettings = async () => {
         setIsSaving(true);
         try {
@@ -94,10 +117,10 @@ export default function LoyaltySettingsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ outletId: selectedOutletId, ...settings }),
             });
-            alert("Pengaturan berhasil disimpan!");
+            toast.success("Pengaturan berhasil disimpan!");
         } catch (error) {
             console.error("Failed to save settings:", error);
-            alert("Gagal menyimpan pengaturan");
+            toast.error("Gagal menyimpan pengaturan");
         } finally {
             setIsSaving(false);
         }
@@ -105,7 +128,7 @@ export default function LoyaltySettingsPage() {
 
     const createTier = async () => {
         if (!newTier.name) {
-            alert("Nama tier harus diisi");
+            toast.error("Nama tier harus diisi");
             return;
         }
 
@@ -135,13 +158,21 @@ export default function LoyaltySettingsPage() {
     };
 
     const deleteTier = async (tierId: string) => {
-        if (!confirm("Hapus tier ini?")) return;
-        try {
-            await fetch(`/api/loyalty/tiers/${tierId}`, { method: "DELETE" });
-            setTiers(tiers.filter((t) => t.id !== tierId));
-        } catch (error) {
-            console.error("Failed to delete tier:", error);
-        }
+        showConfirm({
+            title: "Hapus Tier",
+            message: "Apakah Anda yakin ingin menghapus tier loyalty ini? Member yang berada di tier ini akan kembali ke tier default.",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await fetch(`/api/loyalty/tiers/${tierId}`, { method: "DELETE" });
+                    setTiers(tiers.filter((t) => t.id !== tierId));
+                    toast.success("Tier berhasil dihapus");
+                } catch (error) {
+                    console.error("Failed to delete tier:", error);
+                    toast.error("Gagal menghapus tier");
+                }
+            }
+        });
     };
 
     const formatCurrency = (value: number) =>
@@ -424,6 +455,16 @@ export default function LoyaltySettingsPage() {
                     )}
                 </div>
             </div>
-        </div>
+
+            <ConfirmationModal
+                isOpen={confirmState.isOpen}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                isLoading={isSaving}
+            />
+        </div >
     );
 }

@@ -18,6 +18,8 @@ export const outlets = sediaPos.table("outlets", {
     address: text("address"),
     phone: text("phone"),
     qrisImageUrl: text("qris_image_url"),
+    primaryColor: text("primary_color").default("#2e6a69"),
+    secondaryColor: text("secondary_color").default("#f2b30c"),
     ownerId: text("owner_id").notNull(), // Links to authSchema.user
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
@@ -29,12 +31,20 @@ export const paymentMethods = sediaPos.table("payment_methods", {
     name: text("name").notNull(), // e.g., "Cash", "QRIS", "Transfer BCA"
     type: text("type").notNull().default("cash"), // 'cash', 'qris', 'transfer', 'ewallet', 'card'
     isActive: boolean("is_active").default(true),
+    isManual: boolean("is_manual").default(false),
+    bankName: text("bank_name"), // Legacy single field
+    accountNumber: text("account_number"), // Legacy single field
+    accountHolder: text("account_holder"), // Legacy single field
+    bankAccounts: jsonb("bank_accounts").$type<{ bankName: string; accountNumber: string; accountHolder: string }[]>(),
+    qrisData: text("qris_data"),
+    qrisImageUrl: text("qris_image_url"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const categories = sediaPos.table("categories", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    outletId: text("outlet_id").notNull().references(() => outlets.id),
+    ownerId: text("owner_id").notNull(), // Master data owned by user/owner
+    outletId: text("outlet_id").references(() => outlets.id), // Nullable = shared/master
     name: text("name").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
@@ -53,6 +63,7 @@ export const products = sediaPos.table("products", {
     trackStock: boolean("track_stock").default(true),
     imageUrl: text("image_url"),
     isActive: boolean("is_active").default(true),
+    isDeleted: boolean("is_deleted").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
 });
@@ -72,6 +83,7 @@ export const inventoryLogs = sediaPos.table("inventory_logs", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     outletId: text("outlet_id").notNull().references(() => outlets.id),
     productId: text("product_id").notNull().references(() => products.id),
+    variantId: text("variant_id").references(() => productVariants.id),
     type: text("type").notNull(), // 'in', 'out', 'adjustment', 'sale', 'refund'
     quantity: integer("quantity").notNull(), // Positive or negative
     notes: text("notes"),
@@ -164,6 +176,8 @@ export const transactionItems = sediaPos.table("transaction_items", {
     productId: text("product_id").references(() => products.id),
     productName: text("product_name").notNull(), // Store name snapshop in case product is deleted
     productSku: text("product_sku"),
+    variantId: text("variant_id"),
+    variantName: text("variant_name"),
 
     quantity: integer("quantity").notNull(),
     price: numeric("price", { precision: 15, scale: 2 }).notNull(), // Price at the time of sale
@@ -224,44 +238,66 @@ export const shifts = sediaPos.table("shifts", {
     notes: text("notes"), // Catatan saat closing
 });
 
-export const heldOrders = sediaPos.table("held_orders", {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    outletId: text("outlet_id").notNull().references(() => outlets.id),
-    cashierId: text("cashier_id"),
-    customerId: text("customer_id").references(() => customers.id),
-    customerName: text("customer_name"), // Snapshot for display
-    customerPhone: text("customer_phone"), // Snapshot for display
-    items: text("items").notNull(), // JSON array of cart items
-    notes: text("notes"),
-    totalAmount: numeric("total_amount", { precision: 15, scale: 2 }).notNull(),
-    status: text("status").notNull().default("active"), // 'active', 'completed', 'cancelled'
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
-});
 
-export const activityLogs = sediaPos.table("activity_logs", {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    outletId: text("outlet_id").references(() => outlets.id),
-    userId: text("user_id").notNull(),
-    userName: text("user_name"),
-    action: text("action").notNull(), // 'CREATE', 'UPDATE', 'DELETE', 'VOID', 'LOGIN', 'LOGOUT'
-    entityType: text("entity_type").notNull(), // 'PRODUCT', 'TRANSACTION', 'SHIFT', 'EMPLOYEE', 'OUTLET', 'CATEGORY'
-    entityId: text("entity_id"),
-    description: text("description").notNull(),
-    metadata: jsonb("metadata"), // Structured data about the change
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+// ============================================
+// Tax Settings
+// ============================================
 
 export const taxSettings = sediaPos.table("tax_settings", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     outletId: text("outlet_id").notNull().references(() => outlets.id).unique(),
-    name: text("name").notNull().default("PPN"), // e.g., "PPN", "Tax", "Service Charge"
-    rate: numeric("rate", { precision: 5, scale: 2 }).notNull().default("0"), // e.g., 11.00
+    name: text("name").notNull().default("PPN"),
+    rate: numeric("rate", { precision: 5, scale: 2 }).notNull().default("0"),
     type: text("type").notNull().default("percentage"), // 'percentage', 'fixed'
     isEnabled: boolean("is_enabled").notNull().default(false),
-    isInclusive: boolean("is_inclusive").notNull().default(false), // true: price includes tax, false: tax added on top
+    isInclusive: boolean("is_inclusive").notNull().default(false), // Harga sudah termasuk pajak
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+
+// ============================================
+// Suppliers & Purchasing
+// ============================================
+
+export const suppliers = sediaPos.table("suppliers", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id").notNull().references(() => outlets.id),
+    name: text("name").notNull(),
+    contactPerson: text("contact_person"),
+    email: text("email"),
+    phone: text("phone"),
+    address: text("address"),
+    notes: text("notes"),
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+export const purchaseOrders = sediaPos.table("purchase_orders", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id").notNull().references(() => outlets.id),
+    supplierId: text("supplier_id").notNull().references(() => suppliers.id),
+    invoiceNumber: text("invoice_number").notNull(),
+    status: text("status", { enum: ["draft", "ordered", "received", "cancelled"] }).default("draft").notNull(),
+    totalAmount: integer("total_amount").notNull().default(0),
+    orderDate: timestamp("order_date").defaultNow(),
+    expectedDate: timestamp("expected_date"),
+    receivedDate: timestamp("received_date"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+export const purchaseOrderItems = sediaPos.table("purchase_order_items", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    purchaseOrderId: text("purchase_order_id").notNull().references(() => purchaseOrders.id, { onDelete: 'cascade' }),
+    productId: text("product_id").notNull().references(() => products.id),
+    variantId: text("variant_id").references(() => productVariants.id), // Nullable for product without variant
+    quantity: integer("quantity").notNull(),
+    costPrice: integer("cost_price").notNull(), // Cost per unit
+    subtotal: integer("subtotal").notNull(), // quantity * costPrice
+    createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 
@@ -279,6 +315,27 @@ export const outletsRelations = relations(outlets, ({ one, many }) => ({
     employees: many(employees),
     roles: many(roles),
     employeeOutlets: many(employeeOutlets),
+    taxSettings: one(taxSettings, {
+        fields: [outlets.id],
+        references: [taxSettings.outletId],
+    }),
+    suppliers: many(suppliers),
+    purchaseOrders: many(purchaseOrders),
+}));
+
+export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
+    outlet: one(outlets, {
+        fields: [suppliers.outletId],
+        references: [outlets.id],
+    }),
+    purchaseOrders: many(purchaseOrders),
+}));
+
+export const taxSettingsRelations = relations(taxSettings, ({ one }) => ({
+    outlet: one(outlets, {
+        fields: [taxSettings.outletId],
+        references: [outlets.id],
+    }),
 }));
 
 export const rolesRelations = relations(roles, ({ one, many }) => ({
@@ -307,6 +364,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
         references: [categories.id],
     }),
     logs: many(inventoryLogs),
+    variants: many(productVariants),
 }));
 
 export const transactionsRelations = relations(transactions, ({ one, many }) => ({
@@ -354,7 +412,7 @@ export const employeesRelations = relations(employees, ({ one, many }) => ({
         fields: [employees.outletId],
         references: [outlets.id],
     }),
-    role: one(roles, {
+    roleData: one(roles, {
         fields: [employees.roleId],
         references: [roles.id],
     }),
@@ -376,6 +434,21 @@ export const employeeOutletsRelations = relations(employeeOutlets, ({ one }) => 
 // Stock Opname (Physical Stock Counting)
 // ============================================
 
+export const heldOrders = sediaPos.table("held_orders", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id").notNull().references(() => outlets.id),
+    cashierId: text("cashier_id"),
+    customerId: text("customer_id").references(() => customers.id),
+    customerName: text("customer_name"), // Snapshot for display
+    customerPhone: text("customer_phone"), // Snapshot for display
+    items: text("items").notNull(), // JSON array of cart items
+    notes: text("notes"),
+    totalAmount: numeric("total_amount", { precision: 15, scale: 2 }).notNull(),
+    status: text("status").notNull().default("active"), // 'active', 'completed', 'cancelled'
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
 export const stockOpnames = sediaPos.table("stock_opnames", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     outletId: text("outlet_id").notNull().references(() => outlets.id),
@@ -391,10 +464,37 @@ export const stockOpnameItems = sediaPos.table("stock_opname_items", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     opnameId: text("opname_id").notNull().references(() => stockOpnames.id, { onDelete: "cascade" }),
     productId: text("product_id").notNull().references(() => products.id),
+    variantId: text("variant_id").references(() => productVariants.id),
     systemStock: integer("system_stock").notNull().default(0), // Snapshot at creation
     actualStock: integer("actual_stock"), // Input by user
     difference: integer("difference"), // actual - system
     notes: text("notes"),
+});
+
+export const backups = sediaPos.table("backups", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id").notNull().references(() => outlets.id),
+    userId: text("user_id").notNull(),
+    fileName: text("file_name").notNull(),
+    fileUrl: text("file_url"),
+    fileSize: integer("file_size"),
+    type: text("type").notNull(), // 'manual', 'auto', 'export'
+    status: text("status").notNull().default("completed"), // 'pending', 'completed', 'failed'
+    metadata: text("metadata"), // JSON string for details like table counts
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const activityLogs = sediaPos.table("activity_logs", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id"), // Can be null for system-wide/owner activities
+    userId: text("user_id").notNull(),
+    userName: text("user_name"),
+    action: text("action").notNull(), // 'CREATE', 'UPDATE', 'DELETE', etc.
+    entityType: text("entity_type").notNull(), // 'PRODUCT', 'TRANSACTION', etc.
+    entityId: text("entity_id"),
+    description: text("description").notNull(),
+    metadata: text("metadata"), // JSON string for detailed changes
+    createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const stockOpnameItemsRelations = relations(stockOpnameItems, ({ one }) => ({
@@ -427,6 +527,13 @@ export const heldOrdersRelations = relations(heldOrders, ({ one }) => ({
     }),
 }));
 
+export const backupsRelations = relations(backups, ({ one }) => ({
+    outlet: one(outlets, {
+        fields: [backups.outletId],
+        references: [outlets.id],
+    }),
+}));
+
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
     outlet: one(outlets, {
         fields: [activityLogs.outletId],
@@ -434,9 +541,36 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
     }),
 }));
 
-export const taxSettingsRelations = relations(taxSettings, ({ one }) => ({
+export const productVariantsRelations = relations(productVariants, ({ one }) => ({
+    product: one(products, {
+        fields: [productVariants.productId],
+        references: [products.id],
+    }),
+}));
+
+export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
     outlet: one(outlets, {
-        fields: [taxSettings.outletId],
+        fields: [purchaseOrders.outletId],
         references: [outlets.id],
+    }),
+    supplier: one(suppliers, {
+        fields: [purchaseOrders.supplierId],
+        references: [suppliers.id],
+    }),
+    items: many(purchaseOrderItems),
+}));
+
+export const purchaseOrderItemsRelations = relations(purchaseOrderItems, ({ one }) => ({
+    purchaseOrder: one(purchaseOrders, {
+        fields: [purchaseOrderItems.purchaseOrderId],
+        references: [purchaseOrders.id],
+    }),
+    product: one(products, {
+        fields: [purchaseOrderItems.productId],
+        references: [products.id],
+    }),
+    variant: one(productVariants, {
+        fields: [purchaseOrderItems.variantId],
+        references: [productVariants.id],
     }),
 }));

@@ -38,13 +38,7 @@ export default function PrintReceiptPage() {
                 date={transaction.createdAt || new Date().toLocaleDateString('id-ID')}
                 cashierName="Kasir"
                 customerName={customer?.name}
-                items={transaction.items.map((i: any) => ({
-                    name: i.name,
-                    quantity: i.quantity,
-                    price: parseFloat(i.price),
-                    total: parseFloat(i.price) * i.quantity,
-                    variant: i.variant // if available
-                }))}
+                items={transaction.items || []}
                 subtotal={transaction.subtotal}
                 tax={transaction.tax}
                 discount={transaction.discount}

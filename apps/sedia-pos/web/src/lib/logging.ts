@@ -3,8 +3,8 @@ import { activityLogs } from "./schema/sedia-pos";
 import { auth } from "./auth";
 import { headers } from "next/headers";
 
-export type ActivityAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'VOID' | 'LOGIN' | 'LOGOUT' | 'ADJUST';
-export type ActivityEntityType = 'PRODUCT' | 'TRANSACTION' | 'SHIFT' | 'EMPLOYEE' | 'OUTLET' | 'CATEGORY' | 'CUSTOMER';
+export type ActivityAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'VOID' | 'LOGIN' | 'LOGOUT' | 'ADJUST' | 'BACKUP' | 'RESTORE';
+export type ActivityEntityType = 'PRODUCT' | 'TRANSACTION' | 'SHIFT' | 'EMPLOYEE' | 'OUTLET' | 'CATEGORY' | 'CUSTOMER' | 'SETTINGS';
 
 interface LogOptions {
     outletId?: string;

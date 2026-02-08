@@ -111,6 +111,14 @@ Sistem membedakan hak akses berdasarkan 3 role utama untuk keamanan operasional:
     *   Cetak Struk.
     *   **Batasan:** Tidak bisa hapus item yang sudah dipesan (perlu approval), tidak bisa lihat laporan profit.
 
+#### 4. Granular Permissions (Custom Roles) 🔐
+Sistem mendukung "Dynamic Permissions" untuk kustomisasi akses lebih detail:
+*   `manage_suppliers`: Akses penuh ke modul Supplier.
+*   `manage_purchase_orders`: Akses penuh ke modul Purchase Orders & Receiving.
+*   `manage_stock_opname`: Akses ke fitur Stock Opname.
+*   `view_reports`: Akses melihat laporan.
+*   `access_pos`: Akses ke halaman Kasir.
+
 ---
 
 ## 4. Struktur Database & Arsitektur
@@ -207,7 +215,12 @@ Sesuai aturan `context.md`, semua data disimpan dalam satu database Neon namun d
 | **Phase 19** | **Hold Order** - Save incomplete transactions, Resume later | ✅ Done |
 | **Phase 20** | **Deployment & Production** - Vercel deploy, Environment configs, Final testing | ✅ Done |
 | **Phase 21** | **Audit Trail & Activity Log** - User activity tracking, Security logs, Change history | ✅ Done |
+| **Phase 22** | **Supplier & Purchase Order Management** - Supplier database, PO creation, Stock receipt | ✅ Done |
 | **Phase 24** | **Tax Management** - Tax configuration (PPN/PPH), Auto-calculation, Tax reports | ✅ Done |
+| **Phase 26** | **Backup & Restore** - Data backup, Restore wizard, Export/Import data | ✅ Done |
+| **Phase 27** | **Dynamic Branding & Modern UI** - Custom colors per outlet, Premium Dashboard, Real-time Preview | ✅ Done |
+| **Phase 28** | **Advanced Shift Detail** - Accurate stock sales tracking via transaction items | ✅ Done |
+| **Phase 29** | **Supplier & Purchase Order Management** - Supplier database, PO creation, Stock receipt | ✅ Done |
 
 ---
 
@@ -215,11 +228,11 @@ Sesuai aturan `context.md`, semua data disimpan dalam satu database Neon namun d
 
 | Phase | Fokus Pengembangan | Prioritas |
 | :--- | :--- | :--- |
-| **Phase 22** | **Supplier & Purchase Order Management** - Supplier database, PO creation, Stock receipt | 🔥 High |
+
 | **Phase 23** | **Return & Refund Management** - Product returns, Refund processing, Store credit | 🔥 High |
 | **Phase 25** | **Promotion & Campaign** - Automatic discounts, Buy X Get Y, Voucher system | Medium |
-| **Phase 26** | **Backup & Restore** - Data backup, Restore wizard, Export/Import data | Medium |
-| **Phase 27** | **Advanced Analytics** - Sales prediction, Trend analysis, Customer insights | Low |
+| **Phase 29** | **Expense Tracking** - Non-transactional expenses for accurate Net Profit calculation | Medium |
+| **Phase 30** | **Advanced Analytics** - Sales prediction, Trend analysis, Customer insights | Low |
 | **Phase 28** | **Integration APIs** - Third-party integrations (Accounting, E-commerce, Marketplace) | Low |
 
 ---

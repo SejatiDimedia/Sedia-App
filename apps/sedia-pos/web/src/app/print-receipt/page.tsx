@@ -28,20 +28,21 @@ export default function PrintReceiptPage() {
     return (
         <div className="p-4 bg-white" style={{ width: '80mm', margin: '0 auto' }}>
             <ReceiptTemplate
-                outletName={data.outletName}
-                outletAddress={data.outletAddress}
-                outletPhone={data.outletPhone}
-                invoiceNumber={data.invoiceNumber || data.id}
-                date={data.createdAt}
-                items={data.items}
-                subtotal={data.subtotal}
-                tax={data.tax}
-                discount={data.discount}
-                total={data.totalAmount || data.total}
-                paymentMethod={data.paymentMethod}
-                cashierName={data.cashierName}
+                outletName={data.outlet?.name || data.outletName || "SediaPOS"}
+                outletAddress={data.outlet?.address || data.outletAddress}
+                outletPhone={data.outlet?.phone || data.outletPhone}
+                invoiceNumber={data.transaction?.invoiceNumber || data.invoiceNumber || data.id}
+                date={data.transaction?.createdAt || data.createdAt}
+                items={data.transaction?.items || data.items || []}
+                subtotal={data.transaction?.subtotal || data.subtotal || 0}
+                tax={data.transaction?.tax || data.tax || 0}
+                discount={data.transaction?.discount || data.discount || 0}
+                total={data.transaction?.totalAmount || data.totalAmount || data.total || 0}
+                paymentMethod={data.transaction?.paymentMethod || data.paymentMethod}
+                paymentDetails={data.transaction?.paymentDetails || data.paymentDetails}
+                cashierName={data.transaction?.cashierName || data.cashierName}
                 customerName={data.customer?.name || data.customerName}
-                pointsEarned={data.pointsEarned}
+                pointsEarned={data.transaction?.pointsEarned || data.pointsEarned}
             />
 
             <style jsx global>{`

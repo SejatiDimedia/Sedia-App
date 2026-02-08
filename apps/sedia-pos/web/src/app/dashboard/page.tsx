@@ -4,35 +4,99 @@ import {
     ShoppingCart,
     TrendingUp,
     Users,
+    ArrowRight,
+    AlertTriangle,
+    Clock
 } from "lucide-react";
 
 import { db, posSchema } from "@/lib/db"; // data access
-import { count, sum, eq, sql } from "drizzle-orm"; // utility
-// import { formatCurrency } from "@/lib/utils"; // assumed utility, or define inline
+import { inArray, count, sum, eq, and, desc, asc, lte } from "drizzle-orm"; // utility
+import { getOutlets } from "@/actions/outlets";
+import { DashboardFilter } from "@/components/dashboard-filter";
+import Link from "next/link";
 
-export default async function DashboardPage() {
-    // 1. Total Penjualan Hari Ini (Sum transactions.totalAmount where created_at is today)
-    // For simplicity, let's just get ALL time total for now, or check date. 
-    // SQLite/Postgres date functions vary. Let's do ALL TIME for simplicity first as requested.
-    // Actually, user asked for "Hari Ini" in UI. Let's try to filter if possible, or just show all time for now to ensure data flows.
-    // Let's stick to ALL TIME for stability, can refine to "Today" later.
+interface DashboardProps {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
 
-    const [salesStats] = await db
-        .select({
-            totalSales: sum(posSchema.transactions.totalAmount),
-            transactionCount: count(posSchema.transactions.id)
-        })
-        .from(posSchema.transactions)
-        .where(eq(posSchema.transactions.status, 'completed'));
+export default async function DashboardPage({ searchParams }: DashboardProps) {
+    const [outlets, params] = await Promise.all([
+        getOutlets(),
+        searchParams
+    ]);
 
-    const [productStats] = await db
-        .select({ count: count(posSchema.products.id) })
-        .from(posSchema.products)
-        .where(eq(posSchema.products.isActive, true));
+    const allowedOutletIds = outlets.map(o => o.id);
 
-    const [customerStats] = await db
-        .select({ count: count(posSchema.customers.id) })
-        .from(posSchema.customers);
+    // Determine which outlets to query
+    const selectedOutletId = typeof params.outletId === 'string' ? params.outletId : undefined;
+    let targetOutletIds = allowedOutletIds;
+
+    // If a specific outlet is selected AND the user has access to it
+    if (selectedOutletId && allowedOutletIds.includes(selectedOutletId)) {
+        targetOutletIds = [selectedOutletId];
+    }
+
+    let salesStats, productStats, customerStats;
+    let recentTransactions: any[] = [];
+    let lowStockProducts: any[] = [];
+
+    if (targetOutletIds.length > 0) {
+        [salesStats] = await db
+            .select({
+                totalSales: sum(posSchema.transactions.totalAmount),
+                transactionCount: count(posSchema.transactions.id)
+            })
+            .from(posSchema.transactions)
+            .where(
+                and(
+                    eq(posSchema.transactions.status, 'completed'),
+                    inArray(posSchema.transactions.outletId, targetOutletIds)
+                )
+            );
+
+        [productStats] = await db
+            .select({ count: count(posSchema.products.id) })
+            .from(posSchema.products)
+            .where(
+                and(
+                    eq(posSchema.products.isActive, true),
+                    inArray(posSchema.products.outletId, targetOutletIds)
+                )
+            );
+
+        [customerStats] = await db
+            .select({ count: count(posSchema.customers.id) })
+            .from(posSchema.customers)
+            .where(inArray(posSchema.customers.outletId, targetOutletIds));
+
+        // Fetch Recent Transactions
+        recentTransactions = await db.query.transactions.findMany({
+            where: and(
+                eq(posSchema.transactions.status, 'completed'),
+                inArray(posSchema.transactions.outletId, targetOutletIds)
+            ),
+            orderBy: [desc(posSchema.transactions.createdAt)],
+            limit: 5,
+            with: {
+                outlet: true
+            }
+        });
+
+        // Fetch Low Stock Products
+        lowStockProducts = await db.query.products.findMany({
+            where: and(
+                eq(posSchema.products.isActive, true),
+                eq(posSchema.products.trackStock, true),
+                lte(posSchema.products.stock, 5),
+                inArray(posSchema.products.outletId, targetOutletIds)
+            ),
+            orderBy: [asc(posSchema.products.stock)],
+            limit: 5,
+            with: {
+                outlet: true
+            }
+        });
+    }
 
     const totalSales = Number(salesStats?.totalSales || 0);
     const totalTransactions = Number(salesStats?.transactionCount || 0);
@@ -40,15 +104,18 @@ export default async function DashboardPage() {
     const totalCustomers = Number(customerStats?.count || 0);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* Page Header */}
-            <div>
-                <h1 className="text-2xl font-bold text-zinc-900">
-                    Dashboard
-                </h1>
-                <p className="text-sm text-zinc-500">
-                    Selamat datang di Sedia POS. Berikut ringkasan bisnis Anda (All Time).
-                </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-zinc-900">
+                        Dashboard
+                    </h1>
+                    <p className="text-sm text-zinc-500">
+                        Selamat datang di Sedia POS. Berikut ringkasan bisnis Anda.
+                    </p>
+                </div>
+                <DashboardFilter outlets={outlets} />
             </div>
 
             {/* Stats Grid */}
@@ -57,7 +124,7 @@ export default async function DashboardPage() {
                     title="Total Penjualan"
                     value={`Rp ${totalSales.toLocaleString('id-ID')}`}
                     icon={TrendingUp}
-                    trend="Total Pendapatan"
+                    trend={selectedOutletId ? "Outlet Terpilih" : "Semua Outlet"}
                     trendUp={true}
                     color="primary"
                 />
@@ -100,6 +167,122 @@ export default async function DashboardPage() {
                     <QuickActionButton icon={Package} label="Tambah Produk" href="/dashboard/products/new" color="secondary" />
                     <QuickActionButton icon={Users} label="Pelanggan Baru" href="/dashboard/customers/new" color="zinc" />
                     <QuickActionButton icon={LayoutDashboard} label="Laporan Harian" href="/dashboard/reports" color="zinc" />
+                </div>
+            </div>
+
+            {/* Detailed Info Grid */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Recent Transactions */}
+                <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                                <Clock className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-zinc-900">Transaksi Terakhir</h3>
+                                <p className="text-xs text-zinc-500">5 penjualan terbaru</p>
+                            </div>
+                        </div>
+                        <Link href="/dashboard/transactions" className="p-2 hover:bg-zinc-50 rounded-lg text-zinc-400 hover:text-zinc-600 transition-colors">
+                            <ArrowRight className="h-5 w-5" />
+                        </Link>
+                    </div>
+
+                    <div className="space-y-4">
+                        {recentTransactions.length === 0 ? (
+                            <div className="text-center py-8 text-zinc-500 text-sm">Belum ada transaksi</div>
+                        ) : (
+                            recentTransactions.map((tx) => (
+                                <div key={tx.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-zinc-50 transition-colors border border-transparent hover:border-zinc-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 flex items-center justify-center rounded-full bg-zinc-100 text-zinc-500 text-xs font-bold">
+                                            {tx.paymentMethod === 'cash' ? '💵' : '💳'}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-zinc-900 text-sm">{tx.invoiceNumber}</div>
+                                            <div className="text-[10px] text-zinc-500 flex items-center gap-1">
+                                                <span>{new Date(tx.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span>•</span>
+                                                <span>{tx.outlet?.name}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-bold text-primary-600 text-sm">
+                                            +Rp {Number(tx.totalAmount).toLocaleString('id-ID')}
+                                        </div>
+                                        <div className="text-[10px] text-zinc-400 capitalize">{tx.paymentStatus}</div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+
+                {/* Low Stock Alerts */}
+                <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-50 text-red-600">
+                                <AlertTriangle className="h-5 w-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-zinc-900">Stok Menipis</h3>
+                                <p className="text-xs text-zinc-500">Perlu restock segera (≤ 5)</p>
+                            </div>
+                        </div>
+                        <Link href="/dashboard/inventory" className="p-2 hover:bg-zinc-50 rounded-lg text-zinc-400 hover:text-zinc-600 transition-colors">
+                            <ArrowRight className="h-5 w-5" />
+                        </Link>
+                    </div>
+
+                    <div className="space-y-4">
+                        {lowStockProducts.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center text-zinc-500">
+                                <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center text-green-500 mb-2">
+                                    <Package className="h-6 w-6" />
+                                </div>
+                                <p className="text-sm">Stok aman terkendali!</p>
+                            </div>
+                        ) : (
+                            lowStockProducts.map((product) => (
+                                <div key={product.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-red-50/50 transition-colors border border-transparent hover:border-red-100">
+                                    <div className="flex items-center gap-3">
+                                        {product.imageUrl ? (
+                                            <img src={product.imageUrl} alt={product.name} className="h-10 w-10 rounded-lg object-cover bg-zinc-100" />
+                                        ) : (
+                                            <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-400">
+                                                <Package className="h-5 w-5" />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <div className="font-bold text-zinc-900 text-sm line-clamp-1">{product.name}</div>
+                                            <div className="text-[10px] text-zinc-500">
+                                                {product.outlet?.name}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-right">
+                                            <div className="font-bold text-red-600 text-sm">
+                                                Sisa {product.stock}
+                                            </div>
+                                            <div className="text-[10px] text-zinc-400">
+                                                Unit
+                                            </div>
+                                        </div>
+                                        <Link
+                                            href={`/dashboard/products/${product.id}/edit`}
+                                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-white border border-zinc-200 text-zinc-400 hover:text-primary-600 hover:border-primary-200 transition-all shadow-sm"
+                                        >
+                                            <ArrowRight className="h-4 w-4" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -168,8 +351,8 @@ function QuickActionButton({
             className={`flex flex-col items-center gap-4 rounded-2xl border p-6 transition-all hover:scale-[1.02] active:scale-[0.98] ${colorClasses[color]}`}
         >
             <div className={`p-3 rounded-xl ${color === 'primary' ? 'bg-primary-500 text-white' :
-                    color === 'secondary' ? 'bg-secondary-500 text-secondary-950' :
-                        'bg-white text-zinc-600 shadow-sm'
+                color === 'secondary' ? 'bg-secondary-500 text-secondary-950' :
+                    'bg-white text-zinc-600 shadow-sm'
                 }`}>
                 <Icon className="h-6 w-6" />
             </div>

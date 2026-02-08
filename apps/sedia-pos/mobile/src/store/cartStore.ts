@@ -7,12 +7,15 @@ import { useOutletStore } from './outletStore';
 const API_BASE_URL = API_URL;
 
 export interface CartItem {
-    id: string;
+    id: string; // unique cart item id (e.g. productId-variantId)
     productId: string;
+    variantId?: string | null;
+    variantName?: string | null;
     name: string;
     price: number;
     quantity: number;
     maxQuantity?: number;
+    imageUrl?: string | null;
 }
 
 export interface HeldOrder {
@@ -33,7 +36,7 @@ interface CartState {
     heldOrders: HeldOrder[];
     resumedOrderId: string | null;
     isFetchingHeldOrders: boolean;
-    addItem: (product: { id: string; name: string; price: number; stock?: number }) => void;
+    addItem: (product: { id: string; name: string; price: number; stock?: number; imageUrl?: string | null }, variant?: { id: string; name: string; priceAdjustment: string; stock: number } | null) => void;
     removeItem: (productId: string) => void;
     updateQuantity: (productId: string, quantity: number) => void;
     setCustomer: (customer: LocalCustomer | null) => void;
@@ -59,16 +62,21 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     setCustomer: (customer) => set({ customer }),
 
-    addItem: (product) => {
+    addItem: (product, variant) => {
         set((state) => {
-            const existingItem = state.items.find((item) => item.productId === product.id);
-            const currentStock = product.stock || 0;
+            const variantId = variant?.id || null;
+            const itemId = variantId ? `${product.id}-${variantId}` : product.id;
+            const existingItem = state.items.find((item) => item.id === itemId);
+
+            const variantPriceAdj = variant ? parseFloat(variant.priceAdjustment) : 0;
+            const finalPrice = product.price + variantPriceAdj;
+            const currentStock = variant ? variant.stock : (product.stock || 0);
 
             if (existingItem) {
                 if (existingItem.quantity >= currentStock) return state;
                 return {
                     items: state.items.map((item) =>
-                        item.productId === product.id
+                        item.id === itemId
                             ? { ...item, quantity: item.quantity + 1 }
                             : item
                     ),
@@ -79,32 +87,35 @@ export const useCartStore = create<CartState>((set, get) => ({
                 items: [
                     ...state.items,
                     {
-                        id: `cart-${Date.now()}`,
+                        id: itemId,
                         productId: product.id,
+                        variantId: variantId,
+                        variantName: variant?.name || null,
                         name: product.name,
-                        price: product.price,
+                        price: finalPrice,
                         quantity: 1,
                         maxQuantity: currentStock,
+                        imageUrl: product.imageUrl,
                     },
                 ],
             };
         });
     },
 
-    removeItem: (productId) => {
+    removeItem: (itemId) => {
         set((state) => ({
-            items: state.items.filter((item) => item.productId !== productId),
+            items: state.items.filter((item) => item.id !== itemId),
         }));
     },
 
-    updateQuantity: (productId, quantity) => {
+    updateQuantity: (itemId, quantity) => {
         if (quantity <= 0) {
-            get().removeItem(productId);
+            get().removeItem(itemId);
             return;
         }
         set((state) => ({
             items: state.items.map((item) => {
-                if (item.productId === productId) {
+                if (item.id === itemId) {
                     if (item.maxQuantity !== undefined && quantity > item.maxQuantity) return item;
                     return { ...item, quantity };
                 }

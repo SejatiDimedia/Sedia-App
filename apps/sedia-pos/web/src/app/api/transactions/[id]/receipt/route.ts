@@ -61,8 +61,21 @@ export async function GET(
             cashier = employeeData || null;
         }
 
+        // Get tax settings
+        const [taxSettingsData] = await db
+            .select()
+            .from(posSchema.taxSettings)
+            .where(eq(posSchema.taxSettings.outletId, transaction.outletId));
+
         return NextResponse.json({
-            transaction,
+            transaction: {
+                ...transaction,
+                taxDetails: taxSettingsData && Number(transaction.tax) > 0 ? {
+                    name: taxSettingsData.name,
+                    rate: taxSettingsData.rate,
+                    isInclusive: taxSettingsData.isInclusive
+                } : null
+            },
             items,
             outlet,
             customer,

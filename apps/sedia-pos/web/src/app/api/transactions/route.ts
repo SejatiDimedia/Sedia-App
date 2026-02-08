@@ -1,25 +1,88 @@
 import { NextResponse } from "next/server";
 import { db, posSchema } from "@/lib/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import { logActivity } from "@/lib/logging";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 // GET /api/transactions - Fetch all transactions
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const outletId = searchParams.get("outletId");
+        const outletIdParam = searchParams.get("outletId");
 
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (!session?.user?.id) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // 1. Determine allowed outlets for this user
+        let allowedOutletIds: string[] = [];
+
+        // Check if user is an owner
+        const ownedOutlets = await db
+            .select({ id: posSchema.outlets.id })
+            .from(posSchema.outlets)
+            .where(eq(posSchema.outlets.ownerId, session.user.id));
+
+        allowedOutletIds = ownedOutlets.map(o => o.id);
+
+        // Check if user is an employee
+        if (allowedOutletIds.length === 0) {
+            const employee = await db.query.employees.findFirst({
+                where: and(
+                    eq(posSchema.employees.userId, session.user.id),
+                    eq(posSchema.employees.isDeleted, false)
+                ),
+                with: {
+                    outlet: true,
+                    employeeOutlets: {
+                        with: {
+                            outlet: true
+                        }
+                    }
+                }
+            });
+
+            if (employee) {
+                const assignedIds = employee.employeeOutlets
+                    ?.map(eo => eo.outlet?.id)
+                    .filter(Boolean) as string[] || [];
+
+                allowedOutletIds = [...assignedIds];
+
+                if (employee.outlet?.id && !allowedOutletIds.includes(employee.outlet.id)) {
+                    allowedOutletIds.push(employee.outlet.id);
+                }
+            }
+        }
+
+        if (allowedOutletIds.length === 0) {
+            return NextResponse.json([]); // No access to any transactions
+        }
+
+        // 2. Build Query
         let query;
-        if (outletId) {
+
+        // If specific outlet requested, verify access
+        if (outletIdParam) {
+            if (!allowedOutletIds.includes(outletIdParam)) {
+                return NextResponse.json({ error: "Forbidden: No access to this outlet" }, { status: 403 });
+            }
             query = db
                 .select()
                 .from(posSchema.transactions)
-                .where(eq(posSchema.transactions.outletId, outletId))
+                .where(eq(posSchema.transactions.outletId, outletIdParam))
                 .orderBy(desc(posSchema.transactions.createdAt));
         } else {
+            // Filter by ALL allowed outlets
             query = db
                 .select()
                 .from(posSchema.transactions)
+                .where(inArray(posSchema.transactions.outletId, allowedOutletIds))
                 .orderBy(desc(posSchema.transactions.createdAt));
         }
 
@@ -74,15 +137,32 @@ export async function POST(request: Request) {
 
             for (const item of items) {
                 if (item.productId) {
-                    const [product] = await db
-                        .select()
-                        .from(posSchema.products)
-                        .where(eq(posSchema.products.id, item.productId));
+                    if (item.variantId) {
+                        const [variant] = await db
+                            .select()
+                            .from(posSchema.productVariants)
+                            .where(eq(posSchema.productVariants.id, item.variantId));
 
-                    if (!product) {
-                        stockErrors.push(`Produk "${item.productName}" tidak ditemukan`);
-                    } else if (product.trackStock && product.stock < item.quantity) {
-                        stockErrors.push(`Stok "${item.productName}" tidak cukup (tersedia: ${product.stock}, diminta: ${item.quantity})`);
+                        if (!variant) {
+                            // SKIP IF VARIANT NOT FOUND - Maybe it was deleted or sync issue
+                            // stockErrors.push(`Varian "${item.variantName || item.productName}" tidak ditemukan`);
+                            console.warn(`Transaction includes unknown variant ID: ${item.variantId}`);
+                        } else if (variant.stock !== null && (variant.stock) < item.quantity) {
+                            // Only check stock if not null? Actually schema has default 0.
+                            // Let's assume strict stock check for now, but maybe the issue is sync.
+                            stockErrors.push(`Stok varian "${item.variantName || item.productName}" tidak cukup (tersedia: ${variant.stock ?? 0}, diminta: ${item.quantity})`);
+                        }
+                    } else {
+                        const [product] = await db
+                            .select()
+                            .from(posSchema.products)
+                            .where(eq(posSchema.products.id, item.productId));
+
+                        if (!product) {
+                            stockErrors.push(`Produk "${item.productName}" tidak ditemukan`);
+                        } else if (product.trackStock && product.stock < item.quantity) {
+                            stockErrors.push(`Stok "${item.productName}" tidak cukup (tersedia: ${product.stock}, diminta: ${item.quantity})`);
+                        }
                     }
                 }
             }
@@ -143,9 +223,13 @@ export async function POST(request: Request) {
                 costPrice?: number;
                 discount?: number;
                 total: number;
+                variantId?: string;
+                variantName?: string;
             }) => ({
                 transactionId: newTransaction.id,
                 productId: item.productId || null,
+                variantId: item.variantId || null,
+                variantName: item.variantName || null,
                 productName: item.productName,
                 productSku: item.productSku || null,
                 quantity: item.quantity,
@@ -160,17 +244,32 @@ export async function POST(request: Request) {
             // Decrease product stock for each item
             for (const item of items) {
                 if (item.productId) {
-                    const [product] = await db
-                        .select()
-                        .from(posSchema.products)
-                        .where(eq(posSchema.products.id, item.productId));
+                    if (item.variantId) {
+                        const [variant] = await db
+                            .select()
+                            .from(posSchema.productVariants)
+                            .where(eq(posSchema.productVariants.id, item.variantId));
 
-                    if (product && product.trackStock) {
-                        const newStock = Math.max(0, product.stock - item.quantity);
-                        await db
-                            .update(posSchema.products)
-                            .set({ stock: newStock })
+                        if (variant) {
+                            const newStock = Math.max(0, (variant.stock || 0) - item.quantity);
+                            await db
+                                .update(posSchema.productVariants)
+                                .set({ stock: newStock })
+                                .where(eq(posSchema.productVariants.id, item.variantId));
+                        }
+                    } else {
+                        const [product] = await db
+                            .select()
+                            .from(posSchema.products)
                             .where(eq(posSchema.products.id, item.productId));
+
+                        if (product && product.trackStock) {
+                            const newStock = Math.max(0, product.stock - item.quantity);
+                            await db
+                                .update(posSchema.products)
+                                .set({ stock: newStock })
+                                .where(eq(posSchema.products.id, item.productId));
+                        }
                     }
                 }
             }

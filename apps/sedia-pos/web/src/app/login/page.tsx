@@ -140,8 +140,8 @@ export default function LoginPage() {
                         <button
                             onClick={() => setLoginType("employee")}
                             className={`flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium transition-all duration-200 ${loginType === "employee"
-                                    ? "bg-white text-primary-700 shadow-sm ring-1 ring-black/5"
-                                    : "text-zinc-500 hover:text-primary-700 hover:bg-primary-50"
+                                ? "bg-white text-primary-700 shadow-sm ring-1 ring-black/5"
+                                : "text-zinc-500 hover:text-primary-700 hover:bg-primary-50"
                                 }`}
                         >
                             <User className="h-4 w-4" />
@@ -161,9 +161,93 @@ export default function LoginPage() {
                                         <div>
                                             <h3 className="text-sm font-medium text-primary-900">Akses Administrator</h3>
                                             <p className="mt-1 text-sm text-primary-700">
-                                                Khusus untuk Pemilik Bisnis & Admin Utama. Masuk menggunakan akun Google terdaftar Anda.
+                                                Khusus untuk Pemilik Bisnis &amp; Admin Utama.
                                             </p>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {error && (
+                                    <div className="rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-600 flex items-start gap-2">
+                                        <span className="mt-0.5">⚠️</span>
+                                        {error}
+                                    </div>
+                                )}
+
+                                {/* Email/Password Form for Admin */}
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label
+                                            htmlFor="admin-email"
+                                            className="block text-sm font-medium text-zinc-900 mb-1.5"
+                                        >
+                                            Email Admin
+                                        </label>
+                                        <input
+                                            id="admin-email"
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="admin@perusahaan.com"
+                                            required
+                                            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            htmlFor="admin-password"
+                                            className="block text-sm font-medium text-zinc-900 mb-1.5"
+                                        >
+                                            Password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                id="admin-password"
+                                                type={showPassword ? "text" : "password"}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                placeholder="Masukan password..."
+                                                required
+                                                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                                            >
+                                                {showPassword ? (
+                                                    <EyeOff className="h-4 w-4" />
+                                                ) : (
+                                                    <Eye className="h-4 w-4" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-500 hover:shadow-lg hover:shadow-primary-600/20 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {loading ? (
+                                            "Memproses..."
+                                        ) : (
+                                            <>
+                                                Masuk sebagai Admin
+                                                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+
+                                {/* Divider */}
+                                <div className="relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t border-zinc-200" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-zinc-50 px-3 text-zinc-500">atau</span>
                                     </div>
                                 </div>
 

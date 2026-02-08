@@ -5,11 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import ConfirmationModal from "@/components/confirmation-modal";
+import { toast } from "react-hot-toast";
 
 interface OpnameItem {
     id: string; // Item ID
     productId: string;
-    product: { name: string; sku: string };
+    variantId: string | null;
+    product: { name: string; sku: string; variantName: string | null };
     systemStock: number;
     actualStock: number | null;
     difference: number | null;
@@ -87,7 +89,7 @@ export default function StockOpnameDetailPage() {
 
             if (res.ok) {
                 setHasUnsavedChanges(false);
-                if (!silent) alert("Progress disimpan (Draft)");
+                if (!silent) toast.success("Draft berhasil disimpan");
                 fetchOpname(); // Refresh
             }
         } catch (error) {
@@ -118,16 +120,16 @@ export default function StockOpnameDetailPage() {
                 router.push("/dashboard/inventory/opname");
             } else {
                 const data = await res.json();
-                alert("Gagal: " + (data.error || "Unknown error"));
+                toast.error("Gagal: " + (data.error || "Unknown error"));
             }
         } catch (error) {
-            alert("Error finalizing");
+            toast.error("Terjadi kesalahan saat finalisasi");
         } finally {
             setIsFinalizing(false);
         }
     };
 
-    if (isLoading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-zinc-400" /></div>;
+    if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin text-primary-500" /></div>;
     if (!opname) return <div className="p-8 text-center">Opname not found</div>;
 
     const isCompleted = opname.status === 'completed';
@@ -147,7 +149,7 @@ export default function StockOpnameDetailPage() {
                         <span>•</span>
                         <span>{new Date(opname.date).toLocaleDateString()}</span>
                         <span>•</span>
-                        <span className={`font-medium ${isCompleted ? "text-green-600" : "text-yellow-600"}`}>
+                        <span className={`font-medium ${isCompleted ? "text-primary-600" : "text-yellow-600"}`}>
                             {isCompleted ? "Selesai" : "Draft (Pending)"}
                         </span>
                     </div>
@@ -177,7 +179,12 @@ export default function StockOpnameDetailPage() {
                             return (
                                 <tr key={item.id} className="hover:bg-zinc-50">
                                     <td className="px-4 py-3">
-                                        <div className="font-medium text-zinc-900">{item.product.name}</div>
+                                        <div className="font-medium text-zinc-900">
+                                            {item.product.name}
+                                            {item.product.variantName && (
+                                                <span className="ml-2 text-primary-600">({item.product.variantName})</span>
+                                            )}
+                                        </div>
                                         <div className="text-xs text-zinc-500">{item.product.sku || '-'}</div>
                                     </td>
                                     <td className="px-4 py-3 text-center text-zinc-600">{item.systemStock}</td>
@@ -195,7 +202,7 @@ export default function StockOpnameDetailPage() {
                                             />
                                         )}
                                     </td>
-                                    <td className={`px-4 py-3 text-center font-bold ${diff === 0 || diff === null ? 'text-zinc-400' : diff > 0 ? 'text-green-600' : 'text-red-600'
+                                    <td className={`px-4 py-3 text-center font-bold ${diff === 0 || diff === null ? 'text-zinc-400' : diff > 0 ? 'text-primary-600' : 'text-red-600'
                                         }`}>
                                         {diff !== null && diff > 0 ? `+${diff}` : diff ?? '-'}
                                     </td>
@@ -221,7 +228,7 @@ export default function StockOpnameDetailPage() {
                         <button
                             onClick={triggerFinalize}
                             disabled={isSaving || isFinalizing}
-                            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 transition-colors disabled:opacity-50"
                         >
                             {isFinalizing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
                             Finalisasi & Update Stok

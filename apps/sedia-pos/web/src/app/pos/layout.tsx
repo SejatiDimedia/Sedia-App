@@ -4,6 +4,10 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { LogOut } from "lucide-react";
 import LogoutButton from "@/components/logout-button";
+import { getOutlets } from "@/actions/outlets";
+import { cookies } from "next/headers";
+import { OutletProvider } from "@/providers/outlet-provider";
+import { BrandingProvider } from "@/providers/branding-provider";
 
 export default async function POSLayout({ children }: { children: React.ReactNode }) {
     const session = await auth.api.getSession({
@@ -35,13 +39,13 @@ export default async function POSLayout({ children }: { children: React.ReactNod
                 // 2. Check Employee role and permissions
                 const employee = await db.query.employees.findFirst({
                     where: (table, { eq }) => eq(table.userId, session.user.id),
-                    with: { role: true }
+                    with: { roleData: true }
                 });
 
                 if (employee && employee.isActive) {
-                    const roleData = employee.role as any;
+                    const roleData = employee.roleData as any;
 
-                    if (roleData && typeof roleData === 'object' && roleData.name) {
+                    if (roleData && roleData.name) {
                         effectiveRole = roleData.name;
 
                         // Manager has all access
@@ -59,7 +63,7 @@ export default async function POSLayout({ children }: { children: React.ReactNod
                         if (roleData.name === "cashier" || roleData.name === "Kasir") {
                             hasAccess = true;
                         }
-                    } else if (typeof employee.role === 'string') {
+                    } else if (employee.role) {
                         // Legacy string role
                         effectiveRole = employee.role;
                         if (employee.role === "cashier" || employee.role === "manager") {
@@ -101,6 +105,22 @@ export default async function POSLayout({ children }: { children: React.ReactNod
         );
     }
 
+    // Fetch Outlets and Active Cookie for Branding
+    const outlets = await getOutlets();
+    const cookieStore = await cookies();
+    let activeOutletId = cookieStore.get("active_outlet_id")?.value;
+
+    // Auto-select first outlet if none selected and outlets exist
+    if (!activeOutletId && outlets.length > 0) {
+        activeOutletId = outlets[0].id;
+    }
+
     // Standalone POS layout - no sidebar, fullscreen optimized
-    return <>{children}</>;
+    return (
+        <OutletProvider initialOutlets={outlets} initialActiveId={activeOutletId}>
+            <BrandingProvider>
+                {children}
+            </BrandingProvider>
+        </OutletProvider>
+    );
 }

@@ -15,6 +15,20 @@
       "when": 1769936041287,
       "tag": "0001_fair_enchantress",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770027620687,
+      "tag": "0002_strange_scalphunter",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1770027844559,
+      "tag": "0003_chilly_masque",
+      "breakpoints": true
     }
   ]
 }

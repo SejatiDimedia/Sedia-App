@@ -4,6 +4,8 @@ import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/outlets - Fetch user's outlets
 export async function GET() {
     try {
@@ -16,20 +18,13 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        console.log("[API Outlets] User:", session.user.id, session.user.email);
+        // 1. Get owned outlets
+        // 1. Get owned outlets
+        const ownedOutlets = await db.query.outlets.findMany({
+            where: eq(posSchema.outlets.ownerId, session.user.id),
+        });
 
-        // 1. Check if user owns any outlets
-        const ownedOutlets = await db
-            .select()
-            .from(posSchema.outlets)
-            .where(eq(posSchema.outlets.ownerId, session.user.id));
-
-        if (ownedOutlets.length > 0) {
-            console.log("[API Outlets] Found owned outlets:", ownedOutlets.length);
-            return NextResponse.json(ownedOutlets);
-        }
-
-        // 2. Check if user is an employee - get from junction table first
+        // 2. Get employee-assigned outlets
         const employee = await db.query.employees.findFirst({
             where: and(
                 eq(posSchema.employees.userId, session.user.id),
@@ -45,23 +40,28 @@ export async function GET() {
             }
         });
 
+        const outletMap = new Map<string, any>();
+
+        // Add owned outlets to map
+        ownedOutlets.forEach(o => {
+            outletMap.set(o.id, o);
+        });
+
         if (employee) {
-            // Get outlets from junction table
-            const assignedOutlets = employee.employeeOutlets
-                ?.map(eo => eo.outlet)
-                .filter(Boolean) || [];
+            // Add outlets from junction table
+            employee.employeeOutlets?.forEach(eo => {
+                if (eo.outlet) outletMap.set(eo.outlet.id, eo.outlet);
+            });
 
-            if (assignedOutlets.length > 0) {
-                console.log("[API Outlets] Found employee outlets (junction):", assignedOutlets.map(o => o.name).join(", "));
-                return NextResponse.json(assignedOutlets);
-            }
-
-            // Fallback to legacy single outlet
+            // Add legacy single outlet
             if (employee.outlet) {
-                console.log("[API Outlets] Found employee outlet (legacy):", employee.outlet.name);
-                return NextResponse.json([employee.outlet]);
+                outletMap.set(employee.outlet.id, employee.outlet);
             }
         }
+
+        const combinedOutlets = Array.from(outletMap.values());
+        console.log("[API Outlets] Total unique outlets found:", combinedOutlets.length);
+        return NextResponse.json(combinedOutlets);
 
         console.log("[API Outlets] No outlets found for user");
         return NextResponse.json([]);

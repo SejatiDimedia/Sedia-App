@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 
+
 interface PermissionGuardProps {
     children: React.ReactNode;
     role?: string;
@@ -11,20 +12,25 @@ interface PermissionGuardProps {
 }
 
 const REQUIRED_PERMISSIONS: Record<string, string> = {
-    "/dashboard/pos": "access_pos",
+    "/pos": "access_pos",
     "/dashboard/transactions": "access_pos",
     "/dashboard/customers": "manage_customers",
-    "/dashboard/settings/loyalty": "manage_customers", // Loyalty = part of customer management
+    "/dashboard/settings/loyalty": "manage_customers",
     "/dashboard/products": "manage_products",
+    "/dashboard/categories": "manage_products",
     "/dashboard/inventory/opname": "manage_stock_opname",
     "/dashboard/inventory": "manage_inventory",
     "/dashboard/employees": "manage_employees",
     "/dashboard/reports": "view_reports",
     "/dashboard/settings": "manage_settings",
-    "/dashboard/outlets": "manage_settings",
+    "/dashboard/tax": "manage_tax",
+    "/dashboard/outlets": "manage_outlets",
+    "/dashboard/activity": "view_reports",
+    "/dashboard/purchase-orders": "manage_purchase_orders",
+    "/dashboard/suppliers": "manage_suppliers",
 };
 
-export default function PermissionGuard({ children, role, permissions = [] }: PermissionGuardProps) {
+export default function PermissionGuard({ children, role, permissions }: PermissionGuardProps) {
     const pathname = usePathname();
     const router = useRouter();
     const [isAuthorized, setIsAuthorized] = useState(true);
@@ -38,19 +44,8 @@ export default function PermissionGuard({ children, role, permissions = [] }: Pe
             return;
         }
 
-        // 2. Manager role always allowed (full access like admin)
-        if (normalizedRole === "manager") {
-            setIsAuthorized(true);
-            return;
-        }
-
-        // 3. Check Permissions
-        // Sort keys by length desc to match most specific paths first (e.g. /dashboard/settings/profile vs /dashboard/settings)
-        // actually strict matching for the map keys to the START of the pathname is usually best
-
+        // 2. Identify required permission for current path
         let requiredPermission = null;
-
-        // Find if current pathname starts with any of the protected routes
         for (const [route, perm] of Object.entries(REQUIRED_PERMISSIONS)) {
             if (pathname === route || pathname.startsWith(`${route}/`)) {
                 requiredPermission = perm;
@@ -59,36 +54,30 @@ export default function PermissionGuard({ children, role, permissions = [] }: Pe
         }
 
         if (requiredPermission) {
-            const hasPermission = permissions.includes(requiredPermission);
-
-            // Legacy/Fallback Roles Logic (if no permissions array or for legacy string roles)
-            if (!permissions || permissions.length === 0) {
-                if (role === "manager") {
-                    setIsAuthorized(true); // Managers usually access everything
-                    return;
-                }
-                if (role === "cashier") {
-                    // Cashier allowed only: dashboard, transactions, customers, products, inventory (read mostly? but for now allow access)
-                    // explicitly DENY: employees, reports, settings
-                    const deniedForCashier = ["manage_employees", "view_reports", "manage_settings", "manage_stock_opname"];
-                    if (deniedForCashier.includes(requiredPermission)) {
-                        setIsAuthorized(false);
-                        return;
-                    }
-                    setIsAuthorized(true);
-                    return;
-                }
-                // If role is unknown and no permissions -> Deny restricted routes
-                setIsAuthorized(false);
+            // 3. Dynamic Permissions Check (Primary)
+            // If permissions is an array, it's the specific source of truth
+            if (permissions && Array.isArray(permissions)) {
+                setIsAuthorized(permissions.includes(requiredPermission));
                 return;
             }
 
-            // Dynamic Permissions Check
-            if (hasPermission) {
-                setIsAuthorized(true);
-            } else {
-                setIsAuthorized(false);
+            // 4. Fallback to Legacy Roles (only if permissions array is missing)
+
+
+            if (normalizedRole === "cashier" || normalizedRole === "kasir") {
+                // Modified for strictness: Legacy cashier only gets POS. 
+                // To get more features, user MUST use a Custom Role.
+                const allowedForCashier = ["access_pos"];
+                if (allowedForCashier.includes(requiredPermission)) {
+                    setIsAuthorized(true);
+                } else {
+                    setIsAuthorized(false);
+                }
+                return;
             }
+
+            // Deny by default for unknown roles with no permissions
+            setIsAuthorized(false);
         } else {
             // Public internal dashboard routes (e.g. /dashboard itself)
             setIsAuthorized(true);

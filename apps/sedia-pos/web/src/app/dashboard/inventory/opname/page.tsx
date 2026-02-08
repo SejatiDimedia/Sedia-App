@@ -135,7 +135,7 @@ export default function StockOpnameListPage() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${opname.status === 'completed'
-                                            ? 'bg-green-100 text-green-700'
+                                            ? 'bg-primary-50 text-primary-700'
                                             : 'bg-yellow-100 text-yellow-700'
                                             }`}>
                                             {opname.status === 'completed' ? (

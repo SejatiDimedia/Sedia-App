@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const protectedRoutes = ["/dashboard"];
 
 // Define public routes (accessible without auth)
-const publicRoutes = ["/", "/login", "/register"];
+const publicRoutes = ["/", "/login", "/register", "/catalog"];
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;

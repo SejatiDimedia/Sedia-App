@@ -88,17 +88,19 @@ export default function NewInternalStockOpnamePage() {
                 const opname = await res.json();
                 router.push(`/dashboard/inventory/opname/${opname.id}`);
             } else {
-                alert("Gagal membuat sesi opname");
+                const errorData = await res.json();
+                console.error("[Opname New] Server Error:", errorData);
+                alert(`Gagal membuat sesi opname: ${errorData.detail || errorData.error || "Unknown error"}`);
             }
-        } catch (error) {
-            console.error("Error creating details:", error);
-            alert("Terjadi kesalahan sistem");
+        } catch (error: any) {
+            console.error("Error creating opname:", error);
+            alert(`Terjadi kesalahan sistem: ${error.message || "Unknown error"}`);
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin text-zinc-400" /></div>;
+    if (isLoading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin text-primary-500" /></div>;
 
     return (
         <div className="max-w-2xl mx-auto space-y-6 py-8">

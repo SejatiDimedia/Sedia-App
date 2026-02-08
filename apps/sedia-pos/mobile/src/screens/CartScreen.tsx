@@ -1,6 +1,6 @@
 import '../../global.css';
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Modal, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Modal, FlatList, ActivityIndicator, Image } from 'react-native';
 import { useCartStore, CartItem, HeldOrder } from '../store/cartStore';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { db, LocalCustomer } from '../db/client';
@@ -20,14 +20,26 @@ interface CartItemRowProps {
     item: CartItem;
     onUpdateQuantity: (quantity: number) => void;
     onRemove: () => void;
+    currentOutlet?: any;
 }
 
-function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
+function CartItemRow({ item, onUpdateQuantity, onRemove, currentOutlet }: CartItemRowProps) {
     return (
         <View className="mb-3 flex-row items-center rounded-2xl bg-white p-4 shadow-sm  border border-zinc-100 ">
-            {/* Icon Placeholder */}
-            <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-primary-50 ">
-                <MaterialCommunityIcons name="food" size={24} color="#377f7e" />
+            {/* Product Image */}
+            <View
+                className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-primary-50 overflow-hidden"
+                style={{ backgroundColor: (currentOutlet?.primaryColor || '#377f7e') + '15' }}
+            >
+                {(item.imageUrl || (item as any).image_url) ? (
+                    <Image
+                        source={{ uri: item.imageUrl || (item as any).image_url }}
+                        className="h-full w-full"
+                        resizeMode="cover"
+                    />
+                ) : (
+                    <MaterialCommunityIcons name="food" size={24} color={currentOutlet?.primaryColor || '#377f7e'} />
+                )}
             </View>
 
             {/* Product Info */}
@@ -35,6 +47,11 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
                 <Text className="text-base font-semibold text-zinc-900 " numberOfLines={1}>
                     {item.name}
                 </Text>
+                {item.variantName && (
+                    <Text className="text-xs font-bold text-primary-600 " style={{ color: currentOutlet?.primaryColor || '#377f7e' }}>
+                        {item.variantName}
+                    </Text>
+                )}
                 <Text className="text-sm font-medium text-zinc-500 ">
                     {formatCurrency(item.price)}
                 </Text>
@@ -67,30 +84,32 @@ function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
 interface CartScreenProps {
     onBack: () => void;
     onCheckout: () => void;
-    role?: string; // Optional role prop for testing or direct pass
+    isSidebar?: boolean;
 }
 
-export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
-    const {
-        items,
-        updateQuantity,
-        removeItem,
-        getTotal,
-        clearCart,
-        customer,
-        setCustomer,
-        holdOrder,
-        heldOrders,
-        fetchHeldOrders,
-        deleteHeldOrder,
-        resumeOrder,
-        isFetchingHeldOrders,
-    } = useCartStore();
-    const { currentEmployee } = useEmployeeStore();
+export default function CartScreen({ onBack, onCheckout, isSidebar = false }: CartScreenProps) {
+    // Optimized store selectors
+    const items = useCartStore(state => state.items);
+    const updateQuantity = useCartStore(state => state.updateQuantity);
+    const removeItem = useCartStore(state => state.removeItem);
+    const getTotal = useCartStore(state => state.getTotal);
+    const clearCart = useCartStore(state => state.clearCart);
+    const customer = useCartStore(state => state.customer);
+    const setCustomer = useCartStore(state => state.setCustomer);
+    const holdOrder = useCartStore(state => state.holdOrder);
+    const heldOrders = useCartStore(state => state.heldOrders);
+    const fetchHeldOrders = useCartStore(state => state.fetchHeldOrders);
+    const deleteHeldOrder = useCartStore(state => state.deleteHeldOrder);
+    const resumeOrder = useCartStore(state => state.resumeOrder);
+    const isFetchingHeldOrders = useCartStore(state => state.isFetchingHeldOrders);
+
+    const activeShift = useShiftStore(state => state.activeShift);
+    const currentOutlet = useOutletStore(state => state.currentOutlet);
+    const tiers = useLoyaltyStore(state => state.tiers);
+
+    // Auth & Sync
     const { isOnline } = useSync();
-    const { currentOutlet } = useOutletStore();
-    const { activeShift } = useShiftStore();
-    const { tiers } = useLoyaltyStore();
+    const currentEmployee = useEmployeeStore(state => state.currentEmployee);
 
     const getMemberDiscount = () => {
         if (!customer?.tier_id) return 0;
@@ -102,15 +121,23 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
 
     const getFinalTotal = () => getTotal() - getMemberDiscount();
 
-    // Check if user is a cashier (restricted role) - case insensitive
+    // Check if user is restricted (requires auth to delete items)
+    // Allowed roles: manager, owner, admin, superadmin, manager/owner
     const roleName = currentEmployee?.role?.toLowerCase() || '';
-    const isCashier = roleName === 'kasir' || roleName === 'cashier';
+    const allowedRoles = ['manager', 'admin', 'owner', 'superadmin', 'manager/owner'];
+
+    // If NO role (null/empty) -> Restricted (fail safe)
+    // If role is NOT in allowed list -> Restricted
+    const isRestricted = !roleName || !allowedRoles.includes(roleName);
+
+    console.log(`[CartScreen] currentEmployee: ${currentEmployee?.name}, role: ${currentEmployee?.role}, asLow: ${roleName}, isRestricted: ${isRestricted}`);
 
 
     const [isCustomerModalVisible, setIsCustomerModalVisible] = useState(false);
     const [customers, setCustomers] = useState<LocalCustomer[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [managerAuthVisible, setManagerAuthVisible] = useState(false);
+    const [pendingAction, setPendingAction] = useState<'delete_item' | 'clear_cart' | null>(null);
     const [pendingRemovals, setPendingRemovals] = useState<string | null>(null);
     const { showToast } = useToast();
     const [isHeldOrdersModalVisible, setIsHeldOrdersModalVisible] = useState(false);
@@ -120,52 +147,83 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
 
     const isEmpty = items.length === 0;
 
-    const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+        console.log(`[CartScreen] handleUpdateQuantity: itemId=${itemId}, newQuantity=${newQuantity}`);
         if (newQuantity === 0) {
-            handleRemoveItem(productId);
+            console.log(`[CartScreen] Quantity is 0, triggering handleRemoveItem`);
+            handleRemoveItem(itemId);
             return;
         }
 
         // Find the item to check max quantity
-        const item = items.find(i => i.productId === productId);
+        const item = items.find(i => i.id === itemId);
         if (item && newQuantity > (item.maxQuantity || Infinity)) {
+            console.log(`[CartScreen] Max quantity reached for ${item.name}`);
             showToast('Stok Habis', 'Stok produk ini sudah habis!', 'warning');
             return;
         }
 
-        updateQuantity(productId, newQuantity);
+        updateQuantity(itemId, newQuantity);
     };
 
-    const handleRemoveItem = (productId: string) => {
-        if (isCashier) {
-            // If Cashier, prompt for manager auth
-            setPendingRemovals(productId);
+    const handleRemoveItem = (itemId: string) => {
+        console.log(`[CartScreen] handleRemoveItem: itemId=${itemId}, isRestricted=${isRestricted}, role=${currentEmployee?.role}`);
+        if (isRestricted) {
+            // If Restricted, prompt for manager auth
+            console.log(`[CartScreen] Prompting for manager auth for removal`);
+            setPendingRemovals(itemId);
+            setPendingAction("delete_item");
             setManagerAuthVisible(true);
         } else {
             // Can delete directly if manager/admin
-            removeItem(productId);
+            console.log(`[CartScreen] Removing item directly (authorized)`);
+            removeItem(itemId);
         }
     };
 
     const handleManagerAuthSuccess = () => {
+        console.log(`[CartScreen] Manager authorization successful, pendingAction: ${pendingAction}`);
         setManagerAuthVisible(false);
-        if (pendingRemovals) {
+        if (pendingAction === 'delete_item' && pendingRemovals) {
             removeItem(pendingRemovals);
             setPendingRemovals(null);
+            setPendingAction(null);
+            showToast('Item Dihapus', 'Produk telah dihapus dari keranjang', 'success');
+        } else if (pendingAction === 'clear_cart') {
+            clearCart();
+            setPendingAction(null);
+            showToast('Keranjang Direset', 'Semua item telah dihapus', 'success');
+        }
+    };
+
+    const handleClearCart = () => {
+        if (isRestricted) {
+            setPendingAction("clear_cart");
+            setManagerAuthVisible(true);
+        } else {
+            clearCart();
+            showToast('Keranjang Direset', 'Semua item telah dihapus', 'success');
         }
     };
 
 
     useEffect(() => {
-        loadCustomers();
-        if (isOnline && currentOutlet?.id) {
-            console.log(`[CartScreen] Triggering fetchHeldOrders for outlet: ${currentOutlet.id}`);
-            fetchHeldOrders(currentOutlet.id).catch(err => {
-                console.error('[CartScreen] fetchHeldOrders failed:', err);
-            });
-        } else {
-            console.log(`[CartScreen] Skip fetchHeldOrders. isOnline: ${isOnline}, currentOutletId: ${currentOutlet?.id}`);
+        let isMounted = true;
+
+        async function init() {
+            await loadCustomers();
+            if (isMounted && isOnline && currentOutlet?.id) {
+                console.log(`[CartScreen] Triggering fetchHeldOrders for outlet: ${currentOutlet.id}`);
+                try {
+                    await fetchHeldOrders(currentOutlet.id);
+                } catch (err) {
+                    console.error('[CartScreen] fetchHeldOrders failed:', err);
+                }
+            }
         }
+
+        init();
+        return () => { isMounted = false; };
     }, [isOnline, currentOutlet?.id]);
 
     const loadCustomers = async () => {
@@ -212,50 +270,52 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
     return (
         <View className="flex-1 bg-zinc-50 ">
             {/* Header */}
-            <View className="flex-row items-center justify-between bg-white px-4 pb-4 pt-14 shadow-sm ">
-                <View className="flex-row items-center gap-3">
-                    <TouchableOpacity
-                        onPress={onBack}
-                        className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 active:bg-zinc-200 "
-                    >
-                        <MaterialCommunityIcons name="arrow-left" size={24} color="#18181b" />
-                    </TouchableOpacity>
-                    <Text className="text-lg font-bold text-zinc-900 ">
-                        Keranjang ({items.length})
-                    </Text>
-                </View>
+            {!isSidebar && (
+                <View className="flex-row items-center justify-between bg-white px-4 pb-4 pt-14 shadow-sm ">
+                    <View className="flex-row items-center gap-3">
+                        <TouchableOpacity
+                            onPress={onBack}
+                            className="h-10 w-10 items-center justify-center rounded-full bg-zinc-100 active:bg-zinc-200 "
+                        >
+                            <MaterialCommunityIcons name="arrow-left" size={24} color="#18181b" />
+                        </TouchableOpacity>
+                        <Text className="text-lg font-bold text-zinc-900 ">
+                            Keranjang ({items.length})
+                        </Text>
+                    </View>
 
-                <View className="flex-row items-center gap-2">
-                    {/* Held Orders List Button */}
-                    <TouchableOpacity
-                        onPress={() => setIsHeldOrdersModalVisible(true)}
-                        className="h-10 w-10 items-center justify-center rounded-full bg-amber-100 active:bg-amber-200 relative"
-                    >
-                        <MaterialCommunityIcons name="clipboard-clock-outline" size={22} color="#d97706" />
-                        {heldOrders.length > 0 && (
-                            <View className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full bg-red-500 border border-white">
-                                <Text className="text-[10px] font-bold text-white">{heldOrders.length}</Text>
-                            </View>
+                    <View className="flex-row items-center gap-2">
+                        {/* Held Orders List Button */}
+                        <TouchableOpacity
+                            onPress={() => setIsHeldOrdersModalVisible(true)}
+                            className="h-10 w-10 items-center justify-center rounded-full bg-amber-100 active:bg-amber-200 relative"
+                        >
+                            <MaterialCommunityIcons name="clipboard-clock-outline" size={22} color="#d97706" />
+                            {heldOrders.length > 0 && (
+                                <View className="absolute -right-1 -top-1 h-5 w-5 items-center justify-center rounded-full bg-red-500 border border-white">
+                                    <Text className="text-[10px] font-bold text-white">{heldOrders.length}</Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+
+                        {!isEmpty && (
+                            <>
+                                {/* Hold Current Order Button */}
+                                <TouchableOpacity
+                                    onPress={() => setIsHoldInputVisible(true)}
+                                    className="h-10 w-10 items-center justify-center rounded-full bg-blue-100 active:bg-blue-200"
+                                >
+                                    <MaterialCommunityIcons name="pause" size={22} color="#2563eb" />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity onPress={handleClearCart} className="h-10 w-10 items-center justify-center rounded-full bg-red-100 active:bg-red-200">
+                                    <MaterialCommunityIcons name="trash-can-outline" size={22} color="#ef4444" />
+                                </TouchableOpacity>
+                            </>
                         )}
-                    </TouchableOpacity>
-
-                    {!isEmpty && (
-                        <>
-                            {/* Hold Current Order Button */}
-                            <TouchableOpacity
-                                onPress={() => setIsHoldInputVisible(true)}
-                                className="h-10 w-10 items-center justify-center rounded-full bg-blue-100 active:bg-blue-200"
-                            >
-                                <MaterialCommunityIcons name="pause" size={22} color="#2563eb" />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity onPress={clearCart} className="h-10 w-10 items-center justify-center rounded-full bg-red-100 active:bg-red-200">
-                                <MaterialCommunityIcons name="trash-can-outline" size={22} color="#ef4444" />
-                            </TouchableOpacity>
-                        </>
-                    )}
+                    </View>
                 </View>
-            </View>
+            )}
 
             {/* Cart Items */}
             {isEmpty ? (
@@ -270,6 +330,7 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                     <TouchableOpacity
                         onPress={onBack}
                         className="mt-8 rounded-full bg-primary-600 px-8 py-3 shadow-lg shadow-primary-500/30"
+                        style={{ backgroundColor: currentOutlet?.primaryColor || '#0f766e', shadowColor: currentOutlet?.primaryColor || '#0f766e' }}
                     >
                         <Text className="font-bold text-white">Mulai Pesan</Text>
                     </TouchableOpacity>
@@ -283,11 +344,14 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                             className="mb-4 flex-row items-center justify-between rounded-xl border border-zinc-200 bg-white p-4"
                         >
                             <View className="flex-row items-center gap-3">
-                                <View className={`h-10 w-10 items-center justify-center rounded-full ${customer ? 'bg-primary-100' : 'bg-zinc-100'}`}>
+                                <View
+                                    className="h-10 w-10 items-center justify-center rounded-full"
+                                    style={{ backgroundColor: customer ? (currentOutlet?.primaryColor || '#377f7e') + '20' : '#f4f4f5' }}
+                                >
                                     <MaterialCommunityIcons
                                         name={customer ? "account-check" : "account-plus"}
                                         size={20}
-                                        color={customer ? "#377f7e" : "#71717a"}
+                                        color={customer ? (currentOutlet?.primaryColor || '#377f7e') : "#71717a"}
                                     />
                                 </View>
                                 <View>
@@ -310,8 +374,9 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                             <CartItemRow
                                 key={item.id}
                                 item={item}
-                                onUpdateQuantity={(qty) => handleUpdateQuantity(item.productId, qty)}
-                                onRemove={() => handleRemoveItem(item.productId)}
+                                onUpdateQuantity={(qty) => handleUpdateQuantity(item.id, qty)}
+                                onRemove={() => handleRemoveItem(item.id)}
+                                currentOutlet={currentOutlet}
                             />
                         ))}
                     </ScrollView>
@@ -320,7 +385,7 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
 
             {/* Checkout Bar */}
             {!isEmpty && (
-                <View className="absolute bottom-0 left-0 right-0 rounded-t-[32px] bg-white p-6 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] ">
+                <View className={`${isSidebar ? 'border-t border-zinc-100 px-4 py-4' : 'absolute bottom-0 left-0 right-0 rounded-t-[32px] bg-white p-6 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]'} `}>
                     <View className="mb-4 space-y-2">
                         <View className="flex-row items-center justify-between">
                             <Text className="text-zinc-500 ">Subtotal</Text>
@@ -378,11 +443,15 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                         }}
                         disabled={!activeShift}
                         className={`flex-row items-center justify-center gap-2 rounded-2xl py-4 shadow-lg active:opacity-90 ${activeShift ? 'bg-secondary-500 shadow-secondary-500/20' : 'bg-zinc-300 shadow-none'}`}
+                        style={activeShift ? {
+                            backgroundColor: currentOutlet?.secondaryColor || '#f59e0b',
+                            shadowColor: currentOutlet?.secondaryColor || '#f59e0b'
+                        } : {}}
                     >
-                        <Text className={`text-base font-bold ${activeShift ? 'text-zinc-900' : 'text-zinc-500'}`}>
+                        <Text className={`text-base font-bold ${activeShift ? 'text-white' : 'text-zinc-500'}`} style={activeShift ? { color: '#ffffff' } : {}}>
                             {activeShift ? 'Checkout Sekarang' : 'Buka Shift Dahulu'}
                         </Text>
-                        <MaterialCommunityIcons name={activeShift ? "arrow-right" : "lock"} size={20} color={activeShift ? "#18181b" : "#71717a"} />
+                        <MaterialCommunityIcons name={activeShift ? "arrow-right" : "lock"} size={20} color={activeShift ? "#ffffff" : "#71717a"} />
                     </TouchableOpacity>
                 </View>
             )}
@@ -429,8 +498,14 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                                 className="mb-3 flex-row items-center justify-between rounded-xl bg-white p-4 border border-zinc-100"
                             >
                                 <View className="flex-row items-center gap-3">
-                                    <View className="h-10 w-10 items-center justify-center rounded-full bg-primary-50">
-                                        <Text className="font-bold text-primary-600">
+                                    <View
+                                        className="h-10 w-10 items-center justify-center rounded-full"
+                                        style={{ backgroundColor: (currentOutlet?.primaryColor || '#377f7e') + '15' }}
+                                    >
+                                        <Text
+                                            className="font-bold"
+                                            style={{ color: currentOutlet?.primaryColor || '#2e6a69' }}
+                                        >
                                             {item.name.charAt(0).toUpperCase()}
                                         </Text>
                                     </View>
@@ -440,7 +515,12 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                                     </View>
                                 </View>
                                 <View className="items-end">
-                                    <Text className="font-medium text-secondary-600">{item.points} Poin</Text>
+                                    <Text
+                                        className="font-medium"
+                                        style={{ color: currentOutlet?.secondaryColor || '#f2b30c' }}
+                                    >
+                                        {item.points} Poin
+                                    </Text>
                                 </View>
                             </TouchableOpacity>
                         )}
@@ -619,7 +699,8 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                                                 setIsHeldOrdersModalVisible(false);
                                                 showToast("Dilanjutkan", "Pesanan dimuat kembali", "success");
                                             }}
-                                            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-primary-600 py-2"
+                                            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl py-2"
+                                            style={{ backgroundColor: currentOutlet?.primaryColor || '#2e6a69' }}
                                         >
                                             <MaterialCommunityIcons name="play-circle-outline" size={20} color="white" />
                                             <Text className="font-bold text-white">Lanjutkan</Text>
@@ -630,16 +711,17 @@ export default function CartScreen({ onBack, onCheckout }: CartScreenProps) {
                         )}
                     />
                 </View>
-            </Modal>
+            </Modal >
 
             <ManagerAuthModal
                 visible={managerAuthVisible}
                 onClose={() => {
                     setManagerAuthVisible(false);
                     setPendingRemovals(null);
+                    setPendingAction(null);
                 }}
                 onSuccess={handleManagerAuthSuccess}
-                actionDescription="Hapus item dari keranjang"
+                actionDescription={pendingAction === 'clear_cart' ? 'Mengosongkan/Reset seluruh keranjang' : 'Hapus item dari keranjang'}
             />
         </View >
     );

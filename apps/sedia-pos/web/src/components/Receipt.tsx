@@ -60,6 +60,16 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
             });
         };
 
+        const formatPaymentMethod = (method: string) => {
+            if (!method) return "-";
+            const m = method.toLowerCase();
+            if (m === "cash") return "Tunai";
+            if (m === "qris" || m === "midtrans_qris") return "QRIS";
+            if (m.startsWith("midtrans_va_")) return `Transfer ${m.replace("midtrans_va_", "").toUpperCase()}`;
+            if (m === "transfer") return "Transfer";
+            return method;
+        };
+
         return (
             <div
                 ref={ref}
@@ -68,10 +78,9 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
             >
                 {/* Header */}
                 <div className="mb-4 text-center">
-                    <h1 className="text-lg font-bold">SEDIA POS</h1>
-                    <p className="font-semibold">{outletName}</p>
+                    <h1 className="text-lg font-bold uppercase">{outletName || "SEDIA POS"}</h1>
                     {outletAddress && (
-                        <p className="text-[10px] text-gray-600">{outletAddress}</p>
+                        <p className="text-[10px] text-gray-600 mt-1">{outletAddress}</p>
                     )}
                 </div>
 
@@ -150,7 +159,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
 
                 <div className="flex justify-between">
                     <span>Bayar:</span>
-                    <span className="uppercase">{paymentMethod}</span>
+                    <span className="uppercase">{formatPaymentMethod(paymentMethod)}</span>
                 </div>
 
                 <div className="my-4 border-t border-dashed border-gray-400" />

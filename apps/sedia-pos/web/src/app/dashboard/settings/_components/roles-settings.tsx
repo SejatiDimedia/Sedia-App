@@ -3,18 +3,33 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Pencil, Check, X, Shield } from "lucide-react";
 import { getRoles, createRole, updateRole, deleteRole, type RoleInput } from "@/actions/roles";
+import ConfirmationModal from "@/components/confirmation-modal";
+import { toast } from "react-hot-toast";
 
+// Define Permission Constants
 // Define Permission Constants
 const PERMISSIONS = [
     { id: "access_pos", label: "Akses POS (Kasir)" },
     { id: "manage_products", label: "Kelola Produk" },
-    { id: "manage_inventory", label: "Kelola Stok & Opname" },
+    { id: "manage_inventory", label: "Kelola Inventaris (Stok)" },
+    { id: "manage_stock_opname", label: "Kelola Stock Opname" },
+    { id: "manage_suppliers", label: "Kelola Supplier" },
+    { id: "manage_purchase_orders", label: "Kelola Purchase Order" },
     { id: "manage_customers", label: "Kelola Pelanggan" },
     { id: "manage_employees", label: "Kelola Karyawan" },
     { id: "view_reports", label: "Lihat Laporan" },
     { id: "manage_settings", label: "Pengaturan Toko" },
     { id: "manage_tax", label: "Kelola Pajak & Biaya" },
+    { id: "manage_outlets", label: "Kelola Outlet" },
+    // Granular Settings Permissions
+    { id: "manage_store", label: "Kelola Info Toko" },
+    { id: "manage_roles", label: "Kelola Role & Akses" },
+    { id: "manage_loyalty", label: "Kelola Loyalty Program" },
+    { id: "manage_backup", label: "Kelola Backup Data" },
+    { id: "manage_expenses", label: "Kelola Pengeluaran" },
 ];
+
+
 
 export default function RolesSettings() {
     const [roles, setRoles] = useState<any[]>([]);
@@ -27,6 +42,18 @@ export default function RolesSettings() {
     const [formDesc, setFormDesc] = useState("");
     const [formPermissions, setFormPermissions] = useState<string[]>([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        variant?: "primary" | "danger" | "warning";
+    }>({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+    });
 
     useEffect(() => {
         loadRoles();
@@ -44,6 +71,15 @@ export default function RolesSettings() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const showConfirm = (config: Omit<typeof confirmState, "isOpen">) => {
+        setConfirmState({ ...config, isOpen: true });
+    };
+
+    const handleConfirm = () => {
+        confirmState.onConfirm();
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
     };
 
     const handleOpenModal = (role?: any) => {
@@ -93,26 +129,35 @@ export default function RolesSettings() {
             }
             await loadRoles();
             setShowModal(false);
+            toast.success("Role berhasil disimpan");
         } catch (error) {
             console.error("Save failed", error);
-            alert("Gagal menyimpan role");
+            toast.error("Gagal menyimpan role");
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Hapus role ini?")) return;
-        try {
-            const res = await deleteRole(id);
-            if (res.success) {
-                await loadRoles();
-            } else {
-                alert(res.error);
+        showConfirm({
+            title: "Hapus Role",
+            message: "Apakah Anda yakin ingin menghapus role ini? Karyawan yang menggunakan role ini perlu disesuaikan kembali.",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    const res = await deleteRole(id);
+                    if (res.success) {
+                        toast.success("Role berhasil dihapus");
+                        await loadRoles();
+                    } else {
+                        toast.error(res.error || "Gagal menghapus role");
+                    }
+                } catch (error) {
+                    console.error("Delete failed", error);
+                    toast.error("Terjadi kesalahan sistem");
+                }
             }
-        } catch (error) {
-            console.error("Delete failed", error);
-        }
+        });
     };
 
     return (
@@ -169,18 +214,33 @@ export default function RolesSettings() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            {role.isSystem ? (
-                                                <span className="text-zinc-400 text-xs italic">System Default</span>
-                                            ) : (
-                                                <div className="flex justify-end gap-2">
-                                                    <button onClick={() => handleOpenModal(role)} className="text-zinc-400 hover:text-zinc-600">
-                                                        <Pencil className="h-4 w-4" />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(role.id)} className="text-red-400 hover:text-red-600">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleOpenModal(role)}
+                                                    className="text-zinc-400 hover:text-zinc-600"
+                                                    title="Edit Role"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </button>
+
+                                                {role.isSystem ? (
+                                                    <button
+                                                        disabled
+                                                        className="text-zinc-200 cursor-not-allowed"
+                                                        title="System role cannot be deleted"
+                                                    >
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleDelete(role.id)}
+                                                        className="text-red-400 hover:text-red-600"
+                                                        title="Delete Role"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -260,6 +320,16 @@ export default function RolesSettings() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={confirmState.isOpen}
+                title={confirmState.title}
+                message={confirmState.message}
+                variant={confirmState.variant}
+                onConfirm={handleConfirm}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                isLoading={isSaving}
+            />
         </div>
     );
 }

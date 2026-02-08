@@ -10,4 +10,5 @@ export default defineConfig({
     dbCredentials: {
         url: process.env.DATABASE_URL!,
     },
+    schemaFilter: ["sedia_pos", "public", "sedia_auth"],
 });

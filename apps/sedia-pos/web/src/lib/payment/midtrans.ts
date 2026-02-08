@@ -39,9 +39,17 @@ export async function createTransaction(orderId: string, amount: number, payment
     }
 
     if (paymentType === 'bank_transfer' && bank) {
-        parameter.bank_transfer = {
-            bank: bank
-        };
+        if (bank === 'mandiri') {
+            parameter.payment_type = 'echannel';
+            parameter.echannel = {
+                bill_info1: "Payment For:",
+                bill_info2: "SediaPOS Transaction"
+            };
+        } else {
+            parameter.bank_transfer = {
+                bank: bank
+            };
+        }
     }
 
     try {

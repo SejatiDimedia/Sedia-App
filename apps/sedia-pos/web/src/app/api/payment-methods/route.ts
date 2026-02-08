@@ -36,6 +36,46 @@ export async function GET(request: Request) {
     }
 }
 
+async function isAuthorized(userId: string, outletId: string | null) {
+    if (!outletId) return true; // Global methods (if any)
+
+    // 1. Check if owner
+    const [outletOwner] = await db
+        .select()
+        .from(posSchema.outlets)
+        .where(
+            and(
+                eq(posSchema.outlets.id, outletId),
+                eq(posSchema.outlets.ownerId, userId)
+            )
+        );
+
+    if (outletOwner) return true;
+
+    // 2. Check if employee with manager/admin role for THIS outlet
+    const employee = await db.query.employees.findFirst({
+        where: and(
+            eq(posSchema.employees.userId, userId),
+            eq(posSchema.employees.isDeleted, false)
+        ),
+        with: {
+            employeeOutlets: {
+                where: eq(posSchema.employeeOutlets.outletId, outletId)
+            }
+        }
+    });
+
+    if (employee) {
+        // Only allow manager/admin roles to manage payment methods
+        if (employee.role === 'manager' || employee.role === 'admin') {
+            const hasAccess = employee.employeeOutlets.some(eo => eo.outletId === outletId);
+            if (hasAccess) return true;
+        }
+    }
+
+    return false;
+}
+
 // POST /api/payment-methods - Create payment method
 export async function POST(request: Request) {
     try {
@@ -48,7 +88,23 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { outletId, name, type } = body;
+        const {
+            outletId,
+            name,
+            type,
+            bankName,
+            accountNumber,
+            accountHolder,
+            qrisData,
+            qrisImageUrl,
+            bankAccounts,
+            isManual
+        } = body;
+
+        const authorized = await isAuthorized(session.user.id, outletId);
+        if (!authorized) {
+            return NextResponse.json({ error: "Access denied" }, { status: 403 });
+        }
 
         if (!name) {
             return NextResponse.json(
@@ -63,6 +119,13 @@ export async function POST(request: Request) {
                 outletId: outletId || null,
                 name,
                 type: type || "cash",
+                bankName,
+                accountNumber,
+                accountHolder,
+                qrisData,
+                qrisImageUrl,
+                bankAccounts,
+                isManual: isManual ?? false,
             })
             .returning();
 

@@ -372,6 +372,32 @@ export const stockOpnameItems = sediaPos.table("stock_opname_items", {
     notes: text("notes"),
 });
 
+export const backups = sediaPos.table("backups", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id").notNull().references(() => outlets.id),
+    userId: text("user_id").notNull(),
+    fileName: text("file_name").notNull(),
+    fileUrl: text("file_url"),
+    fileSize: integer("file_size"),
+    type: text("type").notNull(), // 'manual', 'auto', 'export'
+    status: text("status").notNull().default("completed"), // 'pending', 'completed', 'failed'
+    metadata: text("metadata"), // JSON string for details like table counts
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const activityLogs = sediaPos.table("activity_logs", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id"), // Can be null for system-wide/owner activities
+    userId: text("user_id").notNull(),
+    userName: text("user_name"),
+    action: text("action").notNull(), // 'CREATE', 'UPDATE', 'DELETE', etc.
+    entityType: text("entity_type").notNull(), // 'PRODUCT', 'TRANSACTION', etc.
+    entityId: text("entity_id"),
+    description: text("description").notNull(),
+    metadata: text("metadata"), // JSON string for detailed changes
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const stockOpnameItemsRelations = relations(stockOpnameItems, ({ one }) => ({
     opname: one(stockOpnames, {
         fields: [stockOpnameItems.opnameId],
@@ -399,5 +425,19 @@ export const heldOrdersRelations = relations(heldOrders, ({ one }) => ({
     customer: one(customers, {
         fields: [heldOrders.customerId],
         references: [customers.id],
+    }),
+}));
+
+export const backupsRelations = relations(backups, ({ one }) => ({
+    outlet: one(outlets, {
+        fields: [backups.outletId],
+        references: [outlets.id],
+    }),
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+    outlet: one(outlets, {
+        fields: [activityLogs.outletId],
+        references: [outlets.id],
     }),
 }));

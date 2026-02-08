@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Package,
     Search,
@@ -10,6 +10,12 @@ import {
     RefreshCw,
 } from "lucide-react";
 
+interface Variant {
+    id: string;
+    name: string;
+    stock: number;
+}
+
 interface Product {
     id: string;
     name: string;
@@ -18,6 +24,7 @@ interface Product {
     trackStock: boolean;
     price: string;
     outletId: string;
+    variants?: Variant[];
 }
 
 interface Outlet {
@@ -34,6 +41,7 @@ interface StockAlert {
         name: string;
         stock: number;
         outletName: string | null;
+        isVariant?: boolean;
     }[];
 }
 
@@ -98,9 +106,10 @@ export default function InventoryPage() {
         }
     };
 
-    const adjustStock = async (productId: string, adjustment: number) => {
-        setAdjustingId(productId);
-        const amount = adjustmentAmounts[productId] ?? 1;
+    const adjustStock = async (productId: string, adjustment: number, variantId?: string) => {
+        const key = variantId ? `${productId}-${variantId}` : productId;
+        setAdjustingId(key);
+        const amount = adjustmentAmounts[key] ?? 1;
         const finalAdjustment = adjustment * amount;
 
         try {
@@ -109,6 +118,7 @@ export default function InventoryPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     productId,
+                    variantId,
                     adjustment: finalAdjustment,
                     type: finalAdjustment > 0 ? "in" : "out",
                 }),
@@ -117,8 +127,8 @@ export default function InventoryPage() {
             if (res.ok) {
                 fetchInventory();
                 fetchAlerts();
-                // Reset adjustment amount for this product
-                setAdjustmentAmounts(prev => ({ ...prev, [productId]: 1 }));
+                // Reset adjustment amount
+                setAdjustmentAmounts(prev => ({ ...prev, [key]: 1 }));
             }
         } catch (error) {
             console.error("Failed to adjust stock:", error);
@@ -133,7 +143,7 @@ export default function InventoryPage() {
             return { label: "Habis", color: "bg-red-100 text-red-700" };
         if (stock < 5)
             return { label: "Rendah", color: "bg-yellow-100 text-yellow-700" };
-        return { label: "Aman", color: "bg-green-100 text-green-700" };
+        return { label: "Aman", color: "bg-primary-50 text-primary-700" };
     };
 
     const filteredProducts = products.filter((p) =>
@@ -177,7 +187,12 @@ export default function InventoryPage() {
                             </h3>
                             <p className="mt-1 text-sm text-yellow-700">
                                 <span className="font-semibold">{alerts.critical}</span> produk habis,{" "}
-                                <span className="font-semibold">{alerts.warning}</span> produk stok rendah
+                                <span className="font-semibold">{alerts.warning}</span> produk stok rendah.
+                                {alerts.products.length <= 10 && (
+                                    <span className="ml-1 opacity-80 italic">
+                                        ({alerts.products.map(p => p.name).join(", ")})
+                                    </span>
+                                )}
                             </p>
                         </div>
                     </div>
@@ -214,7 +229,7 @@ export default function InventoryPage() {
             {/* Inventory Table */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
                 </div>
             ) : filteredProducts.length === 0 ? (
                 <div className="rounded-xl border border-zinc-200 bg-white py-12 text-center">
@@ -242,70 +257,124 @@ export default function InventoryPage() {
                         </thead>
                         <tbody className="divide-y divide-zinc-200">
                             {filteredProducts.map((product) => {
-                                const status = getStockStatus(product.stock);
+                                const hasVariants = product.variants && product.variants.length > 0;
                                 return (
-                                    <tr
-                                        key={product.id}
-                                        className="transition-colors hover:bg-zinc-50"
-                                    >
-                                        <td className="px-4 py-3">
-                                            <div>
-                                                <span className="font-medium text-zinc-900">
-                                                    {product.name}
+                                    <React.Fragment key={product.id}>
+                                        <tr className="transition-colors hover:bg-zinc-50">
+                                            <td className="px-4 py-3">
+                                                <div>
+                                                    <span className="font-medium text-zinc-900">
+                                                        {product.name}
+                                                    </span>
+                                                    {product.sku && (
+                                                        <p className="text-xs text-zinc-500">{product.sku}</p>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className="text-lg font-bold text-zinc-900">
+                                                    {hasVariants ? '-' : product.stock}
                                                 </span>
-                                                {product.sku && (
-                                                    <p className="text-xs text-zinc-500">{product.sku}</p>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {!hasVariants && (
+                                                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStockStatus(product.stock).color}`}>
+                                                        {getStockStatus(product.stock).label}
+                                                    </span>
                                                 )}
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span className="text-lg font-bold text-zinc-900">
-                                                {product.stock}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-center">
-                                            <span
-                                                className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${status.color}`}
-                                            >
-                                                {status.label}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => adjustStock(product.id, -1)}
-                                                    disabled={adjustingId === product.id || product.stock === 0}
-                                                    className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
-                                                    title={`Kurangi ${(adjustmentAmounts[product.id] ?? 1)}`}
-                                                >
-                                                    <Minus className="h-4 w-4" />
-                                                </button>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {!hasVariants && (
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button
+                                                            onClick={() => adjustStock(product.id, -1)}
+                                                            disabled={adjustingId === product.id || product.stock === 0}
+                                                            className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                                                            title={`Kurangi ${(adjustmentAmounts[product.id] ?? 1)}`}
+                                                        >
+                                                            <Minus className="h-4 w-4" />
+                                                        </button>
 
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={adjustmentAmounts[product.id] ?? 1}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value);
-                                                        setAdjustmentAmounts(prev => ({
-                                                            ...prev,
-                                                            [product.id]: isNaN(val) ? 1 : val
-                                                        }));
-                                                    }}
-                                                    className="w-16 rounded-md border border-zinc-200 bg-white py-1 text-center text-sm font-medium text-zinc-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20"
-                                                />
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={adjustmentAmounts[product.id] ?? 1}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value);
+                                                                setAdjustmentAmounts(prev => ({
+                                                                    ...prev,
+                                                                    [product.id]: isNaN(val) ? 1 : val
+                                                                }));
+                                                            }}
+                                                            className="w-16 rounded-md border border-zinc-200 bg-white py-1 text-center text-sm font-medium text-zinc-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20"
+                                                        />
 
-                                                <button
-                                                    onClick={() => adjustStock(product.id, 1)}
-                                                    disabled={adjustingId === product.id}
-                                                    className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-green-50 hover:text-green-600 disabled:opacity-50"
-                                                    title={`Tambah ${(adjustmentAmounts[product.id] ?? 1)}`}
-                                                >
-                                                    <Plus className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                                        <button
+                                                            onClick={() => adjustStock(product.id, 1)}
+                                                            disabled={adjustingId === product.id}
+                                                            className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-green-50 hover:text-green-600 disabled:opacity-50"
+                                                            title={`Tambah ${(adjustmentAmounts[product.id] ?? 1)}`}
+                                                        >
+                                                            <Plus className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                        {hasVariants && product.variants?.map((v) => (
+                                            <tr key={v.id} className="bg-zinc-50 transition-colors hover:bg-zinc-100">
+                                                <td className="pl-10 pr-4 py-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-1.5 w-1.5 rounded-full bg-zinc-300" />
+                                                        <span className="text-sm font-medium text-zinc-600">
+                                                            {v.name}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-2 text-center text-sm font-bold text-zinc-900">
+                                                    {v.stock}
+                                                </td>
+                                                <td className="px-4 py-2 text-center">
+                                                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${getStockStatus(v.stock).color}`}>
+                                                        {getStockStatus(v.stock).label}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-2">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button
+                                                            onClick={() => adjustStock(product.id, -1, v.id)}
+                                                            disabled={adjustingId === `${product.id}-${v.id}` || v.stock === 0}
+                                                            className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                                                        >
+                                                            <Minus className="h-3.5 w-3.5" />
+                                                        </button>
+
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={adjustmentAmounts[`${product.id}-${v.id}`] ?? 1}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value);
+                                                                setAdjustmentAmounts(prev => ({
+                                                                    ...prev,
+                                                                    [`${product.id}-${v.id}`]: isNaN(val) ? 1 : val
+                                                                }));
+                                                            }}
+                                                            className="w-12 rounded-md border border-zinc-200 bg-white py-0.5 text-center text-xs font-medium text-zinc-900 focus:border-primary-500 focus:outline-none"
+                                                        />
+
+                                                        <button
+                                                            onClick={() => adjustStock(product.id, 1, v.id)}
+                                                            disabled={adjustingId === `${product.id}-${v.id}`}
+                                                            className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-green-50 hover:text-green-600 disabled:opacity-50"
+                                                        >
+                                                            <Plus className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
                                 );
                             })}
                         </tbody>
