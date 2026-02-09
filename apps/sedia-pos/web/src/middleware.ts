@@ -50,7 +50,8 @@ export function middleware(request: NextRequest) {
     );
 
     // Get the session token from cookies
-    const sessionToken = request.cookies.get("better-auth.session_token");
+    const sessionToken = request.cookies.get("better-auth.session_token") ||
+        request.cookies.get("__Secure-better-auth.session_token");
 
     // If trying to access protected route without session, redirect to login
     if (isProtectedRoute && !sessionToken) {
