@@ -24,6 +24,7 @@ import {
     ToggleLeft,
     ToggleRight,
     ChevronDown,
+    Share2,
 } from "lucide-react";
 import { slugify } from "@/utils/slug";
 import {
@@ -152,6 +153,37 @@ export default function ProductsPage() {
             toast.error("Terjadi kesalahan sistem");
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const copyLink = (text: string) => {
+        navigator.clipboard.writeText(text).then(() => {
+            toast.success("Link katalog berhasil disalin!");
+        }).catch((err) => {
+            console.error('Failed to copy: ', err);
+            toast.error("Gagal menyalin link");
+        });
+    };
+
+    const handleShareCatalog = async () => {
+        if (!activeOutlet) return;
+        const url = `${window.location.origin}/catalog/${slugify(activeOutlet.name)}`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: activeOutlet.name,
+                    text: `Cek katalog produk ${activeOutlet.name} di sini:`,
+                    url: url,
+                });
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                    copyLink(url);
+                }
+            }
+        } else {
+            copyLink(url);
         }
     };
 
@@ -390,14 +422,24 @@ export default function ProductsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     {activeOutlet && (
-                        <Link
-                            href={`/catalog/${slugify(activeOutlet.name)}`}
-                            target="_blank"
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50 hover:border-zinc-300"
-                        >
-                            <ExternalLink className="h-4 w-4" />
-                            <span className="hidden sm:inline">Katalog</span>
-                        </Link>
+                        <>
+                            <button
+                                onClick={handleShareCatalog}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50 hover:border-zinc-300"
+                                title="Bagikan Katalog"
+                            >
+                                <Share2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">Bagikan</span>
+                            </button>
+                            <Link
+                                href={`/catalog/${slugify(activeOutlet.name)}`}
+                                target="_blank"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50 hover:border-zinc-300"
+                            >
+                                <ExternalLink className="h-4 w-4" />
+                                <span className="hidden sm:inline">Lihat</span>
+                            </Link>
+                        </>
                     )}
                     <button
                         onClick={handleGenerate}

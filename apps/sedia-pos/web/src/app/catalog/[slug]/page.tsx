@@ -9,6 +9,7 @@ import { SearchBar } from "@/components/catalog/SearchBar";
 import { CategoryFilter } from "@/components/catalog/CategoryFilter";
 import { slugify } from "@/utils/slug";
 import { resolveR2UrlServer } from "@/lib/storage";
+import { BrandTheme } from "@/components/catalog/BrandTheme";
 
 // Disable caching for development - set to 60 in production
 export const revalidate = 0;
@@ -162,48 +163,59 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
     ]);
 
     const primaryColor = outlet.primaryColor || "#2e6a69";
+    const secondaryColor = outlet.secondaryColor;
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-zinc-50 via-white to-zinc-50">
-            {/* Premium Header */}
-            <div className="sticky top-0 z-30 backdrop-blur-xl bg-white/80 border-b border-zinc-100/50">
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <div className="flex items-start gap-4 mb-4">
-                        <Link
-                            href="/catalog"
-                            className="p-2.5 -ml-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-zinc-600 transition-all duration-300 hover:scale-105 active:scale-95 mt-1"
-                        >
-                            <Store className="w-5 h-5" />
-                        </Link>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-black text-zinc-900 tracking-tight">{outlet.name}</h1>
-                                {outlet.openTime && outlet.closeTime && (
-                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
-                                        <div className={`w-1 h-1 rounded-full ${getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "bg-emerald-500" : "bg-red-500"}`} />
-                                        {getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "Buka" : "Tutup"}
-                                    </div>
-                                )}
-                            </div>
+        <div className="min-h-screen bg-zinc-50">
+            <BrandTheme primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
-                            {/* Info Rows */}
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                                {outlet.address && (
-                                    <div className="flex items-center gap-1.5 text-zinc-500 text-sm">
-                                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                                        <span className="line-clamp-1">{outlet.address}</span>
-                                    </div>
-                                )}
+            {/* Attractive Outlet Header */}
+            <div className="sticky top-14 md:top-16 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-200/50 shadow-sm transition-all">
+                <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                        <div className="flex items-center gap-5">
+                            <Link href="/catalog" className="shrink-0 relative group">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white to-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-700 shadow-sm group-hover:shadow-md transition-all duration-300">
+                                    <Store className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color: 'var(--brand-primary)' }} />
+                                </div>
                                 {outlet.openTime && outlet.closeTime && (
-                                    <div className="flex items-center gap-1.5 text-zinc-500 text-sm">
-                                        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                                        <span>{outlet.openTime} - {outlet.closeTime}</span>
-                                    </div>
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
                                 )}
+                            </Link>
+
+                            <div className="space-y-1">
+                                <h1 className="text-2xl md:text-3xl font-brand font-black text-zinc-900 tracking-tight leading-none">
+                                    {outlet.name}
+                                </h1>
+
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500 font-medium">
+                                    {outlet.address && (
+                                        <div className="flex items-center gap-1.5">
+                                            <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+                                            <span className="line-clamp-1 max-w-[200px] md:max-w-md">{outlet.address}</span>
+                                        </div>
+                                    )}
+
+                                    {outlet.openTime && outlet.closeTime && (
+                                        <>
+                                            <div className="hidden md:block w-1 h-1 rounded-full bg-zinc-300"></div>
+                                            <div className="flex items-center gap-1.5">
+                                                <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
+                                                <span className="tabular-nums">{outlet.openTime} - {outlet.closeTime}</span>
+                                                <span className={`ml-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-rose-50 text-rose-700 border-rose-200"}`}>
+                                                    {getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "Buka" : "Tutup"}
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
+
+                        <div className="w-full md:w-[420px]">
+                            <SearchBar placeholder={`Cari produk di ${outlet.name}...`} />
+                        </div>
                     </div>
-                    <SearchBar placeholder={`Cari produk...`} />
                 </div>
             </div>
 
@@ -213,18 +225,17 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
             {/* Product Grid */}
             <div className="max-w-7xl mx-auto px-4 py-8">
                 {products.length === 0 ? (
-                    <div className="text-center py-24 bg-gradient-to-br from-zinc-50 to-white rounded-[2rem] border border-dashed border-zinc-200 flex flex-col items-center justify-center">
-                        <div className="w-24 h-24 rounded-full bg-zinc-100 flex items-center justify-center mb-6">
-                            <Package className="w-12 h-12 text-zinc-300" />
+                    <div className="text-center py-20">
+                        <div className="w-20 h-20 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto mb-4">
+                            <Package className="w-10 h-10 text-zinc-300" />
                         </div>
-                        <h3 className="text-2xl font-bold text-zinc-900 mb-3">Produk tidak ditemukan</h3>
-                        <p className="text-zinc-500 max-w-sm mx-auto">Coba pilih kategori lain atau gunakan kata kunci pencarian yang berbeda.</p>
+                        <h3 className="text-xl font-bold text-zinc-900 mb-2">Produk tidak ditemukan</h3>
+                        <p className="text-zinc-500 max-w-sm mx-auto mb-6">Coba cari dengan kata kunci lain.</p>
                         <Link
                             href={`/catalog/${slugify(outlet.name)}`}
-                            className="mt-6 px-6 py-3 rounded-full font-bold text-white transition-all hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-                            style={{ backgroundColor: primaryColor }}
+                            className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-8 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
                         >
-                            Lihat Semua Produk
+                            Lihat Semua
                         </Link>
                     </div>
                 ) : (
@@ -235,7 +246,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                             </h2>
                             <span className="text-sm text-zinc-500">{products.length} item</span>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 pb-20">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5 pb-20">
                             {products.map((product) => (
                                 <ProductCard
                                     key={product.id}

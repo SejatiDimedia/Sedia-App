@@ -184,13 +184,16 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
                     {/* Logo & Toggle */}
                     <div className={`flex h-16 items-center border-b border-zinc-200 transition-all duration-300 ${isCollapsed ? "justify-center px-2" : "justify-between px-4"}`}>
                         <Link href="/dashboard" className={`flex items-center gap-2 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary-500 shadow-sm">
-                                <LayoutDashboard className="h-4 w-4 text-white" />
-                            </div>
-                            {!isCollapsed && (
-                                <span className="text-lg font-bold text-zinc-900 truncate">
-                                    Sedia POS
-                                </span>
+                            {isCollapsed ? (
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-secondary-600 font-bold border border-primary-700 font-brand">
+                                    SP
+                                </div>
+                            ) : (
+                                <div className="grid flex-1 text-left text-sm leading-tight">
+                                    <span className="truncate font-bold tracking-tight text-2xl text-primary-700 font-brand">
+                                        Sedia<span className="text-secondary-600">Pos</span>
+                                    </span>
+                                </div>
                             )}
                         </Link>
 
@@ -319,9 +322,9 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
             </aside >
 
             {/* Main Content */}
-            < div className="flex flex-1 flex-col" >
+            <div className="flex flex-1 flex-col">
                 {/* Top Bar */}
-                < header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-zinc-200 bg-white px-4 lg:px-6" >
+                <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-zinc-200 bg-white px-4 lg:px-6">
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 lg:hidden"
@@ -369,11 +372,11 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
                             </div>
                         )}
                     </div>
-                </header >
+                </header>
 
                 {/* Page Content */}
-                < main className="flex-1 p-4 lg:p-6" > {children}</main >
-            </div >
+                <main className="flex-1 p-4 lg:p-6">{children}</main>
+            </div>
         </>
     );
 }

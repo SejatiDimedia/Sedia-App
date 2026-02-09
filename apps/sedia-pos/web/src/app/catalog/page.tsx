@@ -13,13 +13,13 @@ export default async function OutletSelectionPage() {
     const outlets = await getOutlets();
 
     return (
-        <div className="py-8 px-4">
-            <div className="mb-8 text-center space-y-2">
-                <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-teal-50 text-teal-600 mb-2">
-                    <Store className="w-8 h-8" />
+        <div className="py-12 px-4">
+            <div className="mb-10 text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-900 text-white shadow-sm mb-2">
+                    <Store className="w-6 h-6" />
                 </div>
-                <h1 className="text-2xl font-bold font-outfit text-zinc-900">Pilih Cabang</h1>
-                <p className="text-zinc-500 max-w-[280px] mx-auto text-sm">
+                <h1 className="text-3xl font-brand font-bold text-zinc-900 tracking-tight">Pilih Cabang</h1>
+                <p className="text-zinc-500 max-w-sm mx-auto text-base">
                     Silakan pilih cabang terdekat untuk melihat menu yang tersedia
                 </p>
             </div>

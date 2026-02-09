@@ -28,11 +28,11 @@ function SearchBarContent({ placeholder }: { placeholder: string }) {
 
     return (
         <div className="relative w-full group">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-zinc-600 transition-colors">
-                <Search className="w-5 h-5" />
+            <div className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-zinc-600 transition-colors">
+                <Search className="w-4 h-4 md:w-5 md:h-5" />
             </div>
             <input
-                className="w-full rounded-2xl border-2 border-zinc-100 bg-zinc-50 py-3.5 pl-12 pr-12 text-base font-medium outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:bg-white focus:shadow-lg transition-all duration-300"
+                className="w-full rounded-xl md:rounded-2xl border-2 border-zinc-100 bg-zinc-50 py-2.5 pl-10 pr-10 md:py-3.5 md:pl-12 md:pr-12 text-sm md:text-base font-medium outline-none placeholder:text-zinc-400 focus:border-zinc-300 focus:bg-white focus:shadow-lg transition-all duration-300"
                 placeholder={placeholder}
                 value={value}
                 onChange={(e) => {

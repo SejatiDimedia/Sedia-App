@@ -93,7 +93,7 @@ function CategoryFilterContent({ categories, primaryColor }: CategoryFilterProps
 
 export function CategoryFilter(props: CategoryFilterProps) {
     return (
-        <div className="sticky top-[56px] z-20 bg-gradient-to-b from-white via-white to-white/90 backdrop-blur-lg border-b border-zinc-100/50 py-3">
+        <div className="sticky top-14 md:top-16 z-20 bg-white/95 backdrop-blur-lg border-b border-zinc-100/50 py-2 md:py-3 transition-all">
             <Suspense fallback={
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="flex gap-3">
