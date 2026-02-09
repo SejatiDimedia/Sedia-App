@@ -20,6 +20,8 @@ export const outlets = sediaPos.table("outlets", {
     qrisImageUrl: text("qris_image_url"),
     primaryColor: text("primary_color").default("#2e6a69"),
     secondaryColor: text("secondary_color").default("#f2b30c"),
+    openTime: text("open_time"),
+    closeTime: text("close_time"),
     ownerId: text("owner_id").notNull(), // Links to authSchema.user
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, address, phone } = body;
+        const { name, address, phone, openTime, closeTime } = body;
 
         if (!name) {
             return NextResponse.json(
@@ -101,6 +101,8 @@ export async function POST(request: Request) {
                 name,
                 address: address || null,
                 phone: phone || null,
+                openTime: openTime || null,
+                closeTime: closeTime || null,
                 ownerId: session.user.id,
             })
             .returning();

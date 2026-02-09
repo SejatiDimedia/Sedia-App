@@ -38,6 +38,8 @@ export default async function OutletSelectionPage() {
                             address={outlet.address}
                             phone={outlet.phone}
                             primaryColor={outlet.primaryColor}
+                            openTime={outlet.openTime}
+                            closeTime={outlet.closeTime}
                         />
                     ))}
                 </div>

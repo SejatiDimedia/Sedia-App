@@ -1,12 +1,14 @@
 import { db, posSchema } from "@/lib/db";
 import { eq, and, ilike } from "drizzle-orm";
 import Link from "next/link";
-import { Store, MapPin, Package } from "lucide-react";
+import { Store, MapPin, Package, Clock } from "lucide-react";
+import { getStoreStatus } from "@/utils/store-status";
 
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { SearchBar } from "@/components/catalog/SearchBar";
 import { CategoryFilter } from "@/components/catalog/CategoryFilter";
 import { slugify } from "@/utils/slug";
+import { resolveR2UrlServer } from "@/lib/storage";
 
 // Disable caching for development - set to 60 in production
 export const revalidate = 0;
@@ -97,17 +99,17 @@ async function getProducts(outletId: string, search: string, categoryId: string)
 
     console.log(`[Catalog] Found ${products.length} products for outlet ${outletId}`);
 
-    return products.map(p => ({
+    return await Promise.all(products.map(async p => ({
         id: p.id,
         name: p.name,
         price: p.price,
         stock: p.stock,
-        imageUrl: p.imageUrl,
+        imageUrl: await resolveR2UrlServer(p.imageUrl),
         isActive: p.isActive,
         isDeleted: p.isDeleted,
         categoryName: p.category?.name || null,
         variants: p.variants
-    }));
+    })));
 }
 
 interface PageProps {
@@ -174,15 +176,31 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                             <Store className="w-5 h-5" />
                         </Link>
                         <div className="flex-1">
-                            <h1 className="text-2xl font-black text-zinc-900 tracking-tight">{outlet.name}</h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-black text-zinc-900 tracking-tight">{outlet.name}</h1>
+                                {outlet.openTime && outlet.closeTime && (
+                                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                                        <div className={`w-1 h-1 rounded-full ${getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "bg-emerald-500" : "bg-red-500"}`} />
+                                        {getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? "Buka" : "Tutup"}
+                                    </div>
+                                )}
+                            </div>
 
-                            {/* Address */}
-                            {outlet.address && (
-                                <div className="flex items-center gap-1.5 text-zinc-500 text-sm mt-1">
-                                    <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                                    <span className="line-clamp-1">{outlet.address}</span>
-                                </div>
-                            )}
+                            {/* Info Rows */}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                                {outlet.address && (
+                                    <div className="flex items-center gap-1.5 text-zinc-500 text-sm">
+                                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <span className="line-clamp-1">{outlet.address}</span>
+                                    </div>
+                                )}
+                                {outlet.openTime && outlet.closeTime && (
+                                    <div className="flex items-center gap-1.5 text-zinc-500 text-sm">
+                                        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <span>{outlet.openTime} - {outlet.closeTime}</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                     <SearchBar placeholder={`Cari produk...`} />

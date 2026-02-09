@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { createProduct, getCategories } from "../actions";
 import { toast } from "react-hot-toast";
+import { ImageUpload } from "@/components/dashboard/ImageUpload";
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -462,35 +463,28 @@ export default function NewProductPage() {
                                 <h3 className="font-bold text-zinc-900">Gambar Produk</h3>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-zinc-100 bg-zinc-50 transition-all hover:border-secondary-200">
-                                    {formData.imageUrl ? (
-                                        <img src={formData.imageUrl} alt="Preview" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                                    ) : (
-                                        <div className="text-center">
-                                            <Package className="mx-auto h-12 w-12 text-zinc-200" />
-                                            <p className="mt-2 text-xs font-medium text-zinc-400">Pratinjau Gambar</p>
-                                        </div>
-                                    )}
-                                </div>
+                            <ImageUpload
+                                value={formData.imageUrl}
+                                onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+                                description="* Upload gambar produk Anda di sini (Maks. 5MB)"
+                            />
 
-                                <div className="text-left">
-                                    <label htmlFor="imageUrl" className="mb-1.5 block text-sm font-semibold text-zinc-700">
-                                        URL Gambar
-                                    </label>
-                                    <input
-                                        id="imageUrl"
-                                        name="imageUrl"
-                                        type="text"
-                                        value={formData.imageUrl}
-                                        onChange={handleChange}
-                                        placeholder="https://images.unsplash.com/..."
-                                        className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-xs text-zinc-900 transition-all focus:border-secondary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-secondary-500/10"
-                                    />
-                                    <p className="mt-2 text-[10px] text-zinc-400 italic">
-                                        * Gunakan link gambar dari internet atau Unsplash
-                                    </p>
-                                </div>
+                            <div className="mt-6 pt-6 border-t border-zinc-50 text-left">
+                                <label htmlFor="imageUrl" className="mb-1.5 block text-sm font-semibold text-zinc-700">
+                                    Atau Gunakan URL Gambar
+                                </label>
+                                <input
+                                    id="imageUrl"
+                                    name="imageUrl"
+                                    type="text"
+                                    value={formData.imageUrl}
+                                    onChange={handleChange}
+                                    placeholder="https://images.unsplash.com/..."
+                                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-xs text-zinc-900 transition-all focus:border-secondary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-secondary-500/10"
+                                />
+                                <p className="mt-2 text-[10px] text-zinc-400 italic">
+                                    * Gunakan link gambar dari internet atau Unsplash jika tidak ingin upload
+                                </p>
                             </div>
                         </div>
 

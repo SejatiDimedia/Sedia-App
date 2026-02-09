@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { MapPin, Phone, ArrowRight } from "lucide-react";
+import { MapPin, Phone, ArrowRight, Clock } from "lucide-react";
 import { slugify } from "@/utils/slug";
+import { getStoreStatus } from "@/utils/store-status";
 
 interface OutletCardProps {
     id: string;
@@ -9,6 +10,8 @@ interface OutletCardProps {
     phone?: string | null;
     primaryColor?: string | null;
     secondaryColor?: string | null;
+    openTime?: string | null;
+    closeTime?: string | null;
 }
 
 export function OutletCard({
@@ -18,7 +21,11 @@ export function OutletCard({
     phone,
     primaryColor = "#2e6a69", // Default teal
     secondaryColor = "#f2b30c", // Default gold
+    openTime,
+    closeTime,
 }: OutletCardProps) {
+    const { isOpen } = getStoreStatus(openTime, closeTime);
+
     return (
         <Link href={`/catalog/${slugify(name)}`} className="group block h-full">
             <div className="bg-white rounded-2xl p-5 border border-zinc-100 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col relative overflow-hidden">
@@ -29,9 +36,16 @@ export function OutletCard({
                 />
 
                 <div className="pl-3 flex-1 flex flex-col">
-                    <h3 className="text-lg font-bold text-zinc-900 group-hover:text-zinc-700 transition-colors mb-2 line-clamp-1">
-                        {name}
-                    </h3>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="text-lg font-bold text-zinc-900 group-hover:text-zinc-700 transition-colors line-clamp-1">
+                            {name}
+                        </h3>
+                        {openTime && closeTime && (
+                            <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${isOpen ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                                {isOpen ? "Buka" : "Tutup"}
+                            </span>
+                        )}
+                    </div>
 
                     {address && (
                         <div className="flex items-start gap-2 text-zinc-500 text-sm mb-2 line-clamp-2">

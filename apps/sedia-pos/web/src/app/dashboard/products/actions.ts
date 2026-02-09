@@ -3,6 +3,7 @@
 import { db, posSchema } from "@/lib/db";
 import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { resolveR2UrlServer, extractR2Key, resolveR2Url, deleteFile } from "@/lib/storage";
 
 const { products, categories, outlets, productVariants } = posSchema;
 
@@ -25,7 +26,14 @@ export async function getProducts(outletId: string) {
             },
             orderBy: desc(posSchema.products.createdAt)
         });
-        return { data: result, error: null };
+
+        // Resolve image URLs
+        const resolvedResult = await Promise.all(result.map(async p => ({
+            ...p,
+            imageUrl: await resolveR2UrlServer(p.imageUrl)
+        })));
+
+        return { data: resolvedResult, error: null };
     } catch (error) {
         console.error("Error fetching products:", error);
         return { data: [], error: "Failed to fetch products" };
@@ -41,6 +49,14 @@ export async function getProductById(id: string) {
                 variants: true,
             },
         });
+
+        if (result) {
+            result.imageUrl = await resolveR2UrlServer(result.imageUrl);
+            console.log(`getProductById(${id}) resolved:`, { id: result.id, name: result.name, imageUrl: result.imageUrl });
+        } else {
+            console.log(`getProductById(${id}) result: null`);
+        }
+
         return { data: result || null, error: null };
     } catch (error) {
         console.error("Error fetching product:", error);
@@ -81,7 +97,7 @@ export async function createProduct(data: {
                 costPrice: data.costPrice || "0",
                 stock: data.stock || 0,
                 trackStock: data.trackStock ?? true,
-                imageUrl: data.imageUrl || null,
+                imageUrl: extractR2Key(data.imageUrl || null),
                 isActive: true,
             })
             .returning();
@@ -119,6 +135,25 @@ export async function updateProduct(
     }>
 ) {
     try {
+        // Get current product to check for image replacement
+        const currentProduct = await db.query.products.findFirst({
+            where: eq(products.id, id),
+            columns: { imageUrl: true }
+        });
+
+        const newImageKey = extractR2Key(data.imageUrl ?? null);
+
+        // Cleanup old image if it's being replaced and it was an R2 file
+        if (currentProduct?.imageUrl && currentProduct.imageUrl !== newImageKey) {
+            const oldKey = extractR2Key(currentProduct.imageUrl);
+            if (oldKey && !oldKey.startsWith("http")) {
+                console.log(`[Storage] Deleting old image: ${oldKey}`);
+                await deleteFile(oldKey).catch((e) =>
+                    console.error("Failed to delete orphaned image:", e)
+                );
+            }
+        }
+
         const result = await db
             .update(products)
             .set({
@@ -130,7 +165,7 @@ export async function updateProduct(
                 costPrice: data.costPrice,
                 stock: data.stock,
                 trackStock: data.trackStock,
-                imageUrl: data.imageUrl,
+                imageUrl: extractR2Key(data.imageUrl ?? null),
                 isActive: data.isActive,
                 updatedAt: new Date(),
             })
@@ -194,7 +229,10 @@ export async function updateProduct(
             }
         }
 
+        console.log(`updateProduct(${id}) successful. New imageUrl:`, product.imageUrl);
+
         revalidatePath("/dashboard/products");
+        revalidatePath(`/dashboard/products/${id}/edit`);
         return { data: product, error: null };
     } catch (error) {
         console.error("Error updating product:", error);
@@ -205,6 +243,22 @@ export async function updateProduct(
 // Delete product
 export async function deleteProduct(id: string) {
     try {
+        // Get product to cleanup image even on soft delete (user request)
+        const product = await db.query.products.findFirst({
+            where: eq(products.id, id),
+            columns: { imageUrl: true }
+        });
+
+        if (product?.imageUrl) {
+            const key = extractR2Key(product.imageUrl);
+            if (key && !key.startsWith("http")) {
+                console.log(`[Storage] Deleting image for deleted product: ${key}`);
+                await deleteFile(key).catch((e) =>
+                    console.error("Failed to delete image on product delete:", e)
+                );
+            }
+        }
+
         await db.update(products)
             .set({ isDeleted: true, updatedAt: new Date() })
             .where(eq(products.id, id));

@@ -21,6 +21,74 @@ const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 const PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
 /**
+ * Extracts the relative key from a full R2 URL.
+ * If the input is not an R2 URL, it returns the input as is.
+ */
+export function extractR2Key(urlOrPath: string | null): string | null {
+    if (!urlOrPath) return null;
+    if (!urlOrPath.startsWith("http")) return urlOrPath;
+    if (!urlOrPath.includes(".r2.dev")) return urlOrPath;
+
+    try {
+        const url = new URL(urlOrPath);
+        return url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname;
+    } catch (e) {
+        return urlOrPath;
+    }
+}
+
+/**
+ * Resolves a path or old R2 URL to the current public R2 domain.
+ * If the input is an external URL (not R2), it returns it as is.
+ * Fallback to Signed URL if public URL is not working or not defined.
+ */
+export function resolveR2Url(pathOrUrl: string | null): string | null {
+    if (!pathOrUrl) return null;
+
+    // 1. If it's an external URL (not Cloudflare R2), return as is
+    if (pathOrUrl.startsWith("http") && !pathOrUrl.includes(".r2.dev")) {
+        return pathOrUrl;
+    }
+
+    // 2. Extract the key (relative path)
+    const key = extractR2Key(pathOrUrl);
+    if (!key) return pathOrUrl;
+
+    // 3. Construct URL using CURRENT PUBLIC_URL from env
+    if (PUBLIC_URL) {
+        const baseUrl = PUBLIC_URL.endsWith("/") ? PUBLIC_URL.slice(0, -1) : PUBLIC_URL;
+        return `${baseUrl}/${key}`;
+    }
+
+    // 4. No public URL set, return the key or original
+    return pathOrUrl;
+}
+
+/**
+ * Server-only version that can generate Signed URLs as fallback.
+ */
+export async function resolveR2UrlServer(pathOrUrl: string | null): Promise<string | null> {
+    const resolved = resolveR2Url(pathOrUrl);
+    if (!resolved) return null;
+
+    // If it's an R2 URL, we could optionally force a signed URL if we know the public one is broken
+    // or if we just want maximum reliability.
+    if (resolved.includes(".r2.dev") || !resolved.startsWith("http")) {
+        const key = extractR2Key(resolved);
+        if (key) {
+            try {
+                return await getSignedUrl(key);
+            } catch (e) {
+                console.error("Failed to generate signed URL:", e);
+                return resolved;
+            }
+        }
+    }
+
+    return resolved;
+}
+
+/**
  * Upload a file to R2
  */
 export async function uploadFile(
@@ -37,8 +105,9 @@ export async function uploadFile(
 
     await r2Client.send(command);
 
-    // Return public URL if available, otherwise use signed URL approach
-    const url = PUBLIC_URL ? `${PUBLIC_URL}/${key}` : await getSignedUrl(key);
+    // Always resolve using the current domain
+    const url = resolveR2Url(key) || "";
+
     return { key, url };
 }
 

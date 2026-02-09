@@ -98,7 +98,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { name, address, phone, primaryColor, secondaryColor } = body;
+        const { name, address, phone, primaryColor, secondaryColor, openTime, closeTime } = body;
 
         const [updatedOutlet] = await db
             .update(posSchema.outlets)
@@ -108,6 +108,8 @@ export async function PUT(
                 phone: phone || null,
                 primaryColor: primaryColor || undefined,
                 secondaryColor: secondaryColor || undefined,
+                openTime: openTime || null,
+                closeTime: closeTime || null,
             })
             .where(eq(posSchema.outlets.id, id))
             .returning();

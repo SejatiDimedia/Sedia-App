@@ -26,6 +26,9 @@ export const user = sediaAuth.table("user", {
     emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
     role: text("role"),
+    banned: boolean("banned"),
+    banReason: text("ban_reason"),
+    banExpires: timestamp("ban_expires"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
