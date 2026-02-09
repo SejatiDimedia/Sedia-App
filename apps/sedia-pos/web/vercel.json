@@ -5,10 +5,7 @@
   "framework": "nextjs",
   "regions": ["sin1"],
   "env": {
-    "NEXT_PUBLIC_APP_URL": {
-      "description": "Application URL for production",
-      "value": "https://sedia-pos.vercel.app"
-    }
+    "NEXT_PUBLIC_APP_URL": "https://sedia-pos.vercel.app"
   },
   "build": {
     "env": {

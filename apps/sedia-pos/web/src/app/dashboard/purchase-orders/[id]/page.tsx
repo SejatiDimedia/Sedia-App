@@ -37,7 +37,7 @@ interface PurchaseOrder {
     }[];
 }
 
-export default function PurchaseOrderDetailPage({ params }: { params: { id: string } }) {
+export default function PurchaseOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const router = useRouter();
     const [po, setPo] = useState<PurchaseOrder | null>(null);
     const [isLoading, setIsLoading] = useState(true);

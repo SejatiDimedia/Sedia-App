@@ -67,9 +67,9 @@ interface Variant {
     id: string;
     name: string;
     type: string;
-    priceAdjustment: string;
-    stock: number;
-    isActive: boolean;
+    priceAdjustment: string | null;
+    stock: number | null;
+    isActive: boolean | null;
 }
 
 interface Product {
@@ -77,7 +77,8 @@ interface Product {
     name: string;
     sku: string | null;
     price: string;
-    stock: number;
+    stock: number | null;
+    isActive?: boolean | null;
     imageUrl?: string | null;
     variants?: Variant[];
 }
@@ -498,10 +499,10 @@ function POSContent() {
 
     const addToCart = (product: Product, variant?: Variant) => {
         const itemId = variant ? `${product.id}-${variant.id}` : product.id;
-        const stockToCheck = variant ? variant.stock : product.stock;
+        const stockToCheck = (variant ? variant.stock : product.stock) ?? 0;
         const itemName = variant ? `${product.name} (${variant.name})` : product.name;
         const itemPrice = variant
-            ? (parseFloat(product.price) + parseFloat(variant.priceAdjustment)).toString()
+            ? (parseFloat(product.price) + parseFloat(variant.priceAdjustment || "0")).toString()
             : product.price;
 
         // Check variants first if any and not selected
@@ -518,7 +519,7 @@ function POSContent() {
                 : (item.id === product.id && !item.variantId)
         );
 
-        if (existing && existing.quantity >= stockToCheck) {
+        if (existing && existing.quantity >= (stockToCheck)) {
             showToast("Stok Habis", `Stok ${itemName} tidak cukup!`, "warning");
             return;
         }
@@ -569,7 +570,7 @@ function POSContent() {
             return;
         }
 
-        if (newQty > item.stock) {
+        if (newQty > (item.stock ?? 0)) {
             showToast("Stok Habis", "Stok tidak cukup!", "warning");
             return;
         }
@@ -2441,12 +2442,13 @@ function POSContent() {
                         <div className="max-h-[60vh] overflow-y-auto p-6">
                             <div className="grid grid-cols-1 gap-3">
                                 {selectedProductForVariant.variants?.filter(v => v.isActive).map((variant) => {
-                                    const finalPrice = parseFloat(selectedProductForVariant.price) + parseFloat(variant.priceAdjustment);
+                                    const variantAdjustment = parseFloat(variant.priceAdjustment || "0");
+                                    const finalPrice = parseFloat(selectedProductForVariant.price) + variantAdjustment;
                                     return (
                                         <button
                                             key={variant.id}
                                             onClick={() => addToCart(selectedProductForVariant, variant)}
-                                            disabled={variant.stock <= 0}
+                                            disabled={(variant.stock ?? 0) <= 0}
                                             className="group flex items-center justify-between rounded-2xl border border-primary-100 bg-white p-4 text-left transition-all hover:border-primary-500 hover:bg-primary-50 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                                         >
                                             <div className="flex items-center gap-4">
@@ -2455,14 +2457,14 @@ function POSContent() {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-primary-900">{variant.name}</p>
-                                                    <p className="text-xs text-primary-500">Stok: {variant.stock}</p>
+                                                    <p className="text-xs text-primary-500">Stok: {variant.stock ?? 0}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-bold text-primary-600">{formatPrice(finalPrice)}</p>
-                                                {parseFloat(variant.priceAdjustment) !== 0 && (
+                                                {variantAdjustment !== 0 && (
                                                     <p className="text-xs text-primary-400">
-                                                        {parseFloat(variant.priceAdjustment) > 0 ? '+' : ''}{formatPrice(parseFloat(variant.priceAdjustment))}
+                                                        {variantAdjustment > 0 ? '+' : ''}{formatPrice(variantAdjustment)}
                                                     </p>
                                                 )}
                                             </div>
