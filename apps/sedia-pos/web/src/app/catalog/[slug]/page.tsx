@@ -10,6 +10,7 @@ import { CategoryFilter } from "@/components/catalog/CategoryFilter";
 import { slugify } from "@/utils/slug";
 import { resolveR2UrlServer } from "@/lib/storage";
 import { BrandTheme } from "@/components/catalog/BrandTheme";
+import { GreetingPopup } from "@/components/catalog/GreetingPopup";
 
 // Disable caching for development - set to 60 in production
 export const revalidate = 0;
@@ -191,6 +192,14 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
     return (
         <div className="min-h-screen bg-zinc-50">
             <BrandTheme primaryColor={primaryColor} secondaryColor={secondaryColor} />
+
+            {outlet.greeting && (
+                <GreetingPopup
+                    outletName={outlet.name}
+                    greeting={outlet.greeting}
+                    primaryColor={primaryColor}
+                />
+            )}
 
             {/* Attractive Outlet Header */}
             <div className="sticky top-14 md:top-16 z-30 bg-white/80 backdrop-blur-md border-b border-zinc-200/50 shadow-sm transition-all">

@@ -22,6 +22,7 @@ interface Outlet {
     phone: string | null;
     openTime: string | null;
     closeTime: string | null;
+    greeting: string | null;
     isCatalogVisible: boolean;
     createdAt: string;
 }
@@ -49,6 +50,7 @@ export default function OutletsPage() {
     const [formName, setFormName] = useState("");
     const [formAddress, setFormAddress] = useState("");
     const [formPhone, setFormPhone] = useState("");
+    const [formGreeting, setFormGreeting] = useState("");
     const [formOpenTime, setFormOpenTime] = useState("");
     const [formCloseTime, setFormCloseTime] = useState("");
     const [formIsCatalogVisible, setFormIsCatalogVisible] = useState(true);
@@ -88,6 +90,7 @@ export default function OutletsPage() {
             setFormName(outlet.name);
             setFormAddress(outlet.address || "");
             setFormPhone(outlet.phone || "");
+            setFormGreeting(outlet.greeting || "");
             setFormOpenTime(outlet.openTime || "");
             setFormCloseTime(outlet.closeTime || "");
             setFormIsCatalogVisible(outlet.isCatalogVisible ?? true); // Default true if undefined
@@ -98,6 +101,7 @@ export default function OutletsPage() {
             setFormPhone("");
             setFormOpenTime("");
             setFormCloseTime("");
+            setFormGreeting("");
             setFormIsCatalogVisible(true);
         }
         setShowModal(true);
@@ -109,6 +113,7 @@ export default function OutletsPage() {
         setFormName("");
         setFormAddress("");
         setFormPhone("");
+        setFormGreeting("");
         setFormOpenTime("");
         setFormCloseTime("");
         setFormIsCatalogVisible(true);
@@ -130,6 +135,7 @@ export default function OutletsPage() {
                         phone: formPhone,
                         openTime: formOpenTime || null,
                         closeTime: formCloseTime || null,
+                        greeting: formGreeting || null,
                         isCatalogVisible: formIsCatalogVisible,
                     }),
                 });
@@ -148,6 +154,7 @@ export default function OutletsPage() {
                         phone: formPhone,
                         openTime: formOpenTime || null,
                         closeTime: formCloseTime || null,
+                        greeting: formGreeting || null,
                         isCatalogVisible: formIsCatalogVisible,
                     }),
                 });
@@ -342,6 +349,21 @@ export default function OutletsPage() {
                                     placeholder="Contoh: 0812-3456-7890"
                                     className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                                 />
+                            </div>
+                            <div>
+                                <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                                    Pesan Sambutan (Greeting)
+                                </label>
+                                <textarea
+                                    value={formGreeting}
+                                    onChange={(e) => setFormGreeting(e.target.value)}
+                                    placeholder="Selamat datang di toko kami! Silahkan pesan menu favoritmu."
+                                    rows={3}
+                                    className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
+                                />
+                                <p className="mt-1 text-xs text-zinc-500">
+                                    Pesan ini akan muncul saat pelanggan membuka katalog toko Anda. Kosongkan jika tidak ingin menampilkannya.
+                                </p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

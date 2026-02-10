@@ -22,6 +22,7 @@ export const outlets = sediaPos.table("outlets", {
     secondaryColor: text("secondary_color").default("#f2b30c"),
     openTime: text("open_time"),
     closeTime: text("close_time"),
+    greeting: text("greeting"),
     isCatalogVisible: boolean("is_catalog_visible").default(true),
     ownerId: text("owner_id").notNull(), // Links to authSchema.user
     createdAt: timestamp("created_at").notNull().defaultNow(),

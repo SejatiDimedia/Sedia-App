@@ -8,6 +8,7 @@ import { LayoutDashboard, Eye, EyeOff, ShieldCheck, User, Store, ArrowRight, Che
 import KatsiraLogo from "@/components/KatsiraLogo";
 
 export default function LoginPage() {
+    const isProduction = process.env.NODE_ENV === "production";
     const router = useRouter();
     const [loginType, setLoginType] = useState<"admin" | "employee">("employee"); // Default to employee as requested? Or admin? Let's check user pref. Usually separate. I'll stick to admin default or employee? User asked "role user, cashier login from employee?". I'll default to "employee" as it covers more roles, or "admin" if owner. Let's keep "admin" default or maybe "employee". Let's stick to "admin" as primary for now, or "employee" if more staff use it. I'll keep "admin" as generic default for safety/owner, allowing switch.
     // Actually, user said "role user, cashier... loginnya dari tampilan karyawan?". YES.
@@ -164,82 +165,85 @@ export default function LoginPage() {
                                     </div>
                                 )}
 
-                                {/* Email/Password Form for Admin */}
-                                <form onSubmit={handleSubmit} className="space-y-4">
-                                    <div>
-                                        <label
-                                            htmlFor="admin-email"
-                                            className="block text-sm font-medium text-zinc-900 mb-1.5"
-                                        >
-                                            Email Admin
-                                        </label>
-                                        <input
-                                            id="admin-email"
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="admin@perusahaan.com"
-                                            required
-                                            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label
-                                            htmlFor="admin-password"
-                                            className="block text-sm font-medium text-zinc-900 mb-1.5"
-                                        >
-                                            Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                id="admin-password"
-                                                type={showPassword ? "text" : "password"}
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="Masukan password..."
-                                                required
-                                                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                                {(!isProduction) ? (
+                                    <form onSubmit={handleSubmit} className="space-y-4">
+                                        <div>
+                                            <label
+                                                htmlFor="admin-email"
+                                                className="block text-sm font-medium text-zinc-900 mb-1.5"
                                             >
-                                                {showPassword ? (
-                                                    <EyeOff className="h-4 w-4" />
-                                                ) : (
-                                                    <Eye className="h-4 w-4" />
-                                                )}
-                                            </button>
+                                                Email Admin
+                                            </label>
+                                            <input
+                                                id="admin-email"
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                placeholder="admin@perusahaan.com"
+                                                required
+                                                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label
+                                                htmlFor="admin-password"
+                                                className="block text-sm font-medium text-zinc-900 mb-1.5"
+                                            >
+                                                Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    id="admin-password"
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    placeholder="Masukan password..."
+                                                    required
+                                                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-500 hover:shadow-lg hover:shadow-primary-600/20 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {loading ? (
+                                                "Memproses..."
+                                            ) : (
+                                                <>
+                                                    Masuk sebagai Admin
+                                                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                                </>
+                                            )}
+                                        </button>
+                                    </form>
+                                ) : null}
+
+                                {/* Only show divider and email form for admin in non-production */}
+                                {!isProduction && (
+                                    <div className="relative">
+                                        <div className="absolute inset-0 flex items-center">
+                                            <span className="w-full border-t border-zinc-200" />
+                                        </div>
+                                        <div className="relative flex justify-center text-xs uppercase">
+                                            <span className="bg-zinc-50 px-3 text-zinc-500">atau</span>
                                         </div>
                                     </div>
-
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-500 hover:shadow-lg hover:shadow-primary-600/20 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        {loading ? (
-                                            "Memproses..."
-                                        ) : (
-                                            <>
-                                                Masuk sebagai Admin
-                                                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                            </>
-                                        )}
-                                    </button>
-                                </form>
-
-                                {/* Divider */}
-                                <div className="relative">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t border-zinc-200" />
-                                    </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-zinc-50 px-3 text-zinc-500">atau</span>
-                                    </div>
-                                </div>
+                                )}
 
                                 <button
                                     type="button"
@@ -273,86 +277,96 @@ export default function LoginPage() {
                                 </button>
                             </div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-3 mb-6">
-                                    <p className="text-xs text-zinc-500 text-center">
-                                        Untuk <strong>Manager</strong>, <strong>Kasir</strong>, dan <strong>Staff Outlet</strong>.
-                                    </p>
-                                </div>
-
-                                {error && (
-                                    <div className="rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-600 flex items-start gap-2">
-                                        <span className="mt-0.5">⚠️</span>
-                                        {error}
-                                    </div>
-                                )}
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label
-                                            htmlFor="email"
-                                            className="block text-sm font-medium text-zinc-900 mb-1.5"
-                                        >
-                                            Email Karyawan
-                                        </label>
-                                        <input
-                                            id="email"
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="nama@toko.com"
-                                            required
-                                            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                                        />
+                            !isProduction ? (
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-3 mb-6">
+                                        <p className="text-xs text-zinc-500 text-center">
+                                            Untuk <strong>Manager</strong>, <strong>Kasir</strong>, dan <strong>Staff Outlet</strong>.
+                                        </p>
                                     </div>
 
-                                    <div>
-                                        <label
-                                            htmlFor="password"
-                                            className="block text-sm font-medium text-zinc-900 mb-1.5"
-                                        >
-                                            Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                id="password"
-                                                type={showPassword ? "text" : "password"}
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="Masukan password..."
-                                                required
-                                                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                                    {error && (
+                                        <div className="rounded-lg bg-red-50 border border-red-100 p-3 text-sm text-red-600 flex items-start gap-2">
+                                            <span className="mt-0.5">⚠️</span>
+                                            {error}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label
+                                                htmlFor="email"
+                                                className="block text-sm font-medium text-zinc-900 mb-1.5"
                                             >
-                                                {showPassword ? (
-                                                    <EyeOff className="h-4 w-4" />
-                                                ) : (
-                                                    <Eye className="h-4 w-4" />
-                                                )}
-                                            </button>
+                                                Email Karyawan
+                                            </label>
+                                            <input
+                                                id="email"
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                placeholder="nama@toko.com"
+                                                required
+                                                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label
+                                                htmlFor="password"
+                                                className="block text-sm font-medium text-zinc-900 mb-1.5"
+                                            >
+                                                Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    id="password"
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    placeholder="Masukan password..."
+                                                    required
+                                                    className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-500 hover:shadow-lg hover:shadow-primary-600/20 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    {loading ? (
-                                        "Memproses..."
-                                    ) : (
-                                        <>
-                                            Masuk Sekarang
-                                            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                                        </>
-                                    )}
-                                </button>
-                            </form>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-500 hover:shadow-lg hover:shadow-primary-600/20 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        {loading ? (
+                                            "Memproses..."
+                                        ) : (
+                                            <>
+                                                Masuk Sekarang
+                                                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                                            </>
+                                        )}
+                                    </button>
+                                </form>
+                            ) : (
+                                <div className="text-center py-12 px-6 rounded-2xl bg-zinc-50 border border-zinc-100">
+                                    <ShieldCheck className="mx-auto h-12 w-12 text-zinc-300 mb-4" />
+                                    <h3 className="text-lg font-bold text-zinc-900 mb-2">Login Email Dinonaktifkan</h3>
+                                    <p className="text-sm text-zinc-500">
+                                        Demi keamanan, login via email hanya tersedia di lingkungan pengembangan. Silakan hubungi admin untuk akses alternatif.
+                                    </p>
+                                </div>
+                            )
                         )}
                     </div>
                 </div>
