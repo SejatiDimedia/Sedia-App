@@ -71,12 +71,12 @@ export default function PublicReceiptPage({ params }: { params: Promise<{ id: st
                 <div className="overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-zinc-200">
                     <div className="bg-primary-600 px-6 py-4 text-center text-white">
                         <h1 className="text-lg font-bold">Struk Digital</h1>
-                        <p className="text-xs text-primary-100 opacity-90">Sedia POS - {outlet?.name}</p>
+                        <p className="text-xs text-primary-100 opacity-90">Katsira - {outlet?.name}</p>
                     </div>
 
                     <div className="p-6">
                         <ReceiptTemplate
-                            outletName={outlet?.name || "Sedia POS"}
+                            outletName={outlet?.name || "Katsira"}
                             outletAddress={outlet?.address}
                             outletPhone={outlet?.phone}
                             invoiceNumber={transaction.invoiceNumber}
@@ -99,7 +99,7 @@ export default function PublicReceiptPage({ params }: { params: Promise<{ id: st
                     <div className="border-t border-zinc-100 bg-zinc-50/50 p-6 text-center">
                         <p className="text-xs text-zinc-400">
                             Struk ini adalah bukti pembayaran yang sah.<br />
-                            Disimpan secara digital oleh Sedia POS.
+                            Disimpan secara digital oleh Katsira.
                         </p>
                     </div>
                 </div>

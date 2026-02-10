@@ -78,7 +78,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
             >
                 {/* Header */}
                 <div className="mb-4 text-center">
-                    <h1 className="text-lg font-bold uppercase">{outletName || "SEDIA POS"}</h1>
+                    <h1 className="text-lg font-bold uppercase">{outletName || "KATSIRA"}</h1>
                     {outletAddress && (
                         <p className="text-[10px] text-gray-600 mt-1">{outletAddress}</p>
                     )}
@@ -168,7 +168,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
                 <div className="text-center">
                     <p className="font-semibold">Terima Kasih!</p>
                     <p className="mt-1 text-[10px] text-gray-500">
-                        Powered by Sedia POS
+                        Powered by Katsira
                     </p>
                 </div>
             </div>

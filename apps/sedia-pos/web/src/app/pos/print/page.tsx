@@ -31,7 +31,7 @@ export default function PrintReceiptPage() {
     return (
         <div className="flex min-h-screen items-start justify-center bg-gray-100 p-8 print:bg-white print:p-0">
             <ReceiptTemplate
-                outletName={outlet?.name || "Sedia POS"}
+                outletName={outlet?.name || "Katsira"}
                 outletAddress={outlet?.address}
                 outletPhone={outlet?.phone}
                 invoiceNumber={transaction.invoiceNumber}

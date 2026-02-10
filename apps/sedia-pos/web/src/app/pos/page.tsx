@@ -2073,7 +2073,7 @@ function POSContent() {
                                     {copiedLink ? "Link Disalin" : "Salin Link Struk"}
                                 </button>
                                 <a
-                                    href={`https://wa.me/?text=Halo, berikut struk belanja Anda di ${outlets.find(o => o.id === selectedOutletId)?.name || 'SediaPOS'}: ${window.location.origin}/receipt/${lastInvoice}`}
+                                    href={`https://wa.me/?text=Halo, berikut struk belanja Anda di ${outlets.find(o => o.id === selectedOutletId)?.name || 'Katsira'}: ${window.location.origin}/receipt/${lastInvoice}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-[#25D366] px-4 py-3 font-medium text-white transition-colors hover:opacity-90"

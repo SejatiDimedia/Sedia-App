@@ -112,7 +112,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                         Dashboard
                     </h1>
                     <p className="text-sm text-zinc-500">
-                        Selamat datang di Sedia POS. Berikut ringkasan bisnis Anda.
+                        Selamat datang di Katsira. Kelola Mudah, Rezeki Melimpah.
                     </p>
                 </div>
                 <DashboardFilter outlets={outlets} />

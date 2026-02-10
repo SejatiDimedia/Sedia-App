@@ -354,8 +354,8 @@ function AccountSettings() {
             {/* Message Alert */}
             {message && (
                 <div className={`p-4 rounded-xl flex items-center gap-3 ${message.type === "success"
-                        ? "bg-green-50 border border-green-200 text-green-700"
-                        : "bg-red-50 border border-red-200 text-red-700"
+                    ? "bg-green-50 border border-green-200 text-green-700"
+                    : "bg-red-50 border border-red-200 text-red-700"
                     }`}>
                     {message.type === "success" ? (
                         <CheckCircle className="h-5 w-5 shrink-0" />
@@ -729,7 +729,7 @@ function ThemeSettings() {
                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center opacity-90" style={{ backgroundColor: primary }}>
                                     <div className="w-4 h-4 bg-white/20 rounded-sm"></div>
                                 </div>
-                                <div className="font-bold text-sm text-zinc-800">Sedia POS</div>
+                                <div className="font-bold text-sm text-zinc-800">Katsira</div>
                                 <div className="w-8 h-8 rounded-full bg-zinc-100"></div>
                             </div>
 

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "@/lib/auth-client";
-import { LayoutDashboard, Eye, EyeOff, ArrowLeft, ShieldCheck, User, Store, ArrowRight, CheckCircle2 } from "lucide-react";
+import { LayoutDashboard, Eye, EyeOff, ShieldCheck, User, Store, ArrowRight, CheckCircle2 } from "lucide-react";
+import KatsiraLogo from "@/components/KatsiraLogo";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -52,11 +53,8 @@ export default function LoginPage() {
                 <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: "radial-gradient(#ffffff 1px, transparent 1px)", backgroundSize: "32px 32px" }}></div>
 
                 {/* Logo Area */}
-                <div className="relative z-10 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary-500 shadow-lg shadow-secondary-500/30">
-                        <LayoutDashboard className="h-5 w-5 text-zinc-900" />
-                    </div>
-                    <span className="text-xl font-bold tracking-tight">Sedia POS</span>
+                <div className="relative z-10 flex items-center">
+                    <KatsiraLogo size={48} primaryColor="white" />
                 </div>
 
                 {/* Main Content */}
@@ -92,28 +90,20 @@ export default function LoginPage() {
 
                 {/* Footer */}
                 <div className="relative z-10 text-sm text-primary-300">
-                    &copy; {new Date().getFullYear()} Sedia Ecosystem. All rights reserved.
+                    &copy; {new Date().getFullYear()} Katsira. All rights reserved.
                 </div>
             </div>
 
             {/* Right Side - Login Form */}
             <div className="flex w-full lg:w-1/2 flex-col justify-center items-center p-8 lg:p-12 relative bg-zinc-50/50">
-                {/* Back Button */}
-                <Link
-                    href="/"
-                    className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Kembali
-                </Link>
+
 
                 <div className="w-full max-w-md space-y-8">
                     {/* Mobile Header (Only visible on small screens) */}
                     <div className="lg:hidden text-center mb-8">
-                        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-600">
-                            <LayoutDashboard className="h-6 w-6 text-white" />
+                        <div className="mx-auto mb-4 flex justify-center">
+                            <KatsiraLogo size={52} />
                         </div>
-                        <h2 className="text-2xl font-bold text-zinc-900">Sedia POS</h2>
                     </div>
 
                     <div className="text-center lg:text-left">

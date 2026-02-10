@@ -154,6 +154,29 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
         );
     }
 
+    // Check if catalog is visible
+    if (outlet.isCatalogVisible === false) {
+        return (
+            <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-zinc-200 p-8 text-center">
+                    <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Store className="w-8 h-8 text-zinc-400" />
+                    </div>
+                    <h1 className="text-xl font-bold text-zinc-900 mb-2">Katalog Tidak Tersedia</h1>
+                    <p className="text-zinc-500 mb-6">
+                        Maaf, katalog online untuk <strong>{outlet.name}</strong> saat ini sedang tidak dapat diakses atau dinonaktifkan oleh pemilik toko.
+                    </p>
+                    <Link
+                        href="/"
+                        className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-6 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                    >
+                        Kembali ke Beranda
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     const query = resolvedSearchParams.q || "";
     const categoryId = resolvedSearchParams.category || "";
 
@@ -225,17 +248,27 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
             {/* Product Grid */}
             <div className="max-w-7xl mx-auto px-4 py-8">
                 {products.length === 0 ? (
-                    <div className="text-center py-20">
-                        <div className="w-20 h-20 rounded-2xl bg-zinc-100 flex items-center justify-center mx-auto mb-4">
-                            <Package className="w-10 h-10 text-zinc-300" />
+                    <div className="text-center py-32 bg-white rounded-[3rem] border border-zinc-100 shadow-sm px-6">
+                        <div
+                            className="w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-8 relative"
+                            style={{
+                                background: `linear-gradient(135deg, ${primaryColor}08, ${primaryColor}15)`,
+                                border: `1px solid ${primaryColor}10`
+                            }}
+                        >
+                            <Package className="w-12 h-12 relative z-10" style={{ color: primaryColor }} />
+                            <div className="absolute inset-0 bg-white rounded-[2rem] scale-75 blur-2xl opacity-50"></div>
                         </div>
-                        <h3 className="text-xl font-bold text-zinc-900 mb-2">Produk tidak ditemukan</h3>
-                        <p className="text-zinc-500 max-w-sm mx-auto mb-6">Coba cari dengan kata kunci lain.</p>
+                        <h3 className="text-2xl font-brand font-black text-zinc-900 mb-3 tracking-tight">Produk tidak ditemukan</h3>
+                        <p className="text-zinc-500 max-w-sm mx-auto mb-10 text-lg leading-relaxed font-medium">
+                            Kami tidak dapat menemukan produk <span className="text-zinc-900 italic">&quot;{query}&quot;</span>. Coba kata kunci lain atau jelajahi kategori.
+                        </p>
                         <Link
                             href={`/catalog/${slugify(outlet.name)}`}
-                            className="inline-flex h-10 items-center justify-center rounded-lg bg-zinc-900 px-8 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+                            className="inline-flex h-14 items-center justify-center rounded-2xl px-10 text-base font-bold text-white transition-all shadow-xl hover:shadow-primary-500/20 active:scale-95"
+                            style={{ backgroundColor: primaryColor }}
                         >
-                            Lihat Semua
+                            Lihat Semua Menu
                         </Link>
                     </div>
                 ) : (

@@ -22,6 +22,7 @@ interface Outlet {
     phone: string | null;
     openTime: string | null;
     closeTime: string | null;
+    isCatalogVisible: boolean;
     createdAt: string;
 }
 
@@ -50,6 +51,7 @@ export default function OutletsPage() {
     const [formPhone, setFormPhone] = useState("");
     const [formOpenTime, setFormOpenTime] = useState("");
     const [formCloseTime, setFormCloseTime] = useState("");
+    const [formIsCatalogVisible, setFormIsCatalogVisible] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
     // Fetch outlets on mount
@@ -88,6 +90,7 @@ export default function OutletsPage() {
             setFormPhone(outlet.phone || "");
             setFormOpenTime(outlet.openTime || "");
             setFormCloseTime(outlet.closeTime || "");
+            setFormIsCatalogVisible(outlet.isCatalogVisible ?? true); // Default true if undefined
         } else {
             setEditingOutlet(null);
             setFormName("");
@@ -95,6 +98,7 @@ export default function OutletsPage() {
             setFormPhone("");
             setFormOpenTime("");
             setFormCloseTime("");
+            setFormIsCatalogVisible(true);
         }
         setShowModal(true);
     };
@@ -107,6 +111,7 @@ export default function OutletsPage() {
         setFormPhone("");
         setFormOpenTime("");
         setFormCloseTime("");
+        setFormIsCatalogVisible(true);
     };
 
     const handleSave = async () => {
@@ -125,6 +130,7 @@ export default function OutletsPage() {
                         phone: formPhone,
                         openTime: formOpenTime || null,
                         closeTime: formCloseTime || null,
+                        isCatalogVisible: formIsCatalogVisible,
                     }),
                 });
                 if (res.ok) {
@@ -142,6 +148,7 @@ export default function OutletsPage() {
                         phone: formPhone,
                         openTime: formOpenTime || null,
                         closeTime: formCloseTime || null,
+                        isCatalogVisible: formIsCatalogVisible,
                     }),
                 });
                 if (res.ok) {
@@ -359,6 +366,25 @@ export default function OutletsPage() {
                                         className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                                     />
                                 </div>
+                            </div>
+
+                            {/* Catalog Visibility Toggle */}
+                            <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-3">
+                                <div>
+                                    <h4 className="text-sm font-medium text-zinc-900">Tampilkan Katalog Publik</h4>
+                                    <p className="text-xs text-zinc-500">
+                                        Izinkan pelanggan melihat produk outlet ini secara online.
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex cursor-pointer items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formIsCatalogVisible}
+                                        onChange={(e) => setFormIsCatalogVisible(e.target.checked)}
+                                        className="peer sr-only"
+                                    />
+                                    <div className="peer h-6 w-11 rounded-full bg-zinc-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-zinc-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-secondary-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary-500/20"></div>
+                                </label>
                             </div>
                         </div>
 

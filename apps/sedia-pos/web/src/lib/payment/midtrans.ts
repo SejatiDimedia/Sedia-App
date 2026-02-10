@@ -43,7 +43,7 @@ export async function createTransaction(orderId: string, amount: number, payment
             parameter.payment_type = 'echannel';
             parameter.echannel = {
                 bill_info1: "Payment For:",
-                bill_info2: "SediaPOS Transaction"
+                bill_info2: "Katsira Transaction"
             };
         } else {
             parameter.bank_transfer = {

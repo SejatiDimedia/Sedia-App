@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Plus_Jakarta_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 
@@ -18,8 +18,13 @@ const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
 });
 
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "SediaPos - Smart POS System",
+  title: "Katsira - Kelola Mudah, Rezeki Melimpah",
   description: "Modern & minimal Point of Sale system for your business",
 };
 
@@ -31,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${plusJakarta.variable} ${playfair.variable} antialiased`}
       >
         {children}
         <Toaster position="top-center" />

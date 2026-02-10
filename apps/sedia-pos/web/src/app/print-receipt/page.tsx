@@ -28,7 +28,7 @@ export default function PrintReceiptPage() {
     return (
         <div className="p-4 bg-white" style={{ width: '80mm', margin: '0 auto' }}>
             <ReceiptTemplate
-                outletName={data.outlet?.name || data.outletName || "SediaPOS"}
+                outletName={data.outlet?.name || data.outletName || "Katsira"}
                 outletAddress={data.outlet?.address || data.outletAddress}
                 outletPhone={data.outlet?.phone || data.outletPhone}
                 invoiceNumber={data.transaction?.invoiceNumber || data.invoiceNumber || data.id}

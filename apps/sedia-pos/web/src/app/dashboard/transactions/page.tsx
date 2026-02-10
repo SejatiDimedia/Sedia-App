@@ -436,7 +436,7 @@ export default function TransactionsPage() {
                                     ref={receiptRef}
                                     invoiceNumber={receiptData.transaction.invoiceNumber}
                                     date={receiptData.transaction.createdAt}
-                                    outletName={receiptData.outlet?.name || "Sedia POS"}
+                                    outletName={receiptData.outlet?.name || "Katsira"}
                                     outletAddress={receiptData.outlet?.address || undefined}
                                     cashierName={receiptData.cashier?.name}
                                     customerName={receiptData.customer?.name}

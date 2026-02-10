@@ -255,7 +255,7 @@ export default function ProductsPage() {
             const worksheet = XLSX.utils.json_to_sheet(templateData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Template Produk");
-            XLSX.writeFile(workbook, "Template_Produk_SediaPOS.xlsx");
+            XLSX.writeFile(workbook, "Template_Produk_Katsira.xlsx");
             toast.success("Template berhasil diunduh");
         } catch (error) {
             console.error(error);

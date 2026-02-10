@@ -28,6 +28,7 @@ import {
     UsersRound,
 } from "lucide-react";
 import { useOutlet } from "@/providers/outlet-provider";
+import KatsiraLogo from "@/components/KatsiraLogo";
 
 interface DashboardSidebarProps {
     children: React.ReactNode;
@@ -183,18 +184,12 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
                 <div className="flex h-full flex-col">
                     {/* Logo & Toggle */}
                     <div className={`flex h-16 items-center border-b border-zinc-200 transition-all duration-300 ${isCollapsed ? "justify-center px-2" : "justify-between px-4"}`}>
-                        <Link href="/dashboard" className={`flex items-center gap-2 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
-                            {isCollapsed ? (
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-600 text-secondary-600 font-bold border border-primary-700 font-brand">
-                                    SP
-                                </div>
-                            ) : (
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-bold tracking-tight text-2xl text-primary-700 font-brand">
-                                        Sedia<span className="text-secondary-600">Pos</span>
-                                    </span>
-                                </div>
-                            )}
+                        <Link href="/dashboard" className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? "justify-center" : ""}`}>
+                            <KatsiraLogo
+                                size={isCollapsed ? 32 : 36}
+                                collapsed={isCollapsed}
+                                className="shrink-0"
+                            />
                         </Link>
 
                         {!isCollapsed && (

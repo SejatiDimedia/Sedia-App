@@ -86,7 +86,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, address, phone, openTime, closeTime } = body;
+        const { name, address, phone, openTime, closeTime, isCatalogVisible } = body;
 
         if (!name) {
             return NextResponse.json(
@@ -103,6 +103,7 @@ export async function POST(request: Request) {
                 phone: phone || null,
                 openTime: openTime || null,
                 closeTime: closeTime || null,
+                isCatalogVisible: isCatalogVisible ?? true,
                 ownerId: session.user.id,
             })
             .returning();

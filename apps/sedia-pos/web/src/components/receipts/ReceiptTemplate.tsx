@@ -73,7 +73,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>((props, 
         <div ref={ref} className="font-mono text-[11px] leading-tight w-full max-w-[280px] mx-auto p-2 bg-white text-black">
             {/* Header */}
             <div className="text-center mb-4">
-                <h1 className="text-base font-bold uppercase tracking-wider">{outletName || "SEDIA POS"}</h1>
+                <h1 className="text-base font-bold uppercase tracking-wider">{outletName || "KATSIRA"}</h1>
                 {outletAddress && <p className="text-[10px] mt-1 text-gray-600">{outletAddress}</p>}
                 {outletPhone && <p className="text-[10px] text-gray-600">Tel: {outletPhone}</p>}
             </div>
@@ -180,7 +180,7 @@ export const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptProps>((props, 
                 <div className="text-center mt-4">
                     <p className="font-bold">Terima Kasih</p>
                     <p className="text-[10px] mt-1">Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
-                    <p className="mt-2 text-[9px] opacity-60">Powered by SediaPOS</p>
+                    <p className="mt-2 text-[9px] opacity-60">Powered by Katsira</p>
                 </div>
             </div>
         </div>
