@@ -26,6 +26,9 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Katsira - Kelola Mudah, Rezeki Melimpah",
   description: "Modern & minimal Point of Sale system for your business",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

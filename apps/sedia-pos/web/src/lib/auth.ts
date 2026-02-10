@@ -28,6 +28,7 @@ export const auth = betterAuth({
         },
     },
     trustedOrigins: [
+        "https://katsira-pos.vercel.app",
         "https://sedia-pos.vercel.app",
         "http://localhost:8086",
         "http://127.0.0.1:8086",
