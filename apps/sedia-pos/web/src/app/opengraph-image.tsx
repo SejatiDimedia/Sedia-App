@@ -12,17 +12,33 @@ export const size = {
 
 export const contentType = "image/png";
 
-// Font loading
-// We'll use a standard serif font available in edge runtime if we can't load the custom one,
-// but let's try to load a font.
-// For simplicity and speed in this iteration, we'll use system fonts or reliable fallbacks.
-// If needed, we can fetch fonts from Google Fonts.
+// Font Loader
+async function loadGoogleFont(font: string, text: string) {
+    const url = `https://fonts.googleapis.com/css2?family=${font}&text=${encodeURIComponent(text)}`;
+    const css = await (await fetch(url)).text();
+    const resource = css.match(/src: url\((.+)\) format\('(opentype|truetype)'\)/);
+
+    if (resource) {
+        const response = await fetch(resource[1]);
+        if (response.status == 200) {
+            return await response.arrayBuffer();
+        }
+    }
+
+    throw new Error("failed to load font data");
+}
 
 export default async function Image() {
     // Katsira Brand Colors from globals.css
     const primary950 = "#091515";
     const primary500 = "#377f7e";
     const secondary500 = "#f5c23c"; // Gold accent
+
+    // Load Fonts
+    // We need Playfair Display: 900 Italic (Black Italic) for 'K' and 600 (SemiBold) for 'atsira'
+    // However, loading multiple fonts can be heavy. Let's try to load just one weight if possible or 2 specific ones.
+    const playfairBlackItalic = await loadGoogleFont("Playfair+Display:ital,wght@1,900", "K");
+    const playfairSemiBold = await loadGoogleFont("Playfair+Display:wght@600", "atsiraModernPointofSalesKelolaMudahRezekiMelimpah");
 
     return new ImageResponse(
         (
@@ -35,7 +51,7 @@ export default async function Image() {
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontFamily: "serif",
+                    fontFamily: '"Playfair Display"',
                 }}
             >
                 {/* Decorative background elements */}
@@ -71,39 +87,34 @@ export default async function Image() {
                     style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "16px",
-                        marginBottom: "24px",
+                        justifyContent: "center",
+                        marginBottom: "10px", // Reduced margin
                     }}
                 >
-                    {/* Iconic "K" Logo Mark */}
-                    <div
-                        style={{
-                            display: "flex",
-                            width: "80px",
-                            height: "80px",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "white",
-                            fontSize: "64px",
-                            fontWeight: 900,
-                            fontStyle: "italic",
-                        }}
-                    >
-                        K
-                    </div>
-                    {/* Wordmark */}
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                        }}
-                    >
+                    {/* Exact Replica of KatsiraLogo */}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {/* K - Black Italic */}
                         <span
                             style={{
+                                fontFamily: '"Playfair Display Black Italic"', // Use exact loaded font name
+                                fontSize: "120px",
+                                fontWeight: 900,
+                                fontStyle: "italic",
                                 color: "white",
-                                fontSize: "64px",
-                                fontWeight: 700,
-                                letterSpacing: "-0.05em",
+                                lineHeight: 1,
+                            }}
+                        >
+                            K
+                        </span>
+                        {/* atsira - SemiBold, negative margin */}
+                        <span
+                            style={{
+                                fontFamily: '"Playfair Display"',
+                                fontSize: "120px",
+                                fontWeight: 600,
+                                color: "white",
+                                marginLeft: "-8px", // tight tracking
+                                lineHeight: 1,
                             }}
                         >
                             atsira
@@ -117,27 +128,31 @@ export default async function Image() {
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
-                        gap: "8px",
+                        gap: "0px",
                     }}
                 >
                     <div
                         style={{
-                            fontSize: "32px",
-                            color: "white",
+                            fontSize: "24px", // Smaller detailed text
+                            color: "rgba(255,255,255,0.8)",
                             fontWeight: 600,
-                            letterSpacing: "0.05em",
+                            letterSpacing: "0.2em",
                             textAlign: "center",
                             textTransform: "uppercase",
+                            marginTop: "16px",
+                            fontFamily: '"Playfair Display"', // Consistent serif
                         }}
                     >
                         Modern Point of Sales
                     </div>
                     <div
                         style={{
-                            fontSize: "24px",
-                            color: "#94d0cf", // primary-300
+                            fontSize: "28px",
+                            color: secondary500, // Gold
                             textAlign: "center",
-                            marginTop: "12px",
+                            marginTop: "16px",
+                            fontWeight: 600,
+                            fontStyle: "italic",
                         }}
                     >
                         Kelola Mudah, Rezeki Melimpah
@@ -147,8 +162,19 @@ export default async function Image() {
         ),
         {
             ...size,
-            // Simple approach: relying on default fonts first to ensure it works.
-            // If the user wants specific fonts, we can add fetch() calls here.
+            fonts: [
+                {
+                    name: 'Playfair Display Black Italic',
+                    data: playfairBlackItalic,
+                    style: 'italic',
+                    weight: 900,
+                },
+                {
+                    name: 'Playfair Display',
+                    data: playfairSemiBold,
+                    weight: 600,
+                },
+            ],
         }
     );
 }
