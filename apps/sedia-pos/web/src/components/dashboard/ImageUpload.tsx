@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Upload, X, ImageIcon, Loader2, AlertTriangle } from "lucide-react";
+import { Upload, X, ImageIcon, Loader2, AlertTriangle, RotateCcw, RotateCw, Check } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 interface ImageUploadProps {
@@ -13,8 +13,14 @@ interface ImageUploadProps {
 
 export function ImageUpload({ value, onChange, label, description }: ImageUploadProps) {
     const [uploading, setUploading] = useState(false);
+    const [processing, setProcessing] = useState(false); // For canvas processing
     const [localPreview, setLocalPreview] = useState<string | null>(null);
     const [imageError, setImageError] = useState(false);
+
+    // Rotation & Staging State
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [rotation, setRotation] = useState(0);
+
     // Track key uploaded in the CURRENT session/mount to cleanup if replaced
     const [sessionUploadedKey, setSessionUploadedKey] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +53,7 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
         };
     }, [localPreview]);
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -62,19 +68,84 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
             return;
         }
 
+        // Set local preview immediately for editing
+        const objectUrl = URL.createObjectURL(file);
+        setLocalPreview(objectUrl);
+        setSelectedFile(file);
+        setRotation(0); // Reset rotation
+        setImageError(false);
+
+        // Clear input value to allow selecting same file again if canceled
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+    };
+
+    const rotateImage = (degrees: number) => {
+        setRotation((prev) => (prev + degrees) % 360);
+    };
+
+    const cancelUpload = () => {
+        setSelectedFile(null);
+        setLocalPreview(null);
+        setRotation(0);
+        if (localPreview) URL.revokeObjectURL(localPreview);
+    };
+
+    const processAndUpload = async () => {
+        if (!selectedFile || !localPreview) return;
+
+        setProcessing(true);
+        try {
+            // 1. Load image to get dimensions
+            const img = new Image();
+            img.src = localPreview;
+            await new Promise((resolve) => { img.onload = resolve; });
+
+            // 2. Setup Canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error("Could not get canvas context");
+
+            // Calculate new dimensions based on rotation
+            // If 90 or 270 degrees, swap width and height
+            const isVertical = Math.abs(rotation) === 90 || Math.abs(rotation) === 270;
+            canvas.width = isVertical ? img.height : img.width;
+            canvas.height = isVertical ? img.width : img.height;
+
+            // 3. Draw & Rotate
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((rotation * Math.PI) / 180);
+            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+            // 4. Convert to Blob
+            const blob = await new Promise<Blob | null>((resolve) =>
+                canvas.toBlob(resolve, selectedFile.type, 0.9)
+            );
+
+            if (!blob) throw new Error("Canvas to Blob failed");
+
+            // 5. Upload
+            await performUpload(blob);
+
+        } catch (error) {
+            console.error("Processing error:", error);
+            toast.error("Gagal memproses gambar");
+            setProcessing(false);
+        }
+    };
+
+    const performUpload = async (fileBlob: Blob) => {
+        setUploading(true);
+
         // Cleanup previous unsaved upload from this session
         if (sessionUploadedKey) {
             cleanupSessionUpload(sessionUploadedKey);
         }
 
-        // Set local preview immediately
-        const objectUrl = URL.createObjectURL(file);
-        setLocalPreview(objectUrl);
-        setImageError(false); // Reset error on new upload
-
-        setUploading(true);
         const formData = new FormData();
-        formData.append("file", file);
+        // Append with original name but potentially processed content
+        formData.append("file", fileBlob, selectedFile?.name || "image.jpg");
 
         try {
             const res = await fetch("/api/upload", {
@@ -89,19 +160,19 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
                 setSessionUploadedKey(data.key);
                 onChange(data.key);
                 toast.success("Gambar berhasil diunggah");
+
+                // Clear staging state
+                setSelectedFile(null);
+                setProcessing(false);
             } else {
                 toast.error(data.error || "Gagal mengunggah gambar");
-                setLocalPreview(null); // Clear preview on failure
             }
         } catch (error) {
             console.error("Upload error:", error);
             toast.error("Terjadi kesalahan saat mengunggah");
-            setLocalPreview(null);
         } finally {
             setUploading(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+            setProcessing(false);
         }
     };
 
@@ -113,9 +184,11 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
         onChange("");
         setLocalPreview(null);
         setImageError(false);
+        setSelectedFile(null);
     };
 
     const previewSrc = localPreview || value;
+    const isEditing = !!selectedFile; // True if we are in "Crop/Rotate" mode
 
     return (
         <div className="space-y-4">
@@ -126,30 +199,89 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
             )}
 
             <div className={`group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-all ${imageError ? 'border-rose-200 bg-rose-50' : 'border-zinc-100 bg-zinc-50 hover:border-primary-200'}`}>
+
+                {/* PREVIEW / EDITING MODE */}
                 {previewSrc && !imageError ? (
                     <>
                         <img
                             src={previewSrc}
                             alt="Preview"
-                            className={`h-full w-full object-cover transition-all ${uploading ? 'opacity-50 blur-[2px]' : 'group-hover:scale-105'}`}
+                            className={`h-full w-full object-cover transition-all ${uploading || processing ? 'opacity-50 blur-[2px]' : ''}`}
+                            style={{
+                                // Apply rotation visually during edit mode
+                                transform: isEditing ? `rotate(${rotation}deg)` : 'none',
+                                // Ensure image fits within container during rotation if needed, simply object-cover handles most
+                            }}
                             onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                console.error("Image load failed for URL:", target.src);
-                                setImageError(true);
+                                // Only trigger error if NOT simply waiting for processing
+                                if (!processing) {
+                                    const target = e.target as HTMLImageElement;
+                                    console.error("Image load failed for URL:", target.src);
+                                    setImageError(true);
+                                }
                             }}
                         />
-                        {uploading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white/20 backdrop-blur-[1px]">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+
+                        {(uploading || processing) && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/50 backdrop-blur-[1px] z-20">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary-600 mb-2" />
+                                <span className="text-xs font-bold text-primary-700">
+                                    {processing ? "Memproses..." : "Mengunggah..."}
+                                </span>
                             </div>
                         )}
-                        <button
-                            type="button"
-                            onClick={removeImage}
-                            className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-rose-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-rose-600 backdrop-blur-sm"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
+
+                        {/* EDIT CONTROLS OVERLAY */}
+                        {isEditing && !uploading && !processing && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 z-10 p-4">
+                                <div className="flex gap-4 mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => rotateImage(-90)}
+                                        className="p-2 rounded-full bg-white/20 hover:bg-white text-white hover:text-zinc-900 transition-all backdrop-blur-sm"
+                                        title="Putar Kiri"
+                                    >
+                                        <RotateCcw className="h-5 w-5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => rotateImage(90)}
+                                        className="p-2 rounded-full bg-white/20 hover:bg-white text-white hover:text-zinc-900 transition-all backdrop-blur-sm"
+                                        title="Putar Kanan"
+                                    >
+                                        <RotateCw className="h-5 w-5" />
+                                    </button>
+                                </div>
+                                <div className="flex gap-2 w-full max-w-[200px]">
+                                    <button
+                                        type="button"
+                                        onClick={cancelUpload}
+                                        className="flex-1 py-2 px-3 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-lg border border-white/40 backdrop-blur-sm transition-all"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={processAndUpload}
+                                        className="flex-1 py-2 px-3 bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold rounded-lg shadow-lg transition-all flex items-center justify-center gap-1"
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        Simpan
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* REMOVE BUTTON (Only shown when NOT editing and NOT uploading) */}
+                        {!isEditing && !uploading && (
+                            <button
+                                type="button"
+                                onClick={removeImage}
+                                className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-rose-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-rose-600 backdrop-blur-sm"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        )}
                     </>
                 ) : imageError ? (
                     <div className="text-center p-6">
@@ -198,13 +330,13 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
                 <input
                     type="file"
                     ref={fileInputRef}
-                    onChange={handleUpload}
+                    onChange={handleFileSelect}
                     className="hidden"
                     accept="image/*"
                 />
             </div>
 
-            {description && !value && (
+            {description && !value && !selectedFile && (
                 <p className="text-[10px] text-zinc-400 italic">
                     {description}
                 </p>
