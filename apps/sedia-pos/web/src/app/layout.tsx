@@ -24,8 +24,17 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://katsira-pos.vercel.app"),
   title: "Katsira - Kelola Mudah, Rezeki Melimpah",
   description: "Modern & minimal Point of Sale system for your business",
+  openGraph: {
+    title: "Katsira - Kelola Mudah, Rezeki Melimpah",
+    description: "Modern & minimal Point of Sale system for your business",
+    url: "https://katsira-pos.vercel.app",
+    siteName: "Katsira POS",
+    locale: "id_ID",
+    type: "website",
+  },
   icons: {
     icon: "/favicon.svg",
   },
