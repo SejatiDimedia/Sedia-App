@@ -26,5 +26,8 @@
     "react-textarea-autosize": "^8.5.9",
     "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "dotenv": "^17.3.1"
   }
 }

@@ -2,7 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { db, paths, articles, pathSteps, eq, asc } from "../../lib/db";
 import CommentSection from "../../components/comments/CommentSection";
-import ReactMarkdown from "react-markdown";
+import MarkdownRenderer from "../../components/MarkdownRenderer";
 
 export const prerender = false;
 
@@ -108,7 +108,9 @@ if (pathSlug) {
                         class="text-[10px] font-bold opacity-50 uppercase tracking-widest"
                     >
                         Documented on {
-                            new Date(article.createdAt).toLocaleDateString()
+                            new Date(
+                                article.createdAt || new Date(),
+                            ).toLocaleDateString()
                         }
                     </span>
                 </div>
@@ -136,7 +138,7 @@ if (pathSlug) {
                 prose-strong:font-black
                 prose-img:border-4 prose-img:border-black prose-img:neo-shadow-sm"
             >
-                <ReactMarkdown>{article.content || ""}</ReactMarkdown>
+                <MarkdownRenderer client:load content={article.content || ""} />
             </div>
 
             {/* Discussion Section */}
