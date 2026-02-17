@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { MapPin, Phone, ArrowRight, Clock, Store } from "lucide-react";
 import { slugify } from "@/utils/slug";
@@ -8,6 +11,7 @@ interface OutletCardProps {
     name: string;
     address?: string | null;
     phone?: string | null;
+    logoUrl?: string | null;
     primaryColor?: string | null;
     secondaryColor?: string | null;
     openTime?: string | null;
@@ -19,11 +23,13 @@ export function OutletCard({
     name,
     address,
     phone,
+    logoUrl,
     primaryColor = "#2e6a69", // Default teal
     secondaryColor = "#f2b30c", // Default gold
     openTime,
     closeTime,
 }: OutletCardProps) {
+    const [logoError, setLogoError] = useState(false);
     const { isOpen } = getStoreStatus(openTime, closeTime);
 
     return (
@@ -37,15 +43,24 @@ export function OutletCard({
 
                 <div className="flex-1 flex flex-col relative z-10">
                     <div className="flex items-center justify-between gap-4 mb-4">
-                        <div
-                            className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-110 shadow-sm"
-                            style={{
-                                background: `linear-gradient(135deg, ${(primaryColor || "#2e6a69")}10, ${(primaryColor || "#2e6a69")}25)`,
-                                border: `1px solid ${(primaryColor || "#2e6a69")}20`
-                            }}
-                        >
-                            <Store className="w-6 h-6" style={{ color: primaryColor || "#2e6a69" }} />
-                        </div>
+                        {logoUrl && !logoError ? (
+                            <img
+                                src={logoUrl}
+                                alt={`${name} logo`}
+                                className="w-12 h-12 rounded-2xl object-cover shrink-0 transition-transform duration-500 group-hover:scale-110 shadow-sm border border-zinc-100"
+                                onError={() => setLogoError(true)}
+                            />
+                        ) : (
+                            <div
+                                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:scale-110 shadow-sm"
+                                style={{
+                                    background: `linear-gradient(135deg, ${(primaryColor || "#2e6a69")}10, ${(primaryColor || "#2e6a69")}25)`,
+                                    border: `1px solid ${(primaryColor || "#2e6a69")}20`
+                                }}
+                            >
+                                <Store className="w-6 h-6" style={{ color: primaryColor || "#2e6a69" }} />
+                            </div>
+                        )}
 
                         {openTime && closeTime && (
                             <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border flex items-center gap-1.5 ${isOpen ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100"}`}>

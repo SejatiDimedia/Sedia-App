@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, ShoppingBag, Minus, Plus, Package } from "lucide-react";
+import { X, ShoppingBag, Minus, Plus, Package, Tag, ShoppingCart, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useCart } from "./CartProvider";
 
 interface Variant {
     id: string;
@@ -33,17 +34,18 @@ interface ProductDetailModalProps {
 }
 
 export function ProductDetailModal({ product, isOpen, onClose, primaryColor, outletPhone }: ProductDetailModalProps) {
+    const cart = useCart();
     const [quantity, setQuantity] = useState(1);
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [justAdded, setJustAdded] = useState(false);
 
     // Reset state when product changes
     useEffect(() => {
         if (isOpen && product) {
             setQuantity(1);
-            setIsConfirmOpen(false);
-            setHasError(false); // Reset error state on product change
+            setJustAdded(false);
+            setHasError(false);
             if (product.variants && product.variants.length > 0) {
                 // Select first active variant by default
                 const firstActive = product.variants.find(v => v.isActive !== false);
@@ -72,6 +74,7 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
         : product.stock;
 
     const isOutOfStock = stockToDisplay <= 0;
+    const isLowStock = stockToDisplay > 0 && stockToDisplay <= 5;
     const maxQuantity = stockToDisplay > 0 ? stockToDisplay : 1;
 
     const handleQuantityChange = (delta: number) => {
@@ -81,26 +84,27 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
         }
     };
 
-    const handleWhatsAppRedirect = () => {
-        if (outletPhone) {
-            // Format phone number (remove leading 0 or 62, ensure clean number)
-            let phone = outletPhone.replace(/\D/g, '');
-            if (phone.startsWith('0')) phone = '62' + phone.substring(1);
-            if (!phone.startsWith('62')) phone = '62' + phone;
+    const handleAddToCart = () => {
+        if (!product || isOutOfStock) return;
 
-            // Create message
-            const variantText = selectedVariant ? ` - ${selectedVariant.name}` : '';
-            const message = `Halo, saya ingin pesan:\n\n*${product.name}*${variantText}\nQty: ${quantity}\nHarga: Rp ${totalPrice.toLocaleString('id-ID')}\n\nTerima kasih.`;
+        cart.addItem({
+            productId: product.id,
+            name: product.name,
+            price: basePrice,
+            imageUrl: product.imageUrl,
+            variant: selectedVariant ? {
+                id: selectedVariant.id,
+                name: selectedVariant.name,
+                priceAdjustment: selectedVariant.priceAdjustment,
+            } : null,
+            quantity,
+        });
 
-            // Open WhatsApp
-            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-            setIsConfirmOpen(false);
+        setJustAdded(true);
+        setTimeout(() => {
             onClose();
-        } else {
-            // Fallback if no phone number
-            alert("Nomor WhatsApp outlet belum diatur. Silakan hubungi kasir.");
-        }
+            setJustAdded(false);
+        }, 600);
     };
 
     return (
@@ -150,13 +154,38 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60 sm:opacity-40"></div>
 
-                                <div className="absolute bottom-0 left-0 right-0 p-6 text-white translate-y-2">
-                                    {product.categoryName && (
+                                {/* Category Badge - Top Left (matches ProductCard) */}
+                                {product.categoryName && (
+                                    <div className="absolute top-3 left-3 z-10">
                                         <span
-                                            className="inline-block px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-lg mb-2"
+                                            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-bold capitalize tracking-wide text-white shadow-lg backdrop-blur-md"
                                             style={{ backgroundColor: `${primaryColor}CC` }}
                                         >
-                                            {product.categoryName}
+                                            <Tag className="w-3 h-3 stroke-[3]" />
+                                            {product.categoryName.toLowerCase()}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Status Badges - Bottom Right (matches ProductCard) */}
+                                <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-2">
+                                    {isOutOfStock && (
+                                        <span className="relative flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg border border-white/20">
+                                            <span className="relative flex h-1.5 w-1.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                                            </span>
+                                            Habis
+                                        </span>
+                                    )}
+
+                                    {isLowStock && !isOutOfStock && (
+                                        <span className="relative flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg border border-white/20">
+                                            <span className="relative flex h-1.5 w-1.5">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                                            </span>
+                                            Hampir Habis
                                         </span>
                                     )}
                                 </div>
@@ -213,16 +242,24 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
                                     </div>
                                 )}
 
-                                {/* Stock Status */}
-                                <div className="flex items-center gap-2 px-4 py-3 bg-zinc-50 rounded-xl">
-                                    <div className={cn(
-                                        "w-2 h-2 rounded-full",
-                                        isOutOfStock ? "bg-red-500" : stockToDisplay <= 5 ? "bg-amber-500" : "bg-emerald-500"
+                                {/* Stock Status (matches ProductCard) */}
+                                <div className={cn(
+                                    "flex items-center gap-2 px-4 py-3 rounded-xl",
+                                    isOutOfStock ? "bg-red-50" : isLowStock ? "bg-amber-50" : "bg-emerald-50"
+                                )}>
+                                    <Package className={cn(
+                                        "w-4 h-4",
+                                        isOutOfStock ? "text-red-500" : isLowStock ? "text-amber-600" : "text-emerald-600"
                                     )} />
-                                    <span className="text-sm font-medium text-zinc-600">
+                                    <span className={cn(
+                                        "text-sm font-medium",
+                                        isOutOfStock ? "text-red-600" : isLowStock ? "text-amber-700" : "text-emerald-700"
+                                    )}>
                                         {isOutOfStock
                                             ? "Stok Habis"
-                                            : `Stok Tersedia: ${stockToDisplay} item`}
+                                            : isLowStock
+                                                ? `Sisa ${stockToDisplay} item`
+                                                : `Stok Tersedia: ${stockToDisplay} item`}
                                     </span>
                                 </div>
                             </div>
@@ -266,64 +303,26 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
 
                             {/* Main Action Button */}
                             <button
-                                onClick={() => outletPhone ? setIsConfirmOpen(true) : alert("Nomor WhatsApp outlet belum diatur.")}
+                                onClick={handleAddToCart}
                                 disabled={isOutOfStock}
-                                className="w-full h-14 rounded-2xl flex items-center justify-center gap-2 text-white font-bold text-lg shadow-xl shadow-zinc-200 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ backgroundColor: isOutOfStock ? '#9ca3af' : primaryColor }}
+                                className={cn(
+                                    "w-full h-14 rounded-2xl flex items-center justify-center gap-2 font-bold text-lg shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed",
+                                    justAdded ? "bg-emerald-500 text-white" : "text-white"
+                                )}
+                                style={{ backgroundColor: isOutOfStock ? '#9ca3af' : justAdded ? undefined : primaryColor }}
                             >
-                                <ShoppingBag className="w-5 h-5" />
-                                <span>
-                                    {isOutOfStock ? "Stok Habis" : "Pesan via WhatsApp"}
-                                </span>
+                                {isOutOfStock ? (
+                                    <><ShoppingBag className="w-5 h-5" /><span>Stok Habis</span></>
+                                ) : justAdded ? (
+                                    <><Check className="w-5 h-5" /><span>Ditambahkan!</span></>
+                                ) : (
+                                    <><ShoppingCart className="w-5 h-5" /><span>Tambah ke Keranjang</span></>
+                                )}
                             </button>
                         </div>
                     </motion.div>
 
-                    {/* Confirmation Popup */}
-                    <AnimatePresence>
-                        {isConfirmOpen && (
-                            <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    onClick={() => setIsConfirmOpen(false)}
-                                    className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                                />
-                                <motion.div
-                                    initial={{ scale: 0.9, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    exit={{ scale: 0.9, opacity: 0 }}
-                                    className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl text-center overflow-hidden"
-                                >
-                                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <ShoppingBag className="w-8 h-8 text-emerald-600" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-zinc-900 mb-2">
-                                        Hubungi Penjual?
-                                    </h3>
-                                    <p className="text-zinc-500 mb-6 text-sm leading-relaxed">
-                                        Anda akan diarahkan ke WhatsApp <strong>{outletPhone}</strong> untuk mengirim detail pesanan ini.
-                                    </p>
 
-                                    <div className="space-y-3">
-                                        <button
-                                            onClick={handleWhatsAppRedirect}
-                                            className="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 active:scale-95 transition-all"
-                                        >
-                                            Lanjut ke WhatsApp
-                                        </button>
-                                        <button
-                                            onClick={() => setIsConfirmOpen(false)}
-                                            className="w-full py-3.5 rounded-xl bg-zinc-100 text-zinc-600 font-bold text-sm hover:bg-zinc-200 active:scale-95 transition-all"
-                                        >
-                                            Batal
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            </div>
-                        )}
-                    </AnimatePresence>
                 </div>
             )}
         </AnimatePresence>

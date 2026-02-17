@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProductDetailModal } from "@/components/catalog/ProductDetailModal";
+import { CartProvider } from "@/components/catalog/CartProvider";
+import { CartDrawer } from "@/components/catalog/CartDrawer";
 
 interface Variant {
     id: string;
@@ -22,16 +24,17 @@ interface Product {
     isActive?: boolean;
     isDeleted?: boolean;
     variants?: Variant[];
-    // Add other fields as needed based on what getProducts returns
 }
 
 interface ProductGridProps {
     products: Product[];
     primaryColor: string;
     outletPhone?: string | null;
+    outletSlug: string;
+    outletName: string;
 }
 
-export function ProductGrid({ products, primaryColor, outletPhone }: ProductGridProps) {
+export function ProductGrid({ products, primaryColor, outletPhone, outletSlug, outletName }: ProductGridProps) {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -42,12 +45,10 @@ export function ProductGrid({ products, primaryColor, outletPhone }: ProductGrid
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
-        // Optional: clear selected product after animation, 
-        // but keeping it might be smoother for exit animation
     };
 
     return (
-        <>
+        <CartProvider outletSlug={outletSlug}>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5 pb-20">
                 {products.map((product) => (
                     <ProductCard
@@ -73,6 +74,12 @@ export function ProductGrid({ products, primaryColor, outletPhone }: ProductGrid
                 primaryColor={primaryColor}
                 outletPhone={outletPhone}
             />
-        </>
+
+            <CartDrawer
+                primaryColor={primaryColor}
+                outletPhone={outletPhone}
+                outletName={outletName}
+            />
+        </CartProvider>
     );
 }

@@ -304,6 +304,8 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                             products={products}
                             primaryColor={primaryColor}
                             outletPhone={outlet.phone}
+                            outletSlug={slugify(outlet.name)}
+                            outletName={outlet.name}
                         />
                     </>
                 )}

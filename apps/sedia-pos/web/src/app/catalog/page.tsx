@@ -2,9 +2,14 @@ import { db, posSchema } from "@/lib/db";
 import { OutletCard } from "@/components/catalog/OutletCard";
 import { Store } from "lucide-react";
 import { eq } from "drizzle-orm";
+import { resolveR2UrlServer } from "@/lib/storage";
 
 async function getOutlets() {
-    return await db.select().from(posSchema.outlets).where(eq(posSchema.outlets.isCatalogVisible, true)).orderBy(posSchema.outlets.name);
+    const outlets = await db.select().from(posSchema.outlets).where(eq(posSchema.outlets.isCatalogVisible, true)).orderBy(posSchema.outlets.name);
+    return await Promise.all(outlets.map(async (o) => ({
+        ...o,
+        logoUrl: await resolveR2UrlServer(o.logoUrl),
+    })));
 }
 
 // Revalidate every minute
@@ -44,6 +49,7 @@ export default async function OutletSelectionPage() {
                             name={outlet.name}
                             address={outlet.address}
                             phone={outlet.phone}
+                            logoUrl={outlet.logoUrl}
                             primaryColor={outlet.primaryColor}
                             openTime={outlet.openTime}
                             closeTime={outlet.closeTime}

@@ -13,6 +13,8 @@ import { db, posSchema } from "@/lib/db"; // data access
 import { inArray, count, sum, eq, and, desc, asc, lte } from "drizzle-orm"; // utility
 import { getOutlets } from "@/actions/outlets";
 import { DashboardFilter } from "@/components/dashboard-filter";
+import { resolveR2UrlServer } from "@/lib/storage";
+import { ProductThumbnail } from "@/components/dashboard/ProductThumbnail";
 import Link from "next/link";
 
 interface DashboardProps {
@@ -97,6 +99,14 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
             }
         });
     }
+
+    // Resolve image URLs for low stock products
+    const resolvedLowStockProducts = await Promise.all(
+        lowStockProducts.map(async (p: any) => ({
+            ...p,
+            imageUrl: await resolveR2UrlServer(p.imageUrl),
+        }))
+    );
 
     const totalSales = Number(salesStats?.totalSales || 0);
     const totalTransactions = Number(salesStats?.transactionCount || 0);
@@ -238,7 +248,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                     </div>
 
                     <div className="space-y-4">
-                        {lowStockProducts.length === 0 ? (
+                        {resolvedLowStockProducts.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-8 text-center text-zinc-500">
                                 <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center text-green-500 mb-2">
                                     <Package className="h-6 w-6" />
@@ -246,16 +256,10 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                                 <p className="text-sm">Stok aman terkendali!</p>
                             </div>
                         ) : (
-                            lowStockProducts.map((product) => (
+                            resolvedLowStockProducts.map((product) => (
                                 <div key={product.id} className="flex items-center justify-between p-3 rounded-2xl hover:bg-red-50/50 transition-colors border border-transparent hover:border-red-100">
                                     <div className="flex items-center gap-3">
-                                        {product.imageUrl ? (
-                                            <img src={product.imageUrl} alt={product.name} className="h-10 w-10 rounded-lg object-cover bg-zinc-100" />
-                                        ) : (
-                                            <div className="h-10 w-10 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-400">
-                                                <Package className="h-5 w-5" />
-                                            </div>
-                                        )}
+                                        <ProductThumbnail src={product.imageUrl} alt={product.name} />
                                         <div>
                                             <div className="font-bold text-zinc-900 text-sm line-clamp-1">{product.name}</div>
                                             <div className="text-[10px] text-zinc-500">

@@ -21,16 +21,25 @@ const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 const PUBLIC_URL = process.env.R2_PUBLIC_URL;
 
 /**
+ * Checks if a URL/path is an R2-related resource (r2.dev or cloudflarestorage).
+ */
+function isR2Url(url: string): boolean {
+    return url.includes(".r2.dev") || url.includes(".r2.cloudflarestorage.com");
+}
+
+/**
  * Extracts the relative key from a full R2 URL.
+ * Handles both public (.r2.dev) and signed (.r2.cloudflarestorage.com) URLs.
  * If the input is not an R2 URL, it returns the input as is.
  */
 export function extractR2Key(urlOrPath: string | null): string | null {
     if (!urlOrPath) return null;
-    if (!urlOrPath.startsWith("http")) return urlOrPath;
-    if (!urlOrPath.includes(".r2.dev")) return urlOrPath;
+    if (!urlOrPath.startsWith("http")) return urlOrPath; // Already a clean key
+    if (!isR2Url(urlOrPath)) return urlOrPath; // External URL, return as-is
 
     try {
         const url = new URL(urlOrPath);
+        // pathname starts with /, remove leading slash to get the key
         return url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname;
     } catch (e) {
         return urlOrPath;
@@ -40,19 +49,18 @@ export function extractR2Key(urlOrPath: string | null): string | null {
 /**
  * Resolves a path or old R2 URL to the current public R2 domain.
  * If the input is an external URL (not R2), it returns it as is.
- * Fallback to Signed URL if public URL is not working or not defined.
  */
 export function resolveR2Url(pathOrUrl: string | null): string | null {
     if (!pathOrUrl) return null;
 
     // 1. If it's an external URL (not Cloudflare R2), return as is
-    if (pathOrUrl.startsWith("http") && !pathOrUrl.includes(".r2.dev")) {
+    if (pathOrUrl.startsWith("http") && !isR2Url(pathOrUrl)) {
         return pathOrUrl;
     }
 
     // 2. Extract the key (relative path)
     const key = extractR2Key(pathOrUrl);
-    if (!key) return pathOrUrl;
+    if (!key || key.startsWith("http")) return pathOrUrl;
 
     // 3. Construct URL using CURRENT PUBLIC_URL from env
     if (PUBLIC_URL) {
@@ -65,27 +73,29 @@ export function resolveR2Url(pathOrUrl: string | null): string | null {
 }
 
 /**
- * Server-only version that can generate Signed URLs as fallback.
+ * Server-only version that ALWAYS generates fresh Signed URLs for R2 keys.
+ * This ensures images work even if the public R2 URL is disabled.
  */
 export async function resolveR2UrlServer(pathOrUrl: string | null): Promise<string | null> {
-    const resolved = resolveR2Url(pathOrUrl);
-    if (!resolved) return null;
+    if (!pathOrUrl) return null;
 
-    // If it's an R2 URL, we could optionally force a signed URL if we know the public one is broken
-    // or if we just want maximum reliability.
-    if (resolved.includes(".r2.dev") || !resolved.startsWith("http")) {
-        const key = extractR2Key(resolved);
-        if (key) {
-            try {
-                return await getSignedUrl(key);
-            } catch (e) {
-                console.error("Failed to generate signed URL:", e);
-                return resolved;
-            }
-        }
+    // If it's an external URL (e.g. Unsplash), return as-is
+    if (pathOrUrl.startsWith("http") && !isR2Url(pathOrUrl)) {
+        return pathOrUrl;
     }
 
-    return resolved;
+    // Extract clean key from any R2 URL format or plain key
+    const key = extractR2Key(pathOrUrl);
+    if (!key || key.startsWith("http")) return pathOrUrl;
+
+    // Always generate a fresh signed URL for maximum reliability
+    try {
+        return await getSignedUrl(key);
+    } catch (e) {
+        console.error("Failed to generate signed URL for key:", key, e);
+        // Fallback to public URL
+        return resolveR2Url(pathOrUrl);
+    }
 }
 
 /**
