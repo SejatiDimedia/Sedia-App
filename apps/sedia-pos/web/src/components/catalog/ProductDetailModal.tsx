@@ -35,6 +35,7 @@ interface ProductDetailModalProps {
 export function ProductDetailModal({ product, isOpen, onClose, primaryColor, outletPhone }: ProductDetailModalProps) {
     const [quantity, setQuantity] = useState(1);
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+    const [hasError, setHasError] = useState(false);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
     // Reset state when product changes
@@ -42,6 +43,7 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
         if (isOpen && product) {
             setQuantity(1);
             setIsConfirmOpen(false);
+            setHasError(false); // Reset error state on product change
             if (product.variants && product.variants.length > 0) {
                 // Select first active variant by default
                 const firstActive = product.variants.find(v => v.isActive !== false);
@@ -133,11 +135,12 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
                         <div className="overflow-y-auto flex-1 scrollbar-hide">
                             {/* Image Header */}
                             <div className="relative w-full aspect-square sm:aspect-video bg-zinc-100">
-                                {product.imageUrl ? (
+                                {product.imageUrl && !hasError ? (
                                     <Image
                                         src={product.imageUrl}
                                         alt={product.name}
                                         fill
+                                        onError={() => setHasError(true)}
                                         className="object-cover"
                                     />
                                 ) : (

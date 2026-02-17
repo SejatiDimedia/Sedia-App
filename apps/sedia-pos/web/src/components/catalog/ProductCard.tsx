@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ShoppingBag, Package, Tag } from "lucide-react";
@@ -35,6 +36,7 @@ export function ProductCard({
     variants,
     onClick
 }: ProductCardProps) {
+    const [hasError, setHasError] = useState(false);
     const isOutOfStock = stock <= 0;
     const isLowStock = stock > 0 && stock <= 5;
     const hasVariants = variants && variants.length > 0;
@@ -55,11 +57,12 @@ export function ProductCard({
             )}>
             {/* Image Container */}
             <div className="relative w-full aspect-square md:aspect-[3/4] overflow-hidden bg-gradient-to-br from-zinc-100 via-zinc-50 to-white">
-                {imageUrl ? (
+                {imageUrl && !hasError ? (
                     <Image
                         src={imageUrl}
                         alt={name}
                         fill
+                        onError={() => setHasError(true)}
                         className={cn(
                             "object-cover transition-all duration-700 group-hover:scale-110",
                             isOutOfStock && "grayscale"
@@ -91,27 +94,32 @@ export function ProductCard({
                     </div>
                 )}
 
-                {/* Status Badges - Top Right */}
-                <div className="absolute top-3 right-3 z-10 flex flex-col gap-2">
+                {/* Status Badges - Bottom Right */}
+                <div className="absolute bottom-2 right-2 z-10 flex flex-col gap-2">
                     {isOutOfStock && (
-                        <span className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500 text-white shadow-lg backdrop-blur-md">
-                            Habis
-                        </span>
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <span className="relative flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg border border-white/20 overflow-hidden">
+                                <span className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                                </span>
+                                Habis
+                            </span>
+                        </div>
+                    )}
+
+                    {isLowStock && !isOutOfStock && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <span className="relative flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg border border-white/20 overflow-hidden">
+                                <span className="relative flex h-1.5 w-1.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                                </span>
+                                Hampir Habis
+                            </span>
+                        </div>
                     )}
                 </div>
-
-                {/* Low Stock Badge - Bottom Right */}
-                {isLowStock && !isOutOfStock && (
-                    <div className="absolute bottom-2 right-2 z-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        <span className="relative flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg border border-white/20 overflow-hidden">
-                            <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-                            </span>
-                            Hampir Habis
-                        </span>
-                    </div>
-                )}
 
                 {/* Quick Add Button - Shows on Hover (Desktop) */}
                 {!isOutOfStock && (

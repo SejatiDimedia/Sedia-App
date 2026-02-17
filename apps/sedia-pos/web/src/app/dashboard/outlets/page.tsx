@@ -319,126 +319,141 @@ export default function OutletsPage() {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-                        <div className="mb-6 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-zinc-900">
-                                {editingOutlet ? "Edit Outlet" : "Tambah Outlet"}
-                            </h2>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-2xl rounded-2xl bg-white p-6 md:p-8 shadow-2xl max-h-[95vh] overflow-y-auto">
+                        <div className="mb-6 flex items-center justify-between border-b border-zinc-100 pb-4">
+                            <div>
+                                <h2 className="text-xl font-bold text-zinc-900">
+                                    {editingOutlet ? "Edit Outlet" : "Tambah Outlet"}
+                                </h2>
+                                <p className="text-sm text-zinc-500">Konfigurasi detail operasional outlet Anda</p>
+                            </div>
                             <button
                                 onClick={handleCloseModal}
-                                className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-100"
+                                className="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100 transition-colors"
                             >
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="space-y-5">
-                                {/* Branding Section */}
-                                <div className="rounded-lg border border-zinc-100 bg-zinc-50/50 p-4">
-                                    <h3 className="mb-3 text-sm font-medium text-zinc-900">Branding & Identitas</h3>
-                                    <div className="flex flex-col items-center gap-4 sm:flex-row">
-                                        <div className="w-40 flex-shrink-0">
-                                            <ImageUpload
-                                                value={formLogo}
-                                                onChange={setFormLogo}
-                                                label="Logo"
-                                            />
-                                        </div>
-                                        <div className="flex-1 text-sm text-zinc-500">
-                                            <p className="mb-1 font-medium text-zinc-700">Logo Toko</p>
-                                            <p>Upload logo toko Anda untuk ditampilkan di halaman katalog publik.</p>
-                                            <p className="mt-1 text-xs text-zinc-400">Format: .jpg, .png (Max 2MB)</p>
+                        <div className="space-y-8">
+                            {/* Branding Section */}
+                            <div className="rounded-2xl border border-zinc-100 bg-zinc-50/30 p-5">
+                                <h3 className="mb-4 text-sm font-semibold text-zinc-900 flex items-center gap-2">
+                                    <div className="w-1.5 h-4 rounded-full bg-primary-500"></div>
+                                    Branding & Identitas
+                                </h3>
+                                <div className="flex flex-col items-center gap-6 sm:flex-row">
+                                    <div className="w-40 flex-shrink-0">
+                                        <ImageUpload
+                                            value={formLogo}
+                                            onChange={setFormLogo}
+                                            label="Logo"
+                                        />
+                                    </div>
+                                    <div className="flex-1 space-y-2 text-center sm:text-left">
+                                        <p className="font-bold text-zinc-800">Logo Toko</p>
+                                        <p className="text-sm text-zinc-500 leading-relaxed">
+                                            Logo ini akan tampil pada header katalog publik. Gunakan gambar dengan rasio 1:1 untuk hasil terbaik.
+                                        </p>
+                                        <div className="flex flex-wrap justify-center sm:justify-start gap-2 text-[10px] font-bold text-zinc-400">
+                                            <span className="px-2 py-0.5 rounded bg-white border border-zinc-100 uppercase">.PNG</span>
+                                            <span className="px-2 py-0.5 rounded bg-white border border-zinc-100 uppercase">.JPG</span>
+                                            <span className="px-2 py-0.5 rounded bg-white border border-zinc-100 uppercase">Max 2MB</span>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Basic Info */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Left Column: Basic Info */}
                                 <div className="space-y-4">
+                                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Informasi Dasar</h3>
                                     <div>
-                                        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                                            Nama Outlet *
+                                        <label className="mb-1.5 block text-xs font-bold text-zinc-700">
+                                            Nama Outlet <span className="text-rose-500">*</span>
                                         </label>
                                         <input
                                             type="text"
                                             value={formName}
                                             onChange={(e) => setFormName(e.target.value)}
                                             placeholder="Contoh: Cabang Utama"
-                                            className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                            className="w-full rounded-xl border border-zinc-200 bg-zinc-50/30 px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                                            Alamat
+                                        <label className="mb-1.5 block text-xs font-bold text-zinc-700">
+                                            Alamat Lengkap
                                         </label>
                                         <input
                                             type="text"
                                             value={formAddress}
                                             onChange={(e) => setFormAddress(e.target.value)}
-                                            placeholder="Contoh: Jl. Raya No. 123"
-                                            className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                            placeholder="Jl. Raya Utama No. 123..."
+                                            className="w-full rounded-xl border border-zinc-200 bg-zinc-50/30 px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
                                         />
                                     </div>
                                     <div>
-                                        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                                            No. Telepon
+                                        <label className="mb-1.5 block text-xs font-bold text-zinc-700">
+                                            Nomor Telepon
                                         </label>
                                         <input
                                             type="text"
                                             value={formPhone}
                                             onChange={(e) => setFormPhone(e.target.value)}
-                                            placeholder="Contoh: 0812-3456-7890"
-                                            className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                            placeholder="Contoh: 0812-xxxx-xxxx"
+                                            className="w-full rounded-xl border border-zinc-200 bg-zinc-50/30 px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                                            Pesan Sambutan (Greeting)
-                                        </label>
-                                        <textarea
-                                            value={formGreeting}
-                                            onChange={(e) => setFormGreeting(e.target.value)}
-                                            placeholder="Selamat datang di toko kami! Silahkan pesan menu favoritmu."
-                                            rows={3}
-                                            className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
-                                        />
-                                        <p className="mt-1 text-xs text-zinc-500">
-                                            Pesan ini akan muncul saat pelanggan membuka katalog toko Anda. Kosongkan jika tidak ingin menampilkannya.
-                                        </p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                </div>
+
+                                {/* Right Column: Details & Times */}
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Waktu & Opsional</h3>
+
+                                    <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                                            <label className="mb-1.5 block text-xs font-bold text-zinc-700">
                                                 Jam Buka
                                             </label>
                                             <input
                                                 type="time"
                                                 value={formOpenTime}
                                                 onChange={(e) => setFormOpenTime(e.target.value)}
-                                                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/30 px-4 py-2.5 text-sm text-zinc-900 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
                                             />
                                         </div>
                                         <div>
-                                            <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                                            <label className="mb-1.5 block text-xs font-bold text-zinc-700">
                                                 Jam Tutup
                                             </label>
                                             <input
                                                 type="time"
                                                 value={formCloseTime}
                                                 onChange={(e) => setFormCloseTime(e.target.value)}
-                                                className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/30 px-4 py-2.5 text-sm text-zinc-900 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
                                             />
                                         </div>
                                     </div>
 
+                                    <div>
+                                        <label className="mb-1.5 block text-xs font-bold text-zinc-700">
+                                            Pesan Sambutan
+                                        </label>
+                                        <textarea
+                                            value={formGreeting}
+                                            onChange={(e) => setFormGreeting(e.target.value)}
+                                            placeholder="Selamat datang!"
+                                            rows={2}
+                                            className="w-full rounded-xl border border-zinc-200 bg-zinc-50/30 px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all resize-none"
+                                        />
+                                    </div>
+
                                     {/* Catalog Visibility Toggle */}
-                                    <div className="flex items-center justify-between rounded-lg border border-zinc-200 p-3">
-                                        <div>
-                                            <h4 className="text-sm font-medium text-zinc-900">Tampilkan Katalog Publik</h4>
-                                            <p className="text-xs text-zinc-500">
-                                                Izinkan pelanggan melihat produk outlet ini secara online.
-                                            </p>
+                                    <div className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50/30 p-4 mt-2">
+                                        <div className="flex-1">
+                                            <h4 className="text-sm font-bold text-zinc-800">Katalog Publik</h4>
+                                            <p className="text-[10px] text-zinc-500">Pelanggan bisa pesan online.</p>
                                         </div>
                                         <label className="relative inline-flex cursor-pointer items-center">
                                             <input
@@ -447,27 +462,27 @@ export default function OutletsPage() {
                                                 onChange={(e) => setFormIsCatalogVisible(e.target.checked)}
                                                 className="peer sr-only"
                                             />
-                                            <div className="peer h-6 w-11 rounded-full bg-zinc-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-zinc-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-secondary-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-secondary-500/20"></div>
+                                            <div className="peer h-6 w-11 rounded-full bg-zinc-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-zinc-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-secondary-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-secondary-500/10"></div>
                                         </label>
                                     </div>
                                 </div>
-
-                                <div className="mt-6 flex gap-3">
-                                    <button
-                                        onClick={handleCloseModal}
-                                        className="flex-1 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-                                    >
-                                        Batal
-                                    </button>
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={isSaving || !formName.trim()}
-                                        className="flex-1 rounded-lg bg-secondary-500 px-4 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-secondary-600 disabled:opacity-50"
-                                    >
-                                        {isSaving ? "Menyimpan..." : "Simpan"}
-                                    </button>
-                                </div>
                             </div>
+                        </div>
+
+                        <div className="mt-8 flex gap-3 pt-6 border-t border-zinc-100">
+                            <button
+                                onClick={handleCloseModal}
+                                className="flex-1 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-bold text-zinc-600 transition-all hover:bg-zinc-50 active:scale-95"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving || !formName.trim()}
+                                className="flex-1 rounded-xl bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary-500/20 transition-all hover:bg-primary-700 disabled:opacity-50 active:scale-95"
+                            >
+                                {isSaving ? "Menyimpan..." : "Simpan"}
+                            </button>
                         </div>
                     </div>
                 </div>
