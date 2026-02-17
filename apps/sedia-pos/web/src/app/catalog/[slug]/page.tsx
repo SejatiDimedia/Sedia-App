@@ -1,10 +1,11 @@
 import { db, posSchema } from "@/lib/db";
 import { eq, and, ilike } from "drizzle-orm";
 import Link from "next/link";
+import Image from "next/image";
 import { Store, MapPin, Package, Clock } from "lucide-react";
 import { getStoreStatus } from "@/utils/store-status";
 
-import { ProductCard } from "@/components/catalog/ProductCard";
+import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { SearchBar } from "@/components/catalog/SearchBar";
 import { CategoryFilter } from "@/components/catalog/CategoryFilter";
 import { slugify } from "@/utils/slug";
@@ -104,10 +105,10 @@ async function getProducts(outletId: string, search: string, categoryId: string)
     return await Promise.all(products.map(async p => ({
         id: p.id,
         name: p.name,
-        price: p.price,
+        price: Number(p.price),
         stock: p.stock,
         imageUrl: await resolveR2UrlServer(p.imageUrl),
-        isActive: p.isActive,
+        isActive: p.isActive ?? true,
         isDeleted: p.isDeleted,
         categoryName: p.category?.name || null,
         variants: p.variants
@@ -188,6 +189,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
 
     const primaryColor = outlet.primaryColor || "#2e6a69";
     const secondaryColor = outlet.secondaryColor;
+    const outletLogo = await resolveR2UrlServer(outlet.logoUrl);
 
     return (
         <div className="min-h-screen bg-zinc-50">
@@ -207,8 +209,18 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                         <div className="flex items-center gap-5">
                             <Link href="/catalog" className="shrink-0 relative group">
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white to-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-700 shadow-sm group-hover:shadow-md transition-all duration-300">
-                                    <Store className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color: 'var(--brand-primary)' }} />
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white to-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-700 shadow-sm group-hover:shadow-md transition-all duration-300 overflow-hidden relative">
+                                    {outletLogo ? (
+                                        <Image
+                                            src={outletLogo}
+                                            alt={outlet.name}
+                                            fill
+                                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                                            sizes="64px"
+                                        />
+                                    ) : (
+                                        <Store className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color: 'var(--brand-primary)' }} />
+                                    )}
                                 </div>
                                 {outlet.openTime && outlet.closeTime && (
                                     <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStoreStatus(outlet.openTime, outlet.closeTime).isOpen ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
@@ -288,22 +300,11 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                             </h2>
                             <span className="text-sm text-zinc-500">{products.length} item</span>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5 pb-20">
-                            {products.map((product) => (
-                                <ProductCard
-                                    key={product.id}
-                                    id={product.id}
-                                    name={product.name}
-                                    price={Number(product.price)}
-                                    stock={product.stock}
-                                    imageUrl={product.imageUrl}
-                                    category={product.categoryName || undefined}
-                                    isActive={product.isActive ?? true}
-                                    primaryColor={primaryColor}
-                                    variants={product.variants}
-                                />
-                            ))}
-                        </div>
+                        <ProductGrid
+                            products={products}
+                            primaryColor={primaryColor}
+                            outletPhone={outlet.phone}
+                        />
                     </>
                 )}
             </div>

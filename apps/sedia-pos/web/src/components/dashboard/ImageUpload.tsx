@@ -198,7 +198,10 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
                 </label>
             )}
 
-            <div className={`group relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-all ${imageError ? 'border-rose-200 bg-rose-50' : 'border-zinc-100 bg-zinc-50 hover:border-primary-200'}`}>
+            <div
+                onClick={() => !isEditing && !uploading && !processing && fileInputRef.current?.click()}
+                className={`group relative flex aspect-square w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition-all ${imageError ? 'border-rose-200 bg-rose-50' : 'border-zinc-100 bg-zinc-50 hover:border-primary-200'}`}
+            >
 
                 {/* PREVIEW / EDITING MODE */}
                 {previewSrc && !imageError ? (
@@ -233,37 +236,49 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
 
                         {/* EDIT CONTROLS OVERLAY */}
                         {isEditing && !uploading && !processing && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 z-10 p-4">
-                                <div className="flex gap-4 mb-4">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 z-10 p-4 transition-all animate-in fade-in duration-200">
+                                <div className="flex gap-3 mb-3">
                                     <button
                                         type="button"
-                                        onClick={() => rotateImage(-90)}
-                                        className="p-2 rounded-full bg-white/20 hover:bg-white text-white hover:text-zinc-900 transition-all backdrop-blur-sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            rotateImage(-90);
+                                        }}
+                                        className="h-8 w-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-700 hover:bg-white hover:text-primary-600 transition-all shadow-sm"
                                         title="Putar Kiri"
                                     >
-                                        <RotateCcw className="h-5 w-5" />
+                                        <RotateCcw className="h-4 w-4" />
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => rotateImage(90)}
-                                        className="p-2 rounded-full bg-white/20 hover:bg-white text-white hover:text-zinc-900 transition-all backdrop-blur-sm"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            rotateImage(90);
+                                        }}
+                                        className="h-8 w-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-700 hover:bg-white hover:text-primary-600 transition-all shadow-sm"
                                         title="Putar Kanan"
                                     >
-                                        <RotateCw className="h-5 w-5" />
+                                        <RotateCw className="h-4 w-4" />
                                     </button>
                                 </div>
-                                <div className="flex gap-2 w-full max-w-[200px]">
+                                <div className="flex gap-2 w-full max-w-[160px]">
                                     <button
                                         type="button"
-                                        onClick={cancelUpload}
-                                        className="flex-1 py-2 px-3 bg-white/20 hover:bg-white/30 text-white text-xs font-bold rounded-lg border border-white/40 backdrop-blur-sm transition-all"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            cancelUpload();
+                                        }}
+                                        className="flex-1 py-1.5 px-3 bg-white text-zinc-700 text-[10px] font-bold rounded-lg shadow-sm hover:bg-zinc-100 transition-all"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={processAndUpload}
-                                        className="flex-1 py-2 px-3 bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold rounded-lg shadow-lg transition-all flex items-center justify-center gap-1"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            processAndUpload();
+                                        }}
+                                        className="flex-1 py-1.5 px-3 bg-primary-600 hover:bg-primary-500 text-white text-[10px] font-bold rounded-lg shadow-sm transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <Check className="h-3 w-3" />
                                         Simpan
@@ -276,7 +291,10 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
                         {!isEditing && !uploading && (
                             <button
                                 type="button"
-                                onClick={removeImage}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeImage();
+                                }}
                                 className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-rose-500 shadow-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-rose-600 backdrop-blur-sm"
                             >
                                 <X className="h-4 w-4" />
@@ -294,7 +312,10 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
                         </p>
                         <button
                             type="button"
-                            onClick={() => fileInputRef.current?.click()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                fileInputRef.current?.click();
+                            }}
                             className="mt-4 rounded-lg bg-rose-600 px-4 py-1.5 text-xs font-bold text-white transition-all hover:bg-rose-700"
                         >
                             Ganti Gambar
@@ -309,20 +330,13 @@ export function ImageUpload({ value, onChange, label, description }: ImageUpload
                             </div>
                         ) : (
                             <>
-                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm border border-zinc-100 mb-4 transition-transform group-hover:scale-110 group-hover:rotate-3">
-                                    <Upload className="h-8 w-8 text-zinc-400" />
+                                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600 mb-3 transition-transform group-hover:scale-110">
+                                    <Upload className="h-6 w-6" />
                                 </div>
-                                <p className="text-sm font-bold text-zinc-900">Pilih Gambar</p>
-                                <p className="mt-1 text-[10px] font-medium text-zinc-400">
-                                    JPG, PNG, atau WEBP (Maks. 5MB)
+                                <p className="text-sm font-semibold text-zinc-900 group-hover:text-primary-600 transition-colors">Pilih Gambar</p>
+                                <p className="mt-1 text-[10px] font-medium text-zinc-400 px-2 text-center">
+                                    JPG, PNG, WEBP (Max 5MB)
                                 </p>
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="mt-4 rounded-lg bg-zinc-100 px-4 py-1.5 text-xs font-bold text-zinc-600 transition-all hover:bg-zinc-200"
-                                >
-                                    Pilih File
-                                </button>
                             </>
                         )}
                     </div>

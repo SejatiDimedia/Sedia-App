@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { ShoppingBag, Package } from "lucide-react";
+import { ShoppingBag, Package, Tag } from "lucide-react";
 
 interface Variant {
     id: string;
@@ -22,6 +22,7 @@ interface ProductCardProps {
     isActive: boolean;
     primaryColor: string;
     variants?: Variant[];
+    onClick?: () => void;
 }
 
 export function ProductCard({
@@ -31,7 +32,8 @@ export function ProductCard({
     imageUrl,
     category,
     primaryColor,
-    variants
+    variants,
+    onClick
 }: ProductCardProps) {
     const isOutOfStock = stock <= 0;
     const isLowStock = stock > 0 && stock <= 5;
@@ -43,12 +45,14 @@ export function ProductCard({
         : price;
 
     return (
-        <div className={cn(
-            "group relative bg-white rounded-3xl overflow-hidden transition-all duration-500 h-full flex flex-col",
-            "shadow-[0_2px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]",
-            "hover:-translate-y-2 cursor-pointer",
-            isOutOfStock && "opacity-60"
-        )}>
+        <div
+            onClick={onClick}
+            className={cn(
+                "group relative bg-white rounded-3xl overflow-hidden transition-all duration-500 h-full flex flex-col",
+                "shadow-[0_2px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]",
+                "hover:-translate-y-2 cursor-pointer",
+                isOutOfStock && "opacity-60 pointer-events-none"
+            )}>
             {/* Image Container */}
             <div className="relative w-full aspect-square md:aspect-[3/4] overflow-hidden bg-gradient-to-br from-zinc-100 via-zinc-50 to-white">
                 {imageUrl ? (
@@ -76,12 +80,13 @@ export function ProductCard({
 
                 {/* Category Badge - Top Left */}
                 {category && (
-                    <div className="absolute top-2 left-2 md:top-3 md:left-3 z-10">
+                    <div className="absolute top-2 left-2 md:top-3 md:left-3 z-10 max-w-[80%] md:max-w-[85%]">
                         <span
-                            className="px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-white shadow-lg backdrop-blur-md"
-                            style={{ backgroundColor: primaryColor }}
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 md:px-2.5 md:py-1.5 text-[8px] md:text-[10px] font-bold capitalize leading-tight tracking-wide text-white shadow-lg backdrop-blur-md whitespace-normal text-left"
+                            style={{ backgroundColor: `${primaryColor}CC` }} // CC = 80% opacity
                         >
-                            {category}
+                            <Tag className="w-2.5 h-2.5 md:w-3 md:h-3 stroke-[3]" />
+                            {category.toLowerCase()}
                         </span>
                     </div>
                 )}
@@ -93,21 +98,29 @@ export function ProductCard({
                             Habis
                         </span>
                     )}
-                    {isLowStock && !isOutOfStock && (
-                        <span className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-white shadow-lg animate-pulse">
-                            Hampir Habis
-                        </span>
-                    )}
                 </div>
 
-                {/* Quick Add Button - Shows on Hover */}
+                {/* Low Stock Badge - Bottom Right */}
+                {isLowStock && !isOutOfStock && (
+                    <div className="absolute bottom-2 right-2 z-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <span className="relative flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg border border-white/20 overflow-hidden">
+                            <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                            </span>
+                            Hampir Habis
+                        </span>
+                    </div>
+                )}
+
+                {/* Quick Add Button - Shows on Hover (Desktop) */}
                 {!isOutOfStock && (
-                    <div className="absolute bottom-4 right-4 z-10 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                    <div className="absolute bottom-12 right-2 z-20 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 hidden md:block">
                         <button
-                            className="w-12 h-12 rounded-full flex items-center justify-center shadow-xl text-white transition-transform hover:scale-110 active:scale-95"
+                            className="w-10 h-10 rounded-full flex items-center justify-center shadow-xl text-white transition-transform hover:scale-110 active:scale-95"
                             style={{ backgroundColor: primaryColor }}
                         >
-                            <ShoppingBag className="w-5 h-5" />
+                            <ShoppingBag className="w-4 h-4" />
                         </button>
                     </div>
                 )}
@@ -122,7 +135,7 @@ export function ProductCard({
                 />
 
                 {/* Name */}
-                <h3 className="font-bold text-zinc-900 text-base leading-snug line-clamp-2 mb-2 mt-1 group-hover:text-zinc-700 transition-colors">
+                <h3 className="font-bold text-zinc-900 text-base leading-snug line-clamp-2 mb-2 group-hover:text-zinc-700 transition-colors">
                     {name}
                 </h3>
 

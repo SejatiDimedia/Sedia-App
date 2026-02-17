@@ -1,0 +1,65 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { db, schema, eq } from "../../lib/db";
+import LucideIcon from "../../components/ui/LucideIcon";
+
+// Fetch published topics
+const topics = await db.query.topics.findMany({
+    where: eq(schema.topics.isPublished, true),
+    orderBy: (topics, { asc }) => [asc(topics.sortOrder), asc(topics.name)],
+});
+---
+
+<BaseLayout title="Topics | NoltPedia">
+    <div class="mb-12">
+        <h1 class="text-5xl font-black uppercase mb-4">Knowledge Areas</h1>
+        <p class="text-xl opacity-70 max-w-2xl">
+            Pilih area teknologi yang ingin Anda bedah. Setiap topik berisi
+            panduan fundamental dari nol hingga pemahaman logika mendalam.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {
+            topics.map((topic) => (
+                <a href={`/topics/${topic.id}`} class="group">
+                    <div class="neo-card p-8 h-full bg-white hover:bg-yellow-50 transition-colors flex flex-col items-start gap-4">
+                        <div class="bg-black text-white p-3 border-2 border-black inline-flex items-center justify-center">
+                            <LucideIcon
+                                name={topic.icon || "folder"}
+                                size={32}
+                                strokeWidth={2.5}
+                                client:load
+                            />
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-black uppercase mb-2 group-hover:text-blue-600 transition-colors">
+                                {topic.name}
+                            </h3>
+                            <p class="text-sm opacity-60 leading-relaxed">
+                                {topic.description ||
+                                    "Jelajahi panduan dan dokumentasi teknis mendalam mengenai topik ini."}
+                            </p>
+                        </div>
+                        <div class="mt-auto pt-4 flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
+                            Explore Concepts
+                            <span class="group-hover:translate-x-1 transition-transform">
+                                →
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            ))
+        }
+    </div>
+
+    {
+        topics.length === 0 && (
+            <div class="neo-card p-12 text-center bg-zinc-50 border-dashed">
+                <p class="text-xl font-bold opacity-50 uppercase">
+                    Arsip sedang diperbarui...
+                </p>
+            </div>
+        )
+    }
+</BaseLayout>

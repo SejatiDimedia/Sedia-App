@@ -1,0 +1,198 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { db, paths, articles, pathSteps, eq, asc } from "../../lib/db";
+import CommentSection from "../../components/comments/CommentSection";
+import ReactMarkdown from "react-markdown";
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+if (!slug) {
+    return Astro.redirect("/404");
+}
+
+// Fetch Article
+const article = await db.query.articles.findFirst({
+    where: (articles, { eq }) => eq(articles.slug, slug),
+    with: {
+        topic: true,
+    },
+});
+
+if (!article) {
+    return Astro.redirect("/404");
+}
+
+// Meta for SEO
+const title = article.metaTitle || article.title;
+const description = article.metaDescription || article.excerpt;
+
+// Path Context (if viewing as part of a Learning Path)
+const pathSlug = Astro.url.searchParams.get("path");
+let pathData = null;
+let prevStep = null;
+let nextStep = null;
+
+if (pathSlug) {
+    pathData = await db.query.paths.findFirst({
+        where: (paths, { eq }) => eq(paths.slug, pathSlug),
+        with: {
+            steps: {
+                orderBy: (steps, { asc }) => asc(steps.stepOrder),
+                with: {
+                    article: true,
+                },
+            },
+        },
+    });
+
+    if (pathData) {
+        const currentStepIndex = pathData.steps.findIndex(
+            (step) => step.articleId === article.id,
+        );
+        if (currentStepIndex !== -1) {
+            prevStep = pathData.steps[currentStepIndex - 1] || null;
+            nextStep = pathData.steps[currentStepIndex + 1] || null;
+        }
+    }
+}
+---
+
+<BaseLayout title={`${title} | NoltPedia`}>
+    <div class="max-w-4xl mx-auto py-12 px-4">
+        {/* Breadcrumbs */}
+        <nav class="flex text-xs font-bold uppercase gap-2 mb-8 opacity-50">
+            <a href="/docs" class="hover:underline">Library</a>
+            <span>/</span>
+            {
+                pathData ? (
+                    <>
+                        <a
+                            href={`/paths/${pathData.slug}`}
+                            class="hover:underline text-blue-600"
+                        >
+                            Path: {pathData.title}
+                        </a>
+                        <span>/</span>
+                    </>
+                ) : (
+                    <>
+                        <a
+                            href={`/topics/${article.topic?.id}`}
+                            class="hover:underline"
+                        >
+                            {article.topic?.name || "Topic"}
+                        </a>
+                        <span>/</span>
+                    </>
+                )
+            }
+            <span class="text-black truncate max-w-[200px]"
+                >{article.title}</span
+            >
+        </nav>
+
+        <article
+            class="neo-card p-4 md:p-12 bg-white relative border-4 border-black"
+        >
+            {/* Header */}
+            <header class="mb-12">
+                <div class="flex items-center gap-3 mb-6">
+                    <span
+                        class="text-[10px] font-black uppercase bg-black text-white px-2 py-1"
+                    >
+                        {article.difficulty || "Beginner"}
+                    </span>
+                    <span
+                        class="text-[10px] font-bold opacity-50 uppercase tracking-widest"
+                    >
+                        Documented on {
+                            new Date(article.createdAt).toLocaleDateString()
+                        }
+                    </span>
+                </div>
+
+                <h1
+                    class="text-4xl md:text-6xl font-black uppercase mb-6 leading-tight"
+                >
+                    {article.title}
+                </h1>
+
+                {
+                    article.excerpt && (
+                        <p class="text-xl text-zinc-600 max-w-2xl leading-relaxed font-medium">
+                            {article.excerpt}
+                        </p>
+                    )
+                }
+            </header>
+
+            {/* Content */}
+            <div
+                class="prose prose-lg prose-neutral max-w-none
+                prose-headings:uppercase prose-headings:font-black
+                prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                prose-strong:font-black
+                prose-img:border-4 prose-img:border-black prose-img:neo-shadow-sm"
+            >
+                <ReactMarkdown>{article.content || ""}</ReactMarkdown>
+            </div>
+
+            {/* Discussion Section */}
+            <div class="mt-20 pt-10 border-t-4 border-black border-dashed">
+                <h3
+                    class="text-2xl font-black uppercase mb-8 flex items-center gap-3"
+                >
+                    <span class="w-4 h-4 bg-yellow-400 border-2 border-black"
+                    ></span>
+                    Logic Discussion
+                </h3>
+                <CommentSection client:visible articleId={article.id} />
+            </div>
+
+            {/* Path Navigation */}
+            {
+                pathData && (prevStep || nextStep) && (
+                    <div class="mt-12 grid grid-cols-2 gap-4 border-t-8 border-black pt-8">
+                        <div>
+                            {prevStep && (
+                                <a
+                                    href={`/articles/${prevStep.article.slug}?path=${pathSlug}`}
+                                    class="neo-card p-6 bg-zinc-100 block group hover:bg-yellow-400 transition-colors"
+                                >
+                                    <div class="text-[10px] font-black uppercase opacity-50 mb-1">
+                                        Previous Step
+                                    </div>
+                                    <div class="font-black uppercase text-sm group-hover:underline">
+                                        ← {prevStep.article.title}
+                                    </div>
+                                </a>
+                            )}
+                        </div>
+                        <div class="text-right">
+                            {nextStep && (
+                                <a
+                                    href={`/articles/${nextStep.article.slug}?path=${pathSlug}`}
+                                    class="neo-card p-6 bg-black text-white block group hover:bg-zinc-800 transition-colors"
+                                >
+                                    <div class="text-[10px] font-black uppercase opacity-50 mb-1">
+                                        Next Step
+                                    </div>
+                                    <div class="font-black uppercase text-sm group-hover:underline text-yellow-400">
+                                        {nextStep.article.title} →
+                                    </div>
+                                </a>
+                            )}
+                            {!nextStep && (
+                                <div class="neo-card p-6 bg-green-500 text-white block font-black uppercase text-sm">
+                                    Path Completed! 🏆
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )
+            }
+        </article>
+    </div>
+</BaseLayout>

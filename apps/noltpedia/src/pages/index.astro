@@ -1,0 +1,81 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { AlertTriangle } from "lucide-react";
+---
+
+<BaseLayout title="NoltPedia: Master the Core">
+	<div class="flex flex-col items-center justify-center text-center py-20">
+		<div
+			class="inline-flex items-center gap-2 bg-yellow-400 border-2 border-black px-4 py-1 font-bold mb-8 neo-shadow transform -rotate-2"
+		>
+			<AlertTriangle size={18} /> Early Preview
+		</div>
+
+		<h1 class="text-6xl md:text-8xl font-black mb-6 leading-tight">
+			DOCUMENTS OF <br />
+			<span class="bg-blue-500 text-white px-2 decoration-clone"
+				>PURE LOGIC</span
+			>
+		</h1>
+
+		<p class="text-xl md:text-2xl max-w-2xl mb-12 leading-relaxed">
+			Bukan sekadar tutorial. Kami membedah teknologi hingga ke titik nol. <br
+			/>
+			<strong>No Magic. Just Code.</strong>
+		</p>
+
+		<div class="flex flex-wrap gap-6 justify-center">
+			<a
+				href="/start"
+				class="neo-btn bg-black text-white hover:bg-zinc-800 hover:text-white text-lg px-8 py-4"
+			>
+				Mulai Belajar
+			</a>
+			<a href="/manifesto" class="neo-btn text-lg px-8 py-4">
+				Baca Manifesto
+			</a>
+		</div>
+	</div>
+
+	<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
+		<!-- Feature 1 -->
+		<div class="neo-card p-8">
+			<h3
+				class="text-2xl font-bold mb-4 bg-rose-500 text-white inline-block px-2 border-2 border-black"
+			>
+				The NO Rule
+			</h3>
+			<p>
+				Tidak ada jalan pintas. Kami menolak abstraksi yang
+				membingungkan pemula. Kita bongkar library sampai ke source
+				code.
+			</p>
+		</div>
+
+		<!-- Feature 2 -->
+		<div class="neo-card p-8 bg-blue-100">
+			<h3
+				class="text-2xl font-bold mb-4 bg-blue-500 text-white inline-block px-2 border-2 border-black"
+			>
+				Visual Maps
+			</h3>
+			<p>
+				Setiap konsep dilengkapi dengan diagram alur logika. Karena kode
+				adalah representasi teks dari struktur berpikir.
+			</p>
+		</div>
+
+		<!-- Feature 3 -->
+		<div class="neo-card p-8">
+			<h3
+				class="text-2xl font-bold mb-4 bg-yellow-400 text-black inline-block px-2 border-2 border-black"
+			>
+				Stack Agnostic
+			</h3>
+			<p>
+				Logika itu universal. Syntax hanyalah dialek. Pahami satu,
+				kuasai semua.
+			</p>
+		</div>
+	</div>
+</BaseLayout>

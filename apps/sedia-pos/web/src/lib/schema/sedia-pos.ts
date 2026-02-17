@@ -18,6 +18,7 @@ export const outlets = sediaPos.table("outlets", {
     address: text("address"),
     phone: text("phone"),
     qrisImageUrl: text("qris_image_url"),
+    logoUrl: text("logo_url"),
     primaryColor: text("primary_color").default("#2e6a69"),
     secondaryColor: text("secondary_color").default("#f2b30c"),
     openTime: text("open_time"),

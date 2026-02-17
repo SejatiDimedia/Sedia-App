@@ -1,0 +1,16 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import GlossaryManager from "../../../components/dashboard/GlossaryManager";
+---
+
+<AdminLayout title="Glossary Management">
+    <div class="mb-8">
+        <p class="text-zinc-500 max-w-2xl font-mono text-sm">
+            Daftar istilah teknis dan fundamental yang digunakan di seluruh
+            NoltPedia. Gunakan ini untuk menjaga standar terminologi dan
+            memberikan konteks instan bagi pembaca.
+        </p>
+    </div>
+
+    <GlossaryManager client:load />
+</AdminLayout>

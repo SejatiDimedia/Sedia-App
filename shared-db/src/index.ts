@@ -5,12 +5,14 @@ import { drizzle, NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as authSchema from "./schema/auth-schema";
 import * as arciveSchema from "./schema/sedia-arcive";
 import * as posSchema from "./schema/sedia-pos";
+import * as noltpediaSchema from "./schema/noltpedia";
 
 // Combined schema type
 const combinedSchema = {
     ...authSchema,
     ...arciveSchema,
     ...posSchema,
+    ...noltpediaSchema,
 };
 
 // Lazy database instance
@@ -55,6 +57,7 @@ export const db = new Proxy({} as NeonHttpDatabase<typeof combinedSchema>, {
 export * from "./schema/auth-schema";
 export * from "./schema/sedia-arcive";
 export * from "./schema/sedia-pos";
+export * from "./schema/noltpedia";
 
 // Re-export drizzle-orm operators for consistent typing
 export { eq, and, or, desc, asc, sql, sql as sqlOp } from "drizzle-orm";

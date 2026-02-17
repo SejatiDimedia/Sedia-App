@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import LoginForm from "../components/auth/LoginForm";
+---
+
+<BaseLayout title="Login | NoltPedia">
+    <div class="flex flex-col items-center justify-center min-h-[60vh]">
+        <LoginForm client:load />
+    </div>
+</BaseLayout>

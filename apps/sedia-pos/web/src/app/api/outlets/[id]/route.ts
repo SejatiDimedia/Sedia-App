@@ -3,6 +3,7 @@ import { db, posSchema } from "@/lib/db";
 import { eq, and, or } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { resolveR2UrlServer, extractR2Key } from "@/lib/storage";
 
 async function isAuthorized(userId: string, outletId: string) {
     // 1. Check if owner
@@ -67,7 +68,13 @@ export async function GET(
             .from(posSchema.outlets)
             .where(eq(posSchema.outlets.id, id));
 
-        return NextResponse.json(outlet);
+        // Resolve logo URL
+        const outletWithLogo = {
+            ...outlet,
+            logoUrl: await resolveR2UrlServer(outlet.logoUrl)
+        };
+
+        return NextResponse.json(outletWithLogo);
     } catch (error) {
         console.error("Error fetching outlet:", error);
         return NextResponse.json(
@@ -98,7 +105,7 @@ export async function PUT(
         }
 
         const body = await request.json();
-        const { name, address, phone, primaryColor, secondaryColor, openTime, closeTime, greeting, isCatalogVisible } = body;
+        const { name, address, phone, primaryColor, secondaryColor, openTime, closeTime, greeting, isCatalogVisible, logoUrl } = body;
 
         const [updatedOutlet] = await db
             .update(posSchema.outlets)
@@ -112,6 +119,7 @@ export async function PUT(
                 closeTime: closeTime || null,
                 greeting: greeting || null,
                 isCatalogVisible: isCatalogVisible ?? undefined,
+                logoUrl: extractR2Key(logoUrl) || null,
             })
             .where(eq(posSchema.outlets.id, id))
             .returning();

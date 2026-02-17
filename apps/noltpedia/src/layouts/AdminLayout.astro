@@ -1,0 +1,170 @@
+---
+import "../styles/global.css";
+import { auth } from "../lib/auth";
+
+interface Props {
+    title: string;
+}
+
+const { title } = Astro.props;
+
+const { user } = Astro.locals;
+
+// Redundant check, but safe for TypeScript
+if (!user) {
+    // Middleware should have redirected.
+    // If we are here, something is wrong, so redirect again just in case (as a Response).
+    return Astro.redirect("/login");
+}
+
+import SearchDialog, { SearchTrigger } from "../components/SearchDialog";
+import {
+    BarChart3,
+    Folder,
+    FileText,
+    Image as ImageIcon,
+    Book,
+    Map,
+} from "lucide-react";
+---
+
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="generator" content={Astro.generator} />
+        <title>{title} | NoltPedia Admin</title>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            body {
+                font-family: "Space Mono", monospace;
+            }
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                font-family: "Space Grotesk", sans-serif;
+            }
+        </style>
+    </head>
+    <body class="bg-zinc-100 text-black min-h-screen flex">
+        <SearchDialog client:load />
+        <!-- Sidebar -->
+        <aside
+            class="w-64 bg-white border-r-2 border-black flex flex-col fixed h-full z-10"
+        >
+            <div class="p-6 border-b-2 border-black bg-yellow-400">
+                <a
+                    href="/"
+                    class="text-xl font-black uppercase tracking-tighter"
+                >
+                    Nolt<span class="text-blue-600">Pedia</span>
+                    <br />
+                    <span class="text-xs bg-black text-white px-1"
+                        >Curator Mode</span
+                    >
+                </a>
+            </div>
+
+            <nav class="flex-1 p-4 flex flex-col gap-2">
+                <div class="mb-4">
+                    <SearchTrigger client:idle />
+                </div>
+                <a
+                    href="/dashboard"
+                    class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
+                >
+                    <BarChart3 size={18} /> Data Center
+                </a>
+                <a
+                    href="/dashboard/topics"
+                    class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
+                >
+                    <Folder size={18} /> Topics
+                </a>
+                <a
+                    href="/dashboard/articles"
+                    class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
+                >
+                    <FileText size={18} /> Articles
+                </a>
+                <a
+                    href="/dashboard/glossary"
+                    class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
+                >
+                    <Book size={18} /> Glossary
+                </a>
+                <a
+                    href="/dashboard/paths"
+                    class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
+                >
+                    <Map size={18} /> Paths
+                </a>
+                <a
+                    href="/dashboard/media"
+                    class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
+                >
+                    <ImageIcon size={18} /> Media (R2)
+                </a>
+            </nav>
+
+            <div class="p-4 border-t-2 border-black">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-8 h-8 bg-black rounded-full"></div>
+                    <div class="overflow-hidden">
+                        <p class="font-bold text-xs truncate">{user.name}</p>
+                        <p class="text-[10px] opacity-60 truncate">
+                            {user.email}
+                        </p>
+                    </div>
+                </div>
+                <button
+                    id="logout-btn"
+                    class="neo-btn w-full bg-red-500 text-white hover:bg-red-600"
+                >
+                    Log Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <header
+                class="mb-8 flex justify-between items-end border-b-2 border-black pb-4"
+            >
+                <h1 class="text-4xl font-black uppercase">{title}</h1>
+                <div class="font-bold font-mono text-sm opacity-50">
+                    SESSION_ID: {Astro.locals.session?.id.slice(0, 8)}
+                </div>
+            </header>
+
+            <slot />
+        </main>
+
+        <script>
+            import { authClient } from "../lib/auth-client";
+
+            const logoutBtn = document.getElementById("logout-btn");
+            logoutBtn?.addEventListener("click", async () => {
+                await authClient.signOut({
+                    fetchOptions: {
+                        onSuccess: () => {
+                            window.location.href = "/login";
+                        },
+                    },
+                });
+            });
+        </script>
+    </body>
+</html>

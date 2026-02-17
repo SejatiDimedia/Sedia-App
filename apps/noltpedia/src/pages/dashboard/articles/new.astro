@@ -1,0 +1,8 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import MDXEditor from "../../../components/dashboard/MDXEditor";
+---
+
+<AdminLayout title="New Article">
+    <MDXEditor client:only="react" />
+</AdminLayout>

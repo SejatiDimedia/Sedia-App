@@ -1,0 +1,71 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { db, paths, desc, eq } from "../../lib/db";
+import { Map } from "lucide-react";
+
+const allPaths = await db.query.paths.findMany({
+    where: eq(paths.isPublished, true),
+    orderBy: [desc(paths.createdAt)],
+});
+---
+
+<BaseLayout title="Learning Paths">
+    <div class="max-w-6xl mx-auto px-4 py-12">
+        <div class="mb-12">
+            <h1 class="text-5xl font-black uppercase mb-4 tracking-tighter">
+                Guided Paths
+            </h1>
+            <p class="text-xl font-mono text-zinc-600 max-w-2xl">
+                Kurikulum terstruktur untuk menguasai teknologi dari nol hingga
+                logika terdalam.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {
+                allPaths.map((path) => (
+                    <a href={`/paths/${path.slug}`} class="group">
+                        <div class="neo-card p-8 bg-white h-full flex flex-col transition-transform group-hover:-translate-y-1">
+                            <div class="mb-6 flex justify-between items-start">
+                                <div class="bg-yellow-400 p-3 border-4 border-black shadow-[4px_4px_0px_0px_#000]">
+                                    <Map size={32} strokeWidth={3} />
+                                </div>
+                                <span class="font-mono text-xs uppercase font-bold tracking-widest opacity-50">
+                                    Curriculum
+                                </span>
+                            </div>
+
+                            <h2 class="text-2xl font-black uppercase mb-4 leading-none group-hover:underline">
+                                {path.title}
+                            </h2>
+
+                            <p class="text-sm font-mono text-zinc-600 flex-grow mb-8 line-clamp-3">
+                                {path.description ||
+                                    "No description available for this path."}
+                            </p>
+
+                            <div class="mt-auto pt-6 border-t-4 border-black flex items-center justify-between font-black uppercase text-sm">
+                                <span>Start Learning</span>
+                                <span>→</span>
+                            </div>
+                        </div>
+                    </a>
+                ))
+            }
+
+            {
+                allPaths.length === 0 && (
+                    <div class="col-span-full py-20 text-center neo-card bg-zinc-50 border-4 border-dashed border-black">
+                        <p class="font-mono text-xl opacity-50">
+                            BELUM ADA KURIKULUM TERSEDIA.
+                        </p>
+                        <p class="text-sm font-mono mt-2 opacity-50">
+                            Kurator kami sedang menyusun materi terbaik untuk
+                            Anda.
+                        </p>
+                    </div>
+                )
+            }
+        </div>
+    </div>
+</BaseLayout>

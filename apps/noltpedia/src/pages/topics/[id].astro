@@ -1,0 +1,98 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { db, schema, eq, and, desc } from "../../lib/db";
+import LucideIcon from "../../components/ui/LucideIcon";
+
+const { id } = Astro.params;
+
+if (!id) return Astro.redirect("/404");
+
+// Fetch topic details
+const topic = await db.query.topics.findFirst({
+    where: (topics, { eq }) => eq(topics.id, id),
+});
+
+if (!topic || !topic.isPublished) return Astro.redirect("/404");
+
+// Fetch articles for this topic
+const articlesList = await db.query.articles.findMany({
+    where: (articles, { eq, and }) =>
+        and(eq(articles.topicId, id), eq(articles.isPublished, true)),
+    orderBy: (articles, { desc }) => [desc(articles.createdAt)],
+});
+---
+
+<BaseLayout title={`${topic.name} | NoltPedia`}>
+    <div class="flex flex-col md:flex-row gap-8 items-start mb-16">
+        <div
+            class="bg-black text-white p-6 border-4 border-black inline-flex items-center justify-center neo-shadow"
+        >
+            <LucideIcon
+                name={topic.icon || "folder"}
+                size={64}
+                strokeWidth={2.5}
+                client:load
+            />
+        </div>
+        <div>
+            <nav class="flex text-xs font-bold uppercase gap-2 mb-4 opacity-50">
+                <a href="/topics" class="hover:underline">Topics</a>
+                <span>/</span>
+                <span class="text-black">{topic.name}</span>
+            </nav>
+            <h1 class="text-6xl font-black uppercase mb-4 leading-none">
+                {topic.name}
+            </h1>
+            <p class="text-xl max-w-3xl opacity-80 leading-relaxed font-medium">
+                {topic.description}
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {
+            articlesList.map((article) => (
+                <a href={`/articles/${article.slug}`} class="group">
+                    <div class="neo-card p-8 h-full bg-white hover:bg-zinc-50 transition-colors border-2 border-black">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="text-[10px] font-black uppercase bg-black text-white px-2 py-1">
+                                {article.difficulty || "Beginner"}
+                            </span>
+                            <span class="text-[10px] font-bold opacity-50 uppercase tracking-widest">
+                                {new Date(
+                                    article.createdAt,
+                                ).toLocaleDateString()}
+                            </span>
+                        </div>
+                        <h3 class="text-2xl font-black uppercase mb-3 leading-tight group-hover:text-blue-600 transition-colors">
+                            {article.title}
+                        </h3>
+                        <p class="text-sm opacity-60 leading-relaxed mb-6">
+                            {article.excerpt ||
+                                "No description provided for this logic documents."}
+                        </p>
+                        <div class="flex items-center gap-2 font-bold text-xs uppercase group-hover:gap-4 transition-all">
+                            Read Logic <span>→</span>
+                        </div>
+                    </div>
+                </a>
+            ))
+        }
+    </div>
+
+    {
+        articlesList.length === 0 && (
+            <div class="neo-card p-12 text-center bg-zinc-50 border-dashed border-2 border-black/20">
+                <p class="text-xl font-bold opacity-40 uppercase">
+                    Belum ada dokumen logika untuk topik ini.
+                </p>
+                <a
+                    href="/topics"
+                    class="inline-block mt-4 neo-btn text-xs bg-black text-white px-4 py-2"
+                >
+                    Kembali ke Topik
+                </a>
+            </div>
+        )
+    }
+</BaseLayout>

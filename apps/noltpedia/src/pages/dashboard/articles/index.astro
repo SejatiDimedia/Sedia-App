@@ -1,0 +1,140 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { db, schema, desc } from "../../../lib/db";
+
+const articles = await db.query.articles.findMany({
+    orderBy: [desc(schema.articles.createdAt)],
+    with: {
+        topic: true,
+    },
+});
+---
+
+<AdminLayout title="Articles">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-bold uppercase">All Articles</h2>
+        <a
+            href="/dashboard/articles/new"
+            class="neo-btn bg-blue-600 text-white hover:bg-blue-700"
+        >
+            + Write Article
+        </a>
+    </div>
+
+    <div
+        class="neo-card p-0 bg-white overflow-hidden shadow-none border-2 border-black"
+    >
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-black text-white">
+                <tr>
+                    <th
+                        class="p-4 border-b-2 border-black font-bold uppercase text-sm"
+                        >Title</th
+                    >
+                    <th
+                        class="p-4 border-b-2 border-black font-bold uppercase text-sm"
+                        >Topic</th
+                    >
+                    <th
+                        class="p-4 border-b-2 border-black font-bold uppercase text-sm"
+                        >Status</th
+                    >
+                    <th
+                        class="p-4 border-b-2 border-black font-bold uppercase text-sm"
+                        >Date</th
+                    >
+                    <th
+                        class="p-4 border-b-2 border-black font-bold uppercase text-sm"
+                        >Actions</th
+                    >
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    articles.map((article) => (
+                        <tr class="border-b-2 border-black hover:bg-zinc-50 transition-colors">
+                            <td class="p-4">
+                                <div class="font-bold">{article.title}</div>
+                                <div class="text-[10px] font-mono opacity-50 uppercase">
+                                    {article.slug}
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-zinc-100 border-2 border-black px-2 py-0.5 text-[10px] font-bold uppercase">
+                                    {article.topic?.name || "No Topic"}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                {article.isPublished ? (
+                                    <span class="text-green-600 font-bold text-xs uppercase flex items-center gap-1">
+                                        <span class="w-2 h-2 bg-green-600 rounded-full" />{" "}
+                                        Published
+                                    </span>
+                                ) : (
+                                    <span class="text-zinc-400 font-bold text-xs uppercase flex items-center gap-1">
+                                        <span class="w-2 h-2 bg-zinc-400 rounded-full" />{" "}
+                                        Draft
+                                    </span>
+                                )}
+                            </td>
+                            <td class="p-4 text-xs font-mono">
+                                {article.createdAt
+                                    ? new Date(
+                                          article.createdAt,
+                                      ).toLocaleDateString("id-ID")
+                                    : "-"}
+                            </td>
+                            <td class="p-4">
+                                <div class="flex gap-2">
+                                    <a
+                                        href={`/dashboard/articles/${article.id}`}
+                                        class="text-blue-600 font-bold hover:underline text-xs uppercase"
+                                    >
+                                        Edit
+                                    </a>
+                                    <button
+                                        class="delete-btn text-red-600 font-bold hover:underline text-xs uppercase"
+                                        data-id={article.id}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    ))
+                }
+                {
+                    articles.length === 0 && (
+                        <tr>
+                            <td
+                                colspan="5"
+                                class="p-12 text-center opacity-50 italic"
+                            >
+                                No articles found. Start by writing one!
+                            </td>
+                        </tr>
+                    )
+                }
+            </tbody>
+        </table>
+    </div>
+</AdminLayout>
+
+<script>
+    const deleteBtns = document.querySelectorAll(".delete-btn");
+    deleteBtns.forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+            const id = (e.target as HTMLButtonElement).dataset.id;
+            if (confirm("Are you sure you want to delete this article?")) {
+                const res = await fetch(`/api/articles/${id}`, {
+                    method: "DELETE",
+                });
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert("Failed to delete article");
+                }
+            }
+        });
+    });
+</script>

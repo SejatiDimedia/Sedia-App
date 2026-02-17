@@ -3,6 +3,7 @@ import { db, posSchema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { resolveR2UrlServer, extractR2Key } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -60,8 +61,15 @@ export async function GET() {
         }
 
         const combinedOutlets = Array.from(outletMap.values());
-        console.log("[API Outlets] Total unique outlets found:", combinedOutlets.length);
-        return NextResponse.json(combinedOutlets);
+
+        // Resolve logo URLs
+        const outletsWithLogos = await Promise.all(combinedOutlets.map(async (outlet) => ({
+            ...outlet,
+            logoUrl: await resolveR2UrlServer(outlet.logoUrl)
+        })));
+
+        console.log("[API Outlets] Total unique outlets found:", outletsWithLogos.length);
+        return NextResponse.json(outletsWithLogos);
 
         console.log("[API Outlets] No outlets found for user");
         return NextResponse.json([]);
@@ -86,7 +94,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, address, phone, openTime, closeTime, greeting, isCatalogVisible } = body;
+        const { name, address, phone, openTime, closeTime, greeting, isCatalogVisible, logoUrl } = body;
 
         if (!name) {
             return NextResponse.json(
@@ -105,6 +113,7 @@ export async function POST(request: Request) {
                 closeTime: closeTime || null,
                 greeting: greeting || null,
                 isCatalogVisible: isCatalogVisible ?? true,
+                logoUrl: extractR2Key(body.logoUrl) || null,
                 ownerId: session.user.id,
             })
             .returning();

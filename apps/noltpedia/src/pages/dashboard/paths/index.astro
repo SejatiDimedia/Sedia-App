@@ -1,0 +1,15 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import PathManager from "../../../components/dashboard/PathManager";
+---
+
+<AdminLayout title="Path Management">
+    <div class="mb-8">
+        <h1 class="text-4xl font-black uppercase mb-2">Guided Paths</h1>
+        <p class="text-zinc-600 font-mono">
+            Design structured curriculums and learning roadmaps.
+        </p>
+    </div>
+
+    <PathManager client:load />
+</AdminLayout>
