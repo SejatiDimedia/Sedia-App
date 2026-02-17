@@ -1,0 +1,14 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import BulkImporter from "../../../components/dashboard/BulkImporter";
+---
+
+<AdminLayout title="Impor Massal">
+    <p class="text-sm text-zinc-500 mb-6 max-w-2xl">
+        Tempel konten JSON buatan AI untuk membuat topik, artikel, dan alur
+        belajar secara instan. Gunakan template prompt dari <code
+            class="bg-zinc-200 px-1">prompting_content.md</code
+        > untuk menghasilkan format yang benar.
+    </p>
+    <BulkImporter client:only="react" />
+</AdminLayout>

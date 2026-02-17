@@ -1,0 +1,1 @@
+ALTER TABLE "noltpedia_v1"."articles" ADD COLUMN "author_id" text;

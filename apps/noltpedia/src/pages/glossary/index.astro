@@ -23,14 +23,14 @@ const groupedTerms = terms.reduce(
 const alphabet = Object.keys(groupedTerms).sort();
 ---
 
-<BaseLayout title="Glossary | NoltPedia">
+<BaseLayout title="Glosarium | NoltPedia">
     <div class="mb-16">
         <h1 class="text-6xl font-black uppercase mb-4 leading-none">
-            The Glossary
+            Glosarium
         </h1>
         <p class="text-xl opacity-70 max-w-2xl font-medium">
             Kumpulan terminologi teknis yang dibedah hingga ke akar logikanya.
-            No buzzwords, just clear definitions.
+            Tanpa kata hiasan, hanya definisi yang jelas.
         </p>
     </div>
 
@@ -57,7 +57,7 @@ const alphabet = Object.keys(groupedTerms).sort();
                             {letter}
                         </h2>
                         <span class="text-xs font-black opacity-30 uppercase">
-                            {groupedTerms[letter].length} Terms
+                            {groupedTerms[letter].length} Istilah
                         </span>
                     </div>
 
@@ -76,7 +76,7 @@ const alphabet = Object.keys(groupedTerms).sort();
                                         href={`/articles/${term.relatedArticleId}`}
                                         class="inline-flex items-center gap-2 mt-4 text-[10px] font-black uppercase text-blue-600 hover:underline"
                                     >
-                                        Read Deep Dive <span>→</span>
+                                        Baca Pembahasan Mendalam <span>→</span>
                                     </a>
                                 )}
                             </div>

@@ -16,7 +16,7 @@ export default function MDXEditor({ articleId }: MDXEditorProps) {
     const [title, setTitle] = useState("");
     const [slug, setSlug] = useState("");
     const [topicId, setTopicId] = useState("");
-    const [content, setContent] = useState("# Hello World\nStart writing...");
+    const [content, setContent] = useState("# Halo Dunia\nMulai menulis...");
     const [isPublished, setIsPublished] = useState(false);
 
     const [topics, setTopics] = useState<Topic[]>([]);
@@ -64,19 +64,19 @@ export default function MDXEditor({ articleId }: MDXEditorProps) {
             });
 
             if (res.ok) {
-                alert(articleId ? "Article updated!" : "Article saved!");
+                alert(articleId ? "Artikel diperbarui!" : "Artikel disimpan!");
                 window.location.href = "/dashboard/articles";
             } else {
                 const err = await res.json();
-                alert("Error: " + err.error);
+                alert("Kesalahan: " + err.error);
             }
         } catch (e) {
-            alert("Network error");
+            alert("Gangguan jaringan");
         }
         setLoading(false);
     };
 
-    if (fetching) return <div className="p-12 text-center font-mono uppercase animate-pulse">Loading Archive...</div>;
+    if (fetching) return <div className="p-12 text-center font-mono uppercase animate-pulse">Memuat Arsip...</div>;
 
     return (
         <div className="flex flex-col h-[85vh]">
@@ -84,7 +84,7 @@ export default function MDXEditor({ articleId }: MDXEditorProps) {
             <div className="flex items-center gap-4 mb-4 bg-white p-4 border-2 border-black neo-shadow">
                 <input
                     className="flex-1 text-2xl font-black focus:outline-none bg-transparent"
-                    placeholder="Article Title..."
+                    placeholder="Judul Artikel..."
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                 />
@@ -93,15 +93,15 @@ export default function MDXEditor({ articleId }: MDXEditorProps) {
                     value={topicId}
                     onChange={e => setTopicId(e.target.value)}
                 >
-                    <option value="">Select Topic</option>
+                    <option value="">Pilih Topik</option>
                     {topics.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
                 <label className="flex items-center gap-2 font-bold text-sm bg-yellow-100 px-2 py-1 border-2 border-black border-dashed">
                     <input type="checkbox" checked={isPublished} onChange={e => setIsPublished(e.target.checked)} />
-                    PUBLISH
+                    TERBITKAN
                 </label>
                 <button onClick={handleSave} disabled={loading} className="neo-btn bg-black text-white hover:bg-zinc-800">
-                    {loading ? "SAVING..." : "SAVE ARTICLE"}
+                    {loading ? "MENYIMPAN..." : "SIMPAN ARTIKEL"}
                 </button>
             </div>
 

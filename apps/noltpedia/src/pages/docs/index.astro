@@ -12,12 +12,12 @@ const allArticles = await db.query.articles.findMany({
 });
 ---
 
-<BaseLayout title="Library | NoltPedia">
+<BaseLayout title="Perpustakaan | NoltPedia">
     <div class="mb-16">
         <h1
             class="text-5xl md:text-7xl font-black uppercase mb-4 leading-tight"
         >
-            The Library
+            Perpustakaan
         </h1>
         <p class="text-xl opacity-70 max-w-2xl font-medium">
             Arsip digital untuk segala jenis dokumentasi teknis. Dari
@@ -32,7 +32,7 @@ const allArticles = await db.query.articles.findMany({
                     {/* Topic Indicator */}
                     <div class="w-full md:w-48 bg-black text-white p-6 flex flex-col justify-center items-center text-center">
                         <span class="text-[10px] font-black uppercase tracking-widest opacity-50 mb-2">
-                            Topic
+                            Topik
                         </span>
                         <span class="text-lg font-black uppercase leading-tight">
                             {article.topic?.name || "General"}
@@ -41,7 +41,7 @@ const allArticles = await db.query.articles.findMany({
                             href={`/topics/${article.topic?.id}`}
                             class="mt-4 text-[10px] font-bold border border-white/30 px-2 py-1 hover:bg-white hover:text-black transition-colors"
                         >
-                            View Topic
+                            Lihat Topik
                         </a>
                     </div>
 
@@ -52,14 +52,13 @@ const allArticles = await db.query.articles.findMany({
                                 {article.difficulty}
                             </span>
                             <span class="text-xs font-mono opacity-40">
-                                {new Date(article.createdAt).toLocaleDateString(
-                                    "id-ID",
-                                    {
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                    },
-                                )}
+                                {new Date(
+                                    article.createdAt || new Date(),
+                                ).toLocaleDateString("id-ID", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                })}
                             </span>
                         </div>
 
@@ -81,7 +80,7 @@ const allArticles = await db.query.articles.findMany({
                                 Mulai Baca →
                             </a>
                             <div class="hidden sm:flex items-center gap-2 opacity-30 text-[10px] font-black">
-                                <span>{article.viewCount || 0} VIEWS</span>
+                                <span>{article.viewCount || 0} DILIHAT</span>
                                 <span class="w-1 h-1 bg-black rounded-full" />
                                 <span>MDX V1.0</span>
                             </div>

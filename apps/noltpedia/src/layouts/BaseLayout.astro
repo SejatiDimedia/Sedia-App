@@ -17,6 +17,7 @@ const session = await auth.api.getSession({
 });
 
 import SearchDialog, { SearchTrigger } from "../components/SearchDialog";
+import { ClientRouter } from "astro:transitions";
 ---
 
 <!doctype html>
@@ -28,6 +29,7 @@ import SearchDialog, { SearchTrigger } from "../components/SearchDialog";
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <title>{title}</title>
+    <ClientRouter />
 
     <!-- Google Fonts: Space Grotesk (Headings) & Space Mono (Code/Body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -55,51 +57,59 @@ import SearchDialog, { SearchTrigger } from "../components/SearchDialog";
     <SearchDialog client:load />
     <header class="border-b-2 border-black bg-white sticky top-0 z-50">
       <nav
-        class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center"
+        class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between"
       >
+        <!-- Logo -->
         <a
           href="/"
-          class="text-2xl font-bold uppercase tracking-tighter hover:bg-yellow-400 transition-colors px-2 border-2 border-transparent hover:border-black"
+          class="text-2xl font-bold uppercase tracking-tighter hover:bg-yellow-400 transition-colors px-2 border-4 border-black neo-shadow-sm bg-white"
         >
           Nolt<span class="text-blue-600">Pedia</span>
         </a>
-        <div class="hidden md:flex gap-6 items-center">
-          <SearchTrigger client:idle />
+
+        <!-- Navigation Links -->
+        <div class="hidden md:flex gap-8 items-center">
           <a
             href="/docs"
-            class="font-bold hover:underline decoration-2 underline-offset-4"
-            >Library</a
+            class="text-sm font-black uppercase tracking-tight hover:text-blue-600 transition-colors"
+            >Artikel</a
           >
           <a
             href="/topics"
-            class="font-bold hover:underline decoration-2 underline-offset-4"
-            >Topics</a
+            class="text-sm font-black uppercase tracking-tight hover:text-blue-600 transition-colors"
+            >Topik</a
           >
           <a
             href="/paths"
-            class="font-bold hover:underline decoration-2 underline-offset-4"
-            >Paths</a
+            class="text-sm font-black uppercase tracking-tight hover:text-blue-600 transition-colors"
+            >Alur Belajar</a
           >
           <a
             href="/glossary"
-            class="font-bold hover:underline decoration-2 underline-offset-4"
-            >Glossary</a
+            class="text-sm font-black uppercase tracking-tight hover:text-blue-600 transition-colors"
+            >Glosarium</a
           >
         </div>
-        <div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:block">
+            <SearchTrigger client:idle />
+          </div>
           {
             session ? (
-              <div class="flex items-center gap-4">
-                <span class="font-bold hidden md:inline">
-                  {session.user.name}
-                </span>
-                <a href="/dashboard" class="neo-btn text-sm bg-yellow-400">
-                  Dashboard
-                </a>
-              </div>
+              <a
+                href="/dashboard"
+                class="neo-btn text-xs bg-yellow-400 px-4 py-2 h-[42px] flex items-center justify-center"
+              >
+                DASBOR
+              </a>
             ) : (
-              <a href="/login" class="neo-btn text-sm">
-                Masuk
+              <a
+                href="/login"
+                class="neo-btn text-xs bg-white px-4 py-2 h-[42px] flex items-center justify-center"
+              >
+                MASUK
               </a>
             )
           }
@@ -113,9 +123,9 @@ import SearchDialog, { SearchTrigger } from "../components/SearchDialog";
 
     <footer class="border-t-2 border-black bg-white py-12 mt-auto">
       <div class="max-w-7xl mx-auto px-6 text-center">
-        <p class="font-bold mb-4">NO SHORTCUTS. PURE LOGIC.</p>
+        <p class="font-bold mb-4">TANPA JALAN PINTAS. LOGIKA MURNI.</p>
         <p class="text-sm opacity-60">
-          &copy; {new Date().getFullYear()} NoltPedia. Built with Astro & Neon.
+          &copy; {new Date().getFullYear()} NoltPedia. Dibangun dengan Astro & Neon.
         </p>
       </div>
     </footer>

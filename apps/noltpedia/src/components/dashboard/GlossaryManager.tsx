@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MessageSquare, Trash2, Edit2, Check, X } from "lucide-react";
+import { useToast } from "../ui/NeoToast";
+import { useConfirm } from "../ui/NeoConfirm";
 
 interface GlossaryTerm {
     id: string;
@@ -14,8 +16,10 @@ export default function GlossaryManager() {
     const [term, setTerm] = useState("");
     const [definition, setDefinition] = useState("");
     const [relatedArticleId, setRelatedArticleId] = useState("");
-
     const [editId, setEditId] = useState<string | null>(null);
+
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
 
     useEffect(() => {
         fetchTerms();
@@ -43,8 +47,9 @@ export default function GlossaryManager() {
             setDefinition("");
             setRelatedArticleId("");
             fetchTerms();
+            showToast("Istilah berhasil didaftarkan", "success");
         } else {
-            alert("Failed to create term");
+            showToast("Gagal membuat istilah", "error");
         }
     };
 
@@ -58,13 +63,19 @@ export default function GlossaryManager() {
         if (res.ok) {
             setEditId(null);
             fetchTerms();
+            showToast("Istilah berhasil diperbarui", "success");
         } else {
-            alert("Failed to update term");
+            showToast("Gagal memperbarui istilah", "error");
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm("Delete this term?")) return;
+        const confirmed = await confirm({
+            title: "Hapus Istilah",
+            message: "Apakah Anda yakin ingin menghapus istilah ini dari glosarium?",
+            variant: "danger"
+        });
+        if (!confirmed) return;
 
         const res = await fetch(`/api/glossary/${id}`, {
             method: "DELETE",
@@ -72,8 +83,9 @@ export default function GlossaryManager() {
 
         if (res.ok) {
             fetchTerms();
+            showToast("Istilah berhasil dihapus", "success");
         } else {
-            alert("Failed to delete term");
+            showToast("Gagal menghapus istilah", "error");
         }
     };
 
@@ -81,21 +93,21 @@ export default function GlossaryManager() {
         <div className="space-y-8 font-mono">
             {/* Create Form */}
             <div className="neo-card p-6 bg-white border-4 border-black">
-                <h3 className="text-xl font-black mb-4 uppercase font-sans">Add Technical Term</h3>
+                <h3 className="text-xl font-black mb-4 uppercase font-sans">Tambah Istilah Teknis</h3>
                 <form onSubmit={handleCreate} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-bold uppercase block mb-1">Term</label>
+                            <label className="text-xs font-bold uppercase block mb-1">Istilah</label>
                             <input
                                 className="neo-input w-full"
                                 value={term}
                                 onChange={e => setTerm(e.target.value)}
                                 required
-                                placeholder="e.g. Closure"
+                                placeholder="Misal: Closure"
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold uppercase block mb-1">Related Article Slug (Optional)</label>
+                            <label className="text-xs font-bold uppercase block mb-1">Slug Artikel Terkait (Opsional)</label>
                             <input
                                 className="neo-input w-full"
                                 value={relatedArticleId}
@@ -105,17 +117,17 @@ export default function GlossaryManager() {
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-bold uppercase block mb-1">Definition</label>
+                        <label className="text-xs font-bold uppercase block mb-1">Definisi</label>
                         <textarea
                             className="neo-input w-full min-h-[100px]"
                             value={definition}
                             onChange={e => setDefinition(e.target.value)}
                             required
-                            placeholder="Provide a concise, logic-based definition..."
+                            placeholder="Berikan definisi ringkas berdasarkan logika..."
                         />
                     </div>
                     <button type="submit" className="neo-btn bg-black text-white w-full uppercase font-black">
-                        + Register Term
+                        + Daftarkan Istilah
                     </button>
                 </form>
             </div>
@@ -125,14 +137,14 @@ export default function GlossaryManager() {
                 <table className="w-full text-left border-collapse">
                     <thead className="bg-black text-white font-sans">
                         <tr>
-                            <th className="p-4 border-b-2 border-black font-bold uppercase text-xs">Term</th>
-                            <th className="p-4 border-b-2 border-black font-bold uppercase text-xs">Definition</th>
-                            <th className="p-4 border-b-2 border-black font-bold uppercase text-xs w-24">Actions</th>
+                            <th className="p-4 border-b-2 border-black font-bold uppercase text-xs">Istilah</th>
+                            <th className="p-4 border-b-2 border-black font-bold uppercase text-xs">Definisi</th>
+                            <th className="p-4 border-b-2 border-black font-bold uppercase text-xs w-24">Aksi</th>
                         </tr>
                     </thead>
                     <tbody className="text-sm">
                         {loading ? (
-                            <tr><td colSpan={3} className="p-8 text-center animate-pulse uppercase font-black">Scanning Database...</td></tr>
+                            <tr><td colSpan={3} className="p-8 text-center animate-pulse uppercase font-black">Memindai Database...</td></tr>
                         ) : terms.map(item => (
                             <tr key={item.id} className="border-b-2 border-black hover:bg-zinc-50 group">
                                 <td className="p-4 align-top">
@@ -140,7 +152,7 @@ export default function GlossaryManager() {
                                         <input
                                             className="border-2 border-black p-1 w-full font-bold uppercase"
                                             value={item.term}
-                                            onChange={e => setTerms(terms.map(t => t.id === item.id ? { ...t, term: e.target.value } : t))}
+                                            onChange={e => setTerms(terms.map((t: GlossaryTerm) => t.id === item.id ? { ...t, term: e.target.value } : t))}
                                         />
                                     ) : (
                                         <span className="font-black uppercase text-blue-600">{item.term}</span>
@@ -151,7 +163,7 @@ export default function GlossaryManager() {
                                         <textarea
                                             className="border-2 border-black p-1 w-full min-h-[80px]"
                                             value={item.definition}
-                                            onChange={e => setTerms(terms.map(t => t.id === item.id ? { ...t, definition: e.target.value } : t))}
+                                            onChange={e => setTerms(terms.map((t: GlossaryTerm) => t.id === item.id ? { ...t, definition: e.target.value } : t))}
                                         />
                                     ) : (
                                         <p className="opacity-70 leading-relaxed">{item.definition}</p>
@@ -183,7 +195,7 @@ export default function GlossaryManager() {
                             </tr>
                         ))}
                         {!loading && terms.length === 0 && (
-                            <tr><td colSpan={3} className="p-12 text-center opacity-30 font-black uppercase">No terms registered in the archives.</td></tr>
+                            <tr><td colSpan={3} className="p-12 text-center opacity-30 font-black uppercase">Tidak ada istilah terdaftar di arsip.</td></tr>
                         )}
                     </tbody>
                 </table>

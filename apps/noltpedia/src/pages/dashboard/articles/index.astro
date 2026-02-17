@@ -1,8 +1,27 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { db, schema, desc } from "../../../lib/db";
+import { eq, like, and } from "drizzle-orm";
+
+const search = Astro.url.searchParams.get("search") || "";
+const topicId = Astro.url.searchParams.get("topic") || "";
+
+// Fetch topics for filter dropdown
+const topics = await db.query.topics.findMany({
+    orderBy: [desc(schema.topics.name)],
+});
+
+// Build query conditions
+const conditions = [];
+if (search) {
+    conditions.push(like(schema.articles.title, `%${search}%`));
+}
+if (topicId) {
+    conditions.push(eq(schema.articles.topicId, topicId));
+}
 
 const articles = await db.query.articles.findMany({
+    where: conditions.length > 0 ? and(...conditions) : undefined,
     orderBy: [desc(schema.articles.createdAt)],
     with: {
         topic: true,
@@ -10,15 +29,63 @@ const articles = await db.query.articles.findMany({
 });
 ---
 
-<AdminLayout title="Articles">
-    <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-bold uppercase">All Articles</h2>
+<AdminLayout title="Artikel">
+    <div
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+    >
+        <h2 class="text-2xl font-bold uppercase">Semua Artikel</h2>
         <a
             href="/dashboard/articles/new"
+            transition:animate="fade"
             class="neo-btn bg-blue-600 text-white hover:bg-blue-700"
         >
-            + Write Article
+            + Tulis Artikel
         </a>
+    </div>
+
+    {/* Filter Bar */}
+    <div class="mb-6">
+        <form method="GET" class="flex flex-wrap gap-3 items-end">
+            <div class="flex-1 min-w-[200px]">
+                <label class="text-[10px] font-bold uppercase mb-1 block"
+                    >Cari Judul</label
+                >
+                <input
+                    name="search"
+                    value={search}
+                    placeholder="Ketik judul artikel..."
+                    class="neo-input w-full text-sm"
+                />
+            </div>
+            <div class="w-full md:w-48">
+                <label class="text-[10px] font-bold uppercase mb-1 block"
+                    >Filter Topik</label
+                >
+                <select name="topic" class="neo-input w-full text-sm">
+                    <option value="">Semua Topik</option>
+                    {
+                        topics.map((t) => (
+                            <option value={t.id} selected={t.id === topicId}>
+                                {t.name}
+                            </option>
+                        ))
+                    }
+                </select>
+            </div>
+            <button type="submit" class="neo-btn bg-yellow-400 text-sm"
+                >CARI</button
+            >
+            {
+                (search || topicId) && (
+                    <a
+                        href="/dashboard/articles"
+                        class="neo-btn bg-zinc-200 text-sm"
+                    >
+                        RESET
+                    </a>
+                )
+            }
+        </form>
     </div>
 
     <div
@@ -29,11 +96,11 @@ const articles = await db.query.articles.findMany({
                 <tr>
                     <th
                         class="p-4 border-b-2 border-black font-bold uppercase text-sm"
-                        >Title</th
+                        >Judul</th
                     >
                     <th
                         class="p-4 border-b-2 border-black font-bold uppercase text-sm"
-                        >Topic</th
+                        >Topik</th
                     >
                     <th
                         class="p-4 border-b-2 border-black font-bold uppercase text-sm"
@@ -41,11 +108,11 @@ const articles = await db.query.articles.findMany({
                     >
                     <th
                         class="p-4 border-b-2 border-black font-bold uppercase text-sm"
-                        >Date</th
+                        >Tanggal</th
                     >
                     <th
                         class="p-4 border-b-2 border-black font-bold uppercase text-sm"
-                        >Actions</th
+                        >Aksi</th
                     >
                 </tr>
             </thead>
@@ -61,19 +128,19 @@ const articles = await db.query.articles.findMany({
                             </td>
                             <td class="p-4">
                                 <span class="bg-zinc-100 border-2 border-black px-2 py-0.5 text-[10px] font-bold uppercase">
-                                    {article.topic?.name || "No Topic"}
+                                    {article.topic?.name || "Tanpa Topik"}
                                 </span>
                             </td>
                             <td class="p-4">
                                 {article.isPublished ? (
                                     <span class="text-green-600 font-bold text-xs uppercase flex items-center gap-1">
                                         <span class="w-2 h-2 bg-green-600 rounded-full" />{" "}
-                                        Published
+                                        Terbit
                                     </span>
                                 ) : (
                                     <span class="text-zinc-400 font-bold text-xs uppercase flex items-center gap-1">
                                         <span class="w-2 h-2 bg-zinc-400 rounded-full" />{" "}
-                                        Draft
+                                        Draf
                                     </span>
                                 )}
                             </td>
@@ -90,13 +157,13 @@ const articles = await db.query.articles.findMany({
                                         href={`/dashboard/articles/${article.id}`}
                                         class="text-blue-600 font-bold hover:underline text-xs uppercase"
                                     >
-                                        Edit
+                                        Ubah
                                     </a>
                                     <button
                                         class="delete-btn text-red-600 font-bold hover:underline text-xs uppercase"
                                         data-id={article.id}
                                     >
-                                        Delete
+                                        Hapus
                                     </button>
                                 </div>
                             </td>
@@ -110,7 +177,8 @@ const articles = await db.query.articles.findMany({
                                 colspan="5"
                                 class="p-12 text-center opacity-50 italic"
                             >
-                                No articles found. Start by writing one!
+                                Artikel tidak ditemukan. Mulai dengan menulis
+                                satu!
                             </td>
                         </tr>
                     )
@@ -123,16 +191,32 @@ const articles = await db.query.articles.findMany({
 <script>
     const deleteBtns = document.querySelectorAll(".delete-btn");
     deleteBtns.forEach((btn) => {
-        btn.addEventListener("click", async (e) => {
-            const id = (e.target as HTMLButtonElement).dataset.id;
-            if (confirm("Are you sure you want to delete this article?")) {
-                const res = await fetch(`/api/articles/${id}`, {
-                    method: "DELETE",
-                });
-                if (res.ok) {
-                    window.location.reload();
-                } else {
-                    alert("Failed to delete article");
+        btn.addEventListener("click", async (e: Event) => {
+            const target = e.target as HTMLButtonElement;
+            const id = target.dataset.id;
+            if (!id) {
+                alert("ID Artikel tidak ditemukan");
+                return;
+            }
+
+            if (confirm("Apakah Anda yakin ingin menghapus artikel ini?")) {
+                try {
+                    const res = await fetch(`/api/articles/${id}`, {
+                        method: "DELETE",
+                    });
+
+                    if (res.ok) {
+                        alert("Artikel berhasil dihapus");
+                        window.location.reload();
+                    } else {
+                        const errorData = await res.json();
+                        alert(
+                            `Gagal menghapus: ${errorData.error || "Kesalahan tidak diketahui"}`,
+                        );
+                    }
+                } catch (error) {
+                    console.error("Delete error:", error);
+                    alert("Gagal menghapus artikel. Silakan coba lagi.");
                 }
             }
         });

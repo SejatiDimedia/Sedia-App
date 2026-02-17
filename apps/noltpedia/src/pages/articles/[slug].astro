@@ -63,7 +63,7 @@ if (pathSlug) {
     <div class="max-w-4xl mx-auto py-12 px-4">
         {/* Breadcrumbs */}
         <nav class="flex text-xs font-bold uppercase gap-2 mb-8 opacity-50">
-            <a href="/docs" class="hover:underline">Library</a>
+            <a href="/docs" class="hover:underline">Perpustakaan</a>
             <span>/</span>
             {
                 pathData ? (
@@ -72,7 +72,7 @@ if (pathSlug) {
                             href={`/paths/${pathData.slug}`}
                             class="hover:underline text-blue-600"
                         >
-                            Path: {pathData.title}
+                            Alur: {pathData.title}
                         </a>
                         <span>/</span>
                     </>
@@ -82,7 +82,7 @@ if (pathSlug) {
                             href={`/topics/${article.topic?.id}`}
                             class="hover:underline"
                         >
-                            {article.topic?.name || "Topic"}
+                            {article.topic?.name || "Topik"}
                         </a>
                         <span>/</span>
                     </>
@@ -102,15 +102,15 @@ if (pathSlug) {
                     <span
                         class="text-[10px] font-black uppercase bg-black text-white px-2 py-1"
                     >
-                        {article.difficulty || "Beginner"}
+                        {article.difficulty || "Pemula"}
                     </span>
                     <span
                         class="text-[10px] font-bold opacity-50 uppercase tracking-widest"
                     >
-                        Documented on {
+                        Didokumentasikan pada {
                             new Date(
                                 article.createdAt || new Date(),
-                            ).toLocaleDateString()
+                            ).toLocaleDateString("id-ID")
                         }
                     </span>
                 </div>
@@ -148,7 +148,7 @@ if (pathSlug) {
                 >
                     <span class="w-4 h-4 bg-yellow-400 border-2 border-black"
                     ></span>
-                    Logic Discussion
+                    Diskusi Logika
                 </h3>
                 <CommentSection client:visible articleId={article.id} />
             </div>
@@ -164,7 +164,7 @@ if (pathSlug) {
                                     class="neo-card p-6 bg-zinc-100 block group hover:bg-yellow-400 transition-colors"
                                 >
                                     <div class="text-[10px] font-black uppercase opacity-50 mb-1">
-                                        Previous Step
+                                        Langkah Sebelumnya
                                     </div>
                                     <div class="font-black uppercase text-sm group-hover:underline">
                                         ← {prevStep.article.title}
@@ -179,7 +179,7 @@ if (pathSlug) {
                                     class="neo-card p-6 bg-black text-white block group hover:bg-zinc-800 transition-colors"
                                 >
                                     <div class="text-[10px] font-black uppercase opacity-50 mb-1">
-                                        Next Step
+                                        Langkah Selanjutnya
                                     </div>
                                     <div class="font-black uppercase text-sm group-hover:underline text-yellow-400">
                                         {nextStep.article.title} →
@@ -188,7 +188,7 @@ if (pathSlug) {
                             )}
                             {!nextStep && (
                                 <div class="neo-card p-6 bg-green-500 text-white block font-black uppercase text-sm">
-                                    Path Completed! 🏆
+                                    Alur Selesai! 🏆
                                 </div>
                             )}
                         </div>

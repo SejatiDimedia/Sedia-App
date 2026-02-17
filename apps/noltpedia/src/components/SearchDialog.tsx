@@ -62,19 +62,19 @@ export default function SearchDialog() {
                     <input
                         ref={inputRef}
                         className="flex-1 text-xl font-bold font-mono focus:outline-none placeholder:text-zinc-400 uppercase"
-                        placeholder="Search articles or topics..."
+                        placeholder="Cari artikel atau topik..."
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                     />
-                    <button onClick={() => setIsOpen(false)} className="px-2 font-bold hover:bg-red-100">ESC</button>
+                    <button onClick={() => setIsOpen(false)} className="px-2 font-bold hover:bg-red-100">TUTUP (ESC)</button>
                 </div>
 
                 {/* Results */}
                 <div className="overflow-y-auto p-2 bg-zinc-50 flex-1">
-                    {loading && <div className="p-4 text-center opacity-50 font-mono">Searching...</div>}
+                    {loading && <div className="p-4 text-center opacity-50 font-mono">Mencari...</div>}
 
                     {!loading && results.length === 0 && query.length >= 2 && (
-                        <div className="p-4 text-center opacity-50 font-mono">No results found.</div>
+                        <div className="p-4 text-center opacity-50 font-mono">Hasil tidak ditemukan.</div>
                     )}
 
                     {!loading && results.map((item) => (
@@ -95,7 +95,7 @@ export default function SearchDialog() {
                 </div>
 
                 <div className="p-2 border-t-2 border-black bg-yellow-300 text-xs font-bold font-mono text-center">
-                    PRESS ENTER TO SELECT • ESC TO CLOSE
+                    TEKAN ENTER UNTUK MEMILIH • ESC UNTUK MENUTUP
                 </div>
             </div>
         </div>
@@ -110,7 +110,7 @@ export function SearchTrigger() {
             className="flex items-center gap-2 border-2 border-black bg-white px-4 py-2 hover:bg-yellow-200 transition-all neo-shadow active:translate-y-1 active:shadow-none w-full"
         >
             <Search size={18} />
-            <span className="font-bold text-sm">Search</span>
+            <span className="font-bold text-sm">Cari</span>
             <kbd className="hidden md:inline-block text-[10px] font-mono bg-black text-white px-1 ml-auto">⌘K</kbd>
         </button>
     );

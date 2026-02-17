@@ -1,0 +1,1 @@
+ALTER TABLE "noltpedia_v1"."articles" ADD COLUMN "sort_order" integer DEFAULT 0;

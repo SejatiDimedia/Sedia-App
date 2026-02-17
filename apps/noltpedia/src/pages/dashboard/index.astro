@@ -19,29 +19,29 @@ const publishedArticles = Number(articlesCount[0]?.count || 0);
 const pendingDrafts = Number(draftsCount[0]?.count || 0);
 ---
 
-<AdminLayout title="Dashboard Overview">
+<AdminLayout title="Ringkasan Dasbor">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="neo-card p-6 bg-white shadow-none border-2 border-black">
             <h3 class="text-sm font-bold uppercase opacity-60 mb-2">
-                Total Topics
+                Total Topik
             </h3>
             <p class="text-5xl font-black">{totalTopics}</p>
             <a
                 href="/dashboard/topics"
                 class="text-[10px] font-bold uppercase mt-4 block hover:underline"
-                >Manage Topics →</a
+                >Kelola Topik →</a
             >
         </div>
 
         <div class="neo-card p-6 bg-white shadow-none border-2 border-black">
             <h3 class="text-sm font-bold uppercase opacity-60 mb-2">
-                Published Articles
+                Artikel Terbit
             </h3>
             <p class="text-5xl font-black">{publishedArticles}</p>
             <a
                 href="/dashboard/articles"
                 class="text-[10px] font-bold uppercase mt-4 block hover:underline"
-                >View Articles →</a
+                >Lihat Artikel →</a
             >
         </div>
 
@@ -49,32 +49,32 @@ const pendingDrafts = Number(draftsCount[0]?.count || 0);
             class="neo-card p-6 bg-yellow-300 shadow-none border-2 border-black"
         >
             <h3 class="text-sm font-bold uppercase opacity-60 mb-2">
-                Draft Content
+                Konten Draf
             </h3>
             <p class="text-5xl font-black">{pendingDrafts}</p>
             <a
                 href="/dashboard/articles"
                 class="text-[10px] font-bold uppercase mt-4 block hover:underline"
-                >Finish Writing →</a
+                >Selesaikan Penulisan →</a
             >
         </div>
     </div>
 
     <div class="mt-12">
         <div class="neo-card p-8 bg-zinc-50 border-dashed">
-            <h2 class="text-2xl font-bold mb-4">Quick Actions</h2>
+            <h2 class="text-2xl font-bold mb-4">Aksi Cepat</h2>
             <div class="flex gap-4">
                 <a
                     href="/dashboard/topics"
                     class="neo-btn bg-black text-white hover:bg-zinc-800"
                 >
-                    + New Topic
+                    + Topik Baru
                 </a>
                 <a
                     href="/dashboard/articles/new"
                     class="neo-btn bg-blue-600 text-white hover:bg-blue-700"
                 >
-                    + Write Article
+                    + Tulis Artikel
                 </a>
             </div>
         </div>

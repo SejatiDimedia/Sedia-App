@@ -9,11 +9,11 @@ const allPaths = await db.query.paths.findMany({
 });
 ---
 
-<BaseLayout title="Learning Paths">
+<BaseLayout title="Alur Belajar">
     <div class="max-w-6xl mx-auto px-4 py-12">
         <div class="mb-12">
             <h1 class="text-5xl font-black uppercase mb-4 tracking-tighter">
-                Guided Paths
+                Alur Terpandu
             </h1>
             <p class="text-xl font-mono text-zinc-600 max-w-2xl">
                 Kurikulum terstruktur untuk menguasai teknologi dari nol hingga
@@ -31,7 +31,7 @@ const allPaths = await db.query.paths.findMany({
                                     <Map size={32} strokeWidth={3} />
                                 </div>
                                 <span class="font-mono text-xs uppercase font-bold tracking-widest opacity-50">
-                                    Curriculum
+                                    Kurikulum
                                 </span>
                             </div>
 
@@ -41,11 +41,11 @@ const allPaths = await db.query.paths.findMany({
 
                             <p class="text-sm font-mono text-zinc-600 flex-grow mb-8 line-clamp-3">
                                 {path.description ||
-                                    "No description available for this path."}
+                                    "Tidak ada deskripsi tersedia untuk alur ini."}
                             </p>
 
                             <div class="mt-auto pt-6 border-t-4 border-black flex items-center justify-between font-black uppercase text-sm">
-                                <span>Start Learning</span>
+                                <span>Mulai Belajar</span>
                                 <span>→</span>
                             </div>
                         </div>

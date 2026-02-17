@@ -1,0 +1,38 @@
+[
+    {
+        "slug": "01-pengenalan",
+        "title": "Pengenalan Tailwind CSS v3: Framework Utility-First untuk Modern Web",
+        "excerpt": "Pelajari dasar-dasar Tailwind CSS v3, mulai dari konsep utility-first, installation, hingga setup konfigurasi.",
+        "difficulty": "beginner"
+    },
+    {
+        "slug": "02-core-concepts",
+        "title": "Core Concepts & Utilities: Dasar-Dasar Styling dengan Tailwind",
+        "excerpt": "Pelajari utility-first approach, responsive design, spacing, typography, colors, dan layout utilities di Tailwind CSS v3.",
+        "difficulty": "beginner"
+    },
+    {
+        "slug": "03-arbitrary-values",
+        "title": "Arbitrary Values & Variants: Fleksibilitas Maksimal di Tailwind v3",
+        "excerpt": "Kuasai arbitrary values untuk custom styling dan arbitrary variants untuk custom selectors tanpa perlu modify config.",
+        "difficulty": "intermediate"
+    },
+    {
+        "slug": "04-advanced-features",
+        "title": "Advanced Features: Container Queries, Color Spaces & Plugins",
+        "excerpt": "Pelajari container queries, modern color spaces (oklch, hsl), dan official plugins Tailwind CSS v3.",
+        "difficulty": "intermediate"
+    },
+    {
+        "slug": "05-build-components",
+        "title": "Build Real-World Components: Praktek Membangun UI Modern",
+        "excerpt": "Pelajari cara membangun real-world components seperti cards, navigation, forms, dan layouts dengan Tailwind CSS v3.",
+        "difficulty": "advanced"
+    },
+    {
+        "slug": "06-best-practices",
+        "title": "Best Practices & Optimization: Production-Ready Tailwind CSS",
+        "excerpt": "Pelajari best practices, performance optimization, custom plugins, dan tips untuk production-ready Tailwind CSS v3.",
+        "difficulty": "advanced"
+    }
+]

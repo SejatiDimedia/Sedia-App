@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { db, schema, eq, and, desc } from "../../lib/db";
+import { db, schema, eq, and, asc } from "../../lib/db";
 import LucideIcon from "../../components/ui/LucideIcon";
 
 const { id } = Astro.params;
@@ -18,7 +18,7 @@ if (!topic || !topic.isPublished) return Astro.redirect("/404");
 const articlesList = await db.query.articles.findMany({
     where: (articles, { eq, and }) =>
         and(eq(articles.topicId, id), eq(articles.isPublished, true)),
-    orderBy: (articles, { desc }) => [desc(articles.createdAt)],
+    orderBy: (articles, { asc }) => [asc(articles.sortOrder)],
 });
 ---
 
@@ -36,7 +36,7 @@ const articlesList = await db.query.articles.findMany({
         </div>
         <div>
             <nav class="flex text-xs font-bold uppercase gap-2 mb-4 opacity-50">
-                <a href="/topics" class="hover:underline">Topics</a>
+                <a href="/topics" class="hover:underline">Topik</a>
                 <span>/</span>
                 <span class="text-black">{topic.name}</span>
             </nav>
@@ -51,17 +51,20 @@ const articlesList = await db.query.articles.findMany({
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         {
-            articlesList.map((article) => (
+            articlesList.map((article, index) => (
                 <a href={`/articles/${article.slug}`} class="group">
-                    <div class="neo-card p-8 h-full bg-white hover:bg-zinc-50 transition-colors border-2 border-black">
+                    <div class="neo-card p-8 h-full bg-white hover:bg-zinc-50 transition-colors border-2 border-black relative">
+                        <span class="absolute -top-2 -right-2 text-7xl font-black text-blue-500 opacity-15 pointer-events-none">
+                            {String(index + 1).padStart(2, "0")}
+                        </span>
                         <div class="flex items-center gap-3 mb-4">
                             <span class="text-[10px] font-black uppercase bg-black text-white px-2 py-1">
-                                {article.difficulty || "Beginner"}
+                                {article.difficulty || "Pemula"}
                             </span>
                             <span class="text-[10px] font-bold opacity-50 uppercase tracking-widest">
                                 {new Date(
-                                    article.createdAt,
-                                ).toLocaleDateString()}
+                                    article.createdAt || new Date(),
+                                ).toLocaleDateString("id-ID")}
                             </span>
                         </div>
                         <h3 class="text-2xl font-black uppercase mb-3 leading-tight group-hover:text-blue-600 transition-colors">
@@ -69,10 +72,10 @@ const articlesList = await db.query.articles.findMany({
                         </h3>
                         <p class="text-sm opacity-60 leading-relaxed mb-6">
                             {article.excerpt ||
-                                "No description provided for this logic documents."}
+                                "Tidak ada deskripsi untuk dokumen logika ini."}
                         </p>
                         <div class="flex items-center gap-2 font-bold text-xs uppercase group-hover:gap-4 transition-all">
-                            Read Logic <span>→</span>
+                            Baca Logika <span>→</span>
                         </div>
                     </div>
                 </a>

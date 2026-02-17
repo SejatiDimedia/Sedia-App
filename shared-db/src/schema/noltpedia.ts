@@ -28,6 +28,8 @@ export const articles = noltpedia.table("articles", {
     content: text("content"), // Markdown/MDX
     topicId: text("topic_id").references(() => topics.id),
     difficulty: text("difficulty").default("beginner"), // beginner, intermediate, advanced
+    authorId: text("author_id"), // Linked to sedia_auth.user
+    sortOrder: integer("sort_order").default(0), // Manual sort order per topic
     // 80/20 Rule validation could be metadata or enforced in app
     isPublished: boolean("is_published").default(false),
     viewCount: integer("view_count").default(0),
@@ -60,7 +62,7 @@ export const paths = noltpedia.table("paths", {
 export const pathSteps = noltpedia.table("path_steps", {
     id: text("id").primaryKey(),
     pathId: text("path_id").notNull().references(() => paths.id, { onDelete: 'cascade' }),
-    articleId: text("article_id").notNull().references(() => articles.id),
+    articleId: text("article_id").notNull().references(() => articles.id, { onDelete: 'cascade' }),
     stepOrder: integer("step_order").notNull(),
 });
 
@@ -68,7 +70,7 @@ export const pathSteps = noltpedia.table("path_steps", {
 export const comments = noltpedia.table("comments", {
     id: text("id").primaryKey(), // nanoID
     content: text("content").notNull(),
-    articleId: text("article_id").notNull().references(() => articles.id),
+    articleId: text("article_id").notNull().references(() => articles.id, { onDelete: 'cascade' }),
     userId: text("user_id").notNull(), // Manually linked to sedia_auth.user
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),

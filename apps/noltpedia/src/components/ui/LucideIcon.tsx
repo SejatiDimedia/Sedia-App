@@ -7,6 +7,11 @@ interface LucideIconProps extends LucideProps {
 }
 
 const LucideIcon = ({ name, ...props }: LucideIconProps) => {
+    // Safety check for null/undefined/non-string name
+    if (!name || typeof name !== 'string') {
+        return <LucideIcons.HelpCircle {...props} />;
+    }
+
     // Convert kebab-case or snake_case to PascalCase for Lucide
     const pascalName = name
         .split(/[-_]/)

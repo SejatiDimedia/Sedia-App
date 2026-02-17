@@ -64,9 +64,15 @@ export const DELETE: APIRoute = async ({ request, params }) => {
     if (!id) return new Response("ID required", { status: 400 });
 
     try {
+        // Delete the article
+        // Cascade delete on foreign keys will handle:
+        // - pathSteps (where articleId = this article)
+        // - comments (where articleId = this article)
         await db.delete(schema.articles).where(eq(schema.articles.id, id));
+
         return new Response(JSON.stringify({ success: true }), { status: 200 });
     } catch (e: any) {
+        console.error("Error deleting article:", e);
         return new Response(JSON.stringify({ error: e.message }), { status: 500 });
     }
 };

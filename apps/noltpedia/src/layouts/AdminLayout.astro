@@ -25,7 +25,10 @@ import {
     Image as ImageIcon,
     Book,
     Map,
+    Upload,
 } from "lucide-react";
+import { ClientRouter } from "astro:transitions";
+import NeoProviders from "../components/ui/NeoProviders";
 ---
 
 <!doctype html>
@@ -35,7 +38,8 @@ import {
         <meta name="viewport" content="width=device-width" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="generator" content={Astro.generator} />
-        <title>{title} | NoltPedia Admin</title>
+        <title>{title} | Admin NoltPedia</title>
+        <ClientRouter />
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -69,50 +73,67 @@ import {
                     href="/"
                     class="text-xl font-black uppercase tracking-tighter"
                 >
-                    Nolt<span class="text-blue-600">Pedia</span>
+                    Nolt<span class="text-blue-600">Pedia</span> Admin
                     <br />
                     <span class="text-xs bg-black text-white px-1"
-                        >Curator Mode</span
+                        >Mode Kurator</span
                     >
                 </a>
             </div>
 
             <nav class="flex-1 p-4 flex flex-col gap-2">
-                <div class="mb-4">
-                    <SearchTrigger client:idle />
-                </div>
                 <a
                     href="/dashboard"
+                    transition:animate="fade"
+                    data-astro-prefetch
                     class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
                 >
-                    <BarChart3 size={18} /> Data Center
+                    <BarChart3 size={18} /> Pusat Data
                 </a>
                 <a
                     href="/dashboard/topics"
+                    transition:animate="fade"
+                    data-astro-prefetch
                     class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
                 >
-                    <Folder size={18} /> Topics
+                    <Folder size={18} /> Topik
                 </a>
                 <a
                     href="/dashboard/articles"
+                    transition:animate="fade"
+                    data-astro-prefetch
                     class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
                 >
-                    <FileText size={18} /> Articles
+                    <FileText size={18} /> Artikel
                 </a>
                 <a
                     href="/dashboard/glossary"
+                    transition:animate="fade"
+                    data-astro-prefetch
                     class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
                 >
-                    <Book size={18} /> Glossary
+                    <Book size={18} /> Glosarium
                 </a>
                 <a
                     href="/dashboard/paths"
+                    transition:animate="fade"
+                    data-astro-prefetch
                     class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
                 >
-                    <Map size={18} /> Paths
+                    <Map size={18} /> Alur Belajar
+                </a>
+                <a
+                    href="/dashboard/import"
+                    transition:animate="fade"
+                    data-astro-prefetch
+                    class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
+                >
+                    <Upload size={18} /> Impor
                 </a>
                 <a
                     href="/dashboard/media"
+                    transition:animate="fade"
+                    data-astro-prefetch
                     class="neo-btn text-left border-black hover:bg-zinc-100 text-sm normal-case flex items-center gap-2"
                 >
                     <ImageIcon size={18} /> Media (R2)
@@ -132,29 +153,96 @@ import {
                 <button
                     id="logout-btn"
                     class="neo-btn w-full bg-red-500 text-white hover:bg-red-600"
+                    data-skip-client-nav
                 >
-                    Log Out
+                    Keluar
                 </button>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 ml-64 p-8">
-            <header
-                class="mb-8 flex justify-between items-end border-b-2 border-black pb-4"
-            >
-                <h1 class="text-4xl font-black uppercase">{title}</h1>
-                <div class="font-bold font-mono text-sm opacity-50">
-                    SESSION_ID: {Astro.locals.session?.id.slice(0, 8)}
-                </div>
-            </header>
+        <NeoProviders client:load>
+            <main class="flex-1 ml-64 p-8">
+                <header
+                    class="mb-8 flex justify-between items-end border-b-2 border-black pb-4"
+                >
+                    <h1 class="text-4xl font-black uppercase">{title}</h1>
+                    <div class="font-bold font-mono text-sm opacity-50">
+                        SESSION_ID: {Astro.locals.session?.id.slice(0, 8)}
+                    </div>
+                </header>
 
-            <slot />
-        </main>
+                <slot />
+            </main>
+        </NeoProviders>
 
         <script>
             import { authClient } from "../lib/auth-client";
 
+            // Reset scroll on page navigation
+            document.addEventListener("astro:after-swap", () => {
+                window.scrollTo(0, 0);
+            });
+
+            // Re-attach event listeners after page swap
+            document.addEventListener("astro:page-load", () => {
+                // Re-attach delete button handlers
+                reattachDeleteHandlers();
+            });
+
+            function reattachDeleteHandlers() {
+                const deleteBtns = document.querySelectorAll(".delete-btn");
+                deleteBtns.forEach((btn) => {
+                    const newBtn = btn.cloneNode(true) as HTMLButtonElement;
+                    btn.parentNode?.replaceChild(newBtn, btn);
+
+                    newBtn.addEventListener("click", async (e: Event) => {
+                        const target = e.target as HTMLButtonElement;
+                        const id = target.dataset.id;
+                        if (!id) {
+                            return;
+                        }
+
+                        const { neoConfirm } =
+                            await import("../components/ui/NeoConfirm");
+                        const { toast } =
+                            await import("../components/ui/NeoToast");
+
+                        const confirmed = await neoConfirm({
+                            title: "Konfirmasi Hapus",
+                            message:
+                                "Apakah Anda yakin ingin menghapus artikel ini? Tindakan ini tidak dapat dibatalkan.",
+                            variant: "danger",
+                        });
+
+                        if (confirmed) {
+                            try {
+                                const res = await fetch(`/api/articles/${id}`, {
+                                    method: "DELETE",
+                                });
+
+                                if (res.ok) {
+                                    toast.success("Artikel berhasil dihapus");
+                                    setTimeout(
+                                        () => window.location.reload(),
+                                        1000,
+                                    );
+                                } else {
+                                    const errorData = await res.json();
+                                    toast.error(
+                                        `Gagal menghapus: ${errorData.error || "Kesalahan tidak diketahui"}`,
+                                    );
+                                }
+                            } catch (error) {
+                                console.error("Delete error:", error);
+                                toast.error(
+                                    "Gagal menghapus artikel. Silakan coba lagi.",
+                                );
+                            }
+                        }
+                    });
+                });
+            }
+            // Logout functionality
             const logoutBtn = document.getElementById("logout-btn");
             logoutBtn?.addEventListener("click", async () => {
                 await authClient.signOut({
@@ -164,6 +252,13 @@ import {
                         },
                     },
                 });
+            });
+            // Listen for global toasts from standard events
+            window.addEventListener("neo-toast", (e: any) => {
+                const { msg, type } = e.detail;
+                // This is handled inside NeoToast.tsx Provider via useEffect or direct React state
+                // But since we want to handle events even when triggered from vanilla JS:
+                // The Provider in NeoProviders already listens for this event.
             });
         </script>
     </body>
