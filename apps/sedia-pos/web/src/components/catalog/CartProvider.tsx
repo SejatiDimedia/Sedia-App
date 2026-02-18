@@ -27,6 +27,8 @@ interface CartContextType {
     totalPrice: number;
     isCartOpen: boolean;
     setIsCartOpen: (open: boolean) => void;
+    customerName: string;
+    setCustomerName: (name: string) => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -48,6 +50,7 @@ interface CartProviderProps {
 
 export function CartProvider({ children, outletSlug }: CartProviderProps) {
     const [items, setItems] = useState<CartItem[]>([]);
+    const [customerName, setCustomerName] = useState("");
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
 
@@ -59,6 +62,9 @@ export function CartProvider({ children, outletSlug }: CartProviderProps) {
                 const parsed = JSON.parse(stored);
                 if (Array.isArray(parsed)) setItems(parsed);
             }
+
+            const storedName = localStorage.getItem("sedia-customer-name");
+            if (storedName) setCustomerName(storedName);
         } catch { }
         setIsLoaded(true);
     }, [outletSlug]);
@@ -68,7 +74,11 @@ export function CartProvider({ children, outletSlug }: CartProviderProps) {
         if (isLoaded) {
             localStorage.setItem(getCartKey(outletSlug), JSON.stringify(items));
         }
-    }, [items, outletSlug, isLoaded]);
+    }, [items, outletSlug, isLoaded]); useEffect(() => {
+        if (isLoaded) {
+            localStorage.setItem("sedia-customer-name", customerName);
+        }
+    }, [customerName, isLoaded]);
 
     const addItem = useCallback((item: Omit<CartItem, "quantity"> & { quantity?: number }) => {
         const qty = item.quantity || 1;
@@ -138,6 +148,8 @@ export function CartProvider({ children, outletSlug }: CartProviderProps) {
                 totalPrice,
                 isCartOpen,
                 setIsCartOpen,
+                customerName,
+                setCustomerName,
             }}
         >
             {children}

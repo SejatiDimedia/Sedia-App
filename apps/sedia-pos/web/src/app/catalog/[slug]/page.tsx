@@ -306,6 +306,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                             outletPhone={outlet.phone}
                             outletSlug={slugify(outlet.name)}
                             outletName={outlet.name}
+                            outletId={outlet.id}
                         />
                     </>
                 )}

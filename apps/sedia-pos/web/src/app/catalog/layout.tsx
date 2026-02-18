@@ -42,7 +42,7 @@ export default function CatalogLayout({
             <footer className="bg-white border-t border-zinc-100 py-8 mt-auto">
                 <div className="max-w-7xl mx-auto px-4 text-center">
                     <p className="text-sm font-medium text-zinc-400">
-                        Powered By <span className="text-zinc-900 font-bold">Katsira</span>
+                        &copy;Katsira {new Date().getFullYear()}  Powered By <span className="text-zinc-900 font-bold">- SejatiDimedia</span>
                     </p>
                 </div>
             </footer>

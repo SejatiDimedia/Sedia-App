@@ -32,9 +32,10 @@ interface ProductGridProps {
     outletPhone?: string | null;
     outletSlug: string;
     outletName: string;
+    outletId: string;
 }
 
-export function ProductGrid({ products, primaryColor, outletPhone, outletSlug, outletName }: ProductGridProps) {
+export function ProductGrid({ products, primaryColor, outletPhone, outletSlug, outletName, outletId }: ProductGridProps) {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -79,6 +80,7 @@ export function ProductGrid({ products, primaryColor, outletPhone, outletSlug, o
                 primaryColor={primaryColor}
                 outletPhone={outletPhone}
                 outletName={outletName}
+                outletId={outletId}
             />
         </CartProvider>
     );

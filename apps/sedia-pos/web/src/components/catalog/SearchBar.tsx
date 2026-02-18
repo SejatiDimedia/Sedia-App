@@ -3,13 +3,22 @@
 import { Search, X } from "lucide-react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 
 function SearchBarContent({ placeholder }: { placeholder: string }) {
     const searchParams = useSearchParams();
     const pathname = usePathname();
     const { replace } = useRouter();
-    const [value, setValue] = useState(searchParams?.get("q") || "");
+    const [value, setValue] = useState("");
+
+    // Clear search on mount/refresh as requested by user
+    useEffect(() => {
+        if (searchParams?.get("q")) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete("q");
+            replace(`${pathname}?${params.toString()}`, { scroll: false });
+        }
+    }, []); // Run only on mount
 
     const handleSearch = useDebouncedCallback((term) => {
         const params = new URLSearchParams(searchParams ? searchParams.toString() : "");

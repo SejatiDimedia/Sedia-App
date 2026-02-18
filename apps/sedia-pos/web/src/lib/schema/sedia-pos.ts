@@ -172,6 +172,7 @@ export const transactions = sediaPos.table("transactions", {
     midtransId: text("midtrans_id").unique(),
     paymentUrl: text("payment_url"),
     notes: text("notes"),
+    customerName: text("customer_name"), // Added to support WA orders and walk-ins
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

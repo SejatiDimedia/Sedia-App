@@ -37,6 +37,7 @@ export function ProductCard({
     onClick
 }: ProductCardProps) {
     const [hasError, setHasError] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const isOutOfStock = stock <= 0;
     const isLowStock = stock > 0 && stock <= 5;
     const hasVariants = variants && variants.length > 0;
@@ -49,6 +50,8 @@ export function ProductCard({
     return (
         <div
             onClick={onClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             className={cn(
                 "group relative bg-white rounded-3xl overflow-hidden transition-all duration-500 h-full flex flex-col",
                 "shadow-[0_2px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]",
@@ -130,6 +133,19 @@ export function ProductCard({
                         >
                             <ShoppingBag className="w-4 h-4" />
                         </button>
+                    </div>
+                )}
+                {/* Preload High-Res Image on Hover for Instant Detail View */}
+                {imageUrl && isHovered && !hasError && (
+                    <div className="hidden">
+                        <Image
+                            src={imageUrl}
+                            alt=""
+                            width={512}
+                            height={512}
+                            priority={true}
+                            loading="eager"
+                        />
                     </div>
                 )}
             </div>

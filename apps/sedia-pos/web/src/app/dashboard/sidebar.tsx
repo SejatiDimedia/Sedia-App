@@ -178,7 +178,7 @@ export default function DashboardSidebar({ children, user, role = "cashier", per
 
             {/* Sidebar */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 transform bg-white shadow-xl transition-all duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+                className={`fixed inset-y-0 left-0 z-50 transform bg-white shadow-xl transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
                     } ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
             >
                 <div className="flex h-full flex-col">

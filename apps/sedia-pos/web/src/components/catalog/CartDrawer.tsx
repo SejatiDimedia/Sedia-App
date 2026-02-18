@@ -9,39 +9,80 @@ interface CartDrawerProps {
     primaryColor: string;
     outletPhone?: string | null;
     outletName: string;
+    outletId: string;
 }
 
-export function CartDrawer({ primaryColor, outletPhone, outletName }: CartDrawerProps) {
-    const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart, isCartOpen, setIsCartOpen } = useCart();
+export function CartDrawer({ primaryColor, outletPhone, outletName, outletId }: CartDrawerProps) {
+    const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart, isCartOpen, setIsCartOpen, customerName, setCustomerName } = useCart();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderSent, setOrderSent] = useState(false);
+    const [invoiceNumber, setInvoiceNumber] = useState("");
     const [hasError, setHasError] = useState<Record<string, boolean>>({});
 
-    const handleWhatsAppCheckout = () => {
+    const handleWhatsAppCheckout = async () => {
         if (!outletPhone) {
             alert("Nomor WhatsApp outlet belum diatur.");
             return;
         }
 
-        let phone = outletPhone.replace(/\D/g, "");
-        if (phone.startsWith("0")) phone = "62" + phone.substring(1);
-        if (!phone.startsWith("62")) phone = "62" + phone;
+        setIsSubmitting(true);
+        try {
+            // 1. Save to Database first
+            const checkoutRes = await fetch("/api/catalog/checkout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    outletId,
+                    customerName,
+                    subtotal: totalPrice,
+                    totalAmount: totalPrice,
+                    items: items.map(item => {
+                        const adj = item.variant ? Number(item.variant.priceAdjustment || 0) : 0;
+                        return {
+                            productId: item.productId,
+                            variantId: item.variant?.id,
+                            productName: item.name,
+                            variantName: item.variant?.name,
+                            quantity: item.quantity,
+                            price: item.price + adj,
+                            total: (item.price + adj) * item.quantity
+                        };
+                    })
+                })
+            });
 
-        const itemLines = items.map((item, idx) => {
-            const adj = item.variant ? Number(item.variant.priceAdjustment || 0) : 0;
-            const unitPrice = item.price + adj;
-            const subtotal = unitPrice * item.quantity;
-            const variantText = item.variant ? ` (${item.variant.name})` : "";
-            return `${idx + 1}. *${item.name}*${variantText}\n   ${item.quantity}x @ Rp ${unitPrice.toLocaleString("id-ID")} = Rp ${subtotal.toLocaleString("id-ID")}`;
-        });
+            const checkoutData = await checkoutRes.json();
+            const inv = checkoutData.invoiceNumber || `WA-${Date.now()}`;
+            setInvoiceNumber(inv);
 
-        const message = `Halo *${outletName}*, saya ingin pesan:\n\n${itemLines.join("\n\n")}\n\n*Total: Rp ${totalPrice.toLocaleString("id-ID")}*\n\nTerima kasih 🙏`;
+            // 2. Format & Send to WhatsApp
+            let phone = outletPhone.replace(/\D/g, "");
+            if (phone.startsWith("0")) phone = "62" + phone.substring(1);
+            if (!phone.startsWith("62")) phone = "62" + phone;
 
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        window.open(url, "_blank");
-        clearCart();
-        setIsConfirmOpen(false);
-        setOrderSent(true);
+            const itemLines = items.map((item, idx) => {
+                const adj = item.variant ? Number(item.variant.priceAdjustment || 0) : 0;
+                const unitPrice = item.price + adj;
+                const subtotal = unitPrice * item.quantity;
+                const variantText = item.variant ? ` (${item.variant.name})` : "";
+                return `${idx + 1}. *${item.name}*${variantText}\n   ${item.quantity}x @ Rp ${unitPrice.toLocaleString("id-ID")} = Rp ${subtotal.toLocaleString("id-ID")}`;
+            });
+
+            const message = `Halo, saya *${customerName}*.\n\nSaya ingin pesan dari *${outletName}*:\n\n*Invoice: ${inv}*\n\n${itemLines.join("\n\n")}\n\n*Total: Rp ${totalPrice.toLocaleString("id-ID")}*\n\nTerima kasih 🙏`;
+
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+            window.open(url, "_blank");
+
+            clearCart();
+            setIsConfirmOpen(false);
+            setOrderSent(true);
+        } catch (error) {
+            console.error("Checkout error:", error);
+            alert("Gagal memproses pesanan. Silakan coba lagi.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const getItemKey = (item: typeof items[0]) => `${item.productId}-${item.variant?.id || "base"}`;
@@ -268,16 +309,38 @@ export function CartDrawer({ primaryColor, outletPhone, outletName }: CartDrawer
                                 Anda akan diarahkan ke WhatsApp <strong>{outletPhone}</strong>
                             </p>
 
+                            <div className="mb-6 text-left">
+                                <label className="block text-xs font-bold text-zinc-500 mb-1.5 uppercase tracking-wider ml-1">Nama Pembeli</label>
+                                <input
+                                    type="text"
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    placeholder="Masukkan nama Anda..."
+                                    className="w-full h-12 px-4 rounded-xl border border-zinc-200 focus:outline-none focus:ring-2 transition-all"
+                                    style={{ borderColor: customerName ? `${primaryColor}40` : undefined, boxShadow: customerName ? `0 0 0 2px ${primaryColor}10` : undefined }}
+                                    autoFocus
+                                />
+                            </div>
+
                             <div className="space-y-3">
                                 <button
                                     onClick={handleWhatsAppCheckout}
-                                    className="w-full py-3.5 rounded-xl bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 active:scale-95 transition-all"
+                                    disabled={!customerName.trim() || isSubmitting}
+                                    className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Lanjut ke WhatsApp
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                            <span>Memproses...</span>
+                                        </>
+                                    ) : (
+                                        "Lanjut ke WhatsApp"
+                                    )}
                                 </button>
                                 <button
                                     onClick={() => setIsConfirmOpen(false)}
-                                    className="w-full py-3.5 rounded-xl bg-zinc-100 text-zinc-600 font-bold text-sm hover:bg-zinc-200 active:scale-95 transition-all"
+                                    disabled={isSubmitting}
+                                    className="w-full py-3.5 rounded-xl bg-zinc-100 text-zinc-600 font-bold text-sm hover:bg-zinc-200 active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     Batal
                                 </button>
@@ -316,7 +379,7 @@ export function CartDrawer({ primaryColor, outletPhone, outletName }: CartDrawer
 
                             <h3 className="text-xl font-bold text-zinc-900 mb-2">Pesanan Terkirim!</h3>
                             <p className="text-zinc-500 text-sm leading-relaxed mb-1">
-                                Pesanan Anda telah dikirim ke <strong>{outletName}</strong> melalui WhatsApp.
+                                Pesanan Anda (*{invoiceNumber}*) telah dikirim ke <strong>{outletName}</strong> melalui WhatsApp.
                             </p>
                             <p className="text-zinc-400 text-xs leading-relaxed mb-6">
                                 Mohon menunggu konfirmasi dari penjual mengenai ketersediaan dan detail pengiriman.
