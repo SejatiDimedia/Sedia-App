@@ -347,79 +347,16 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
 
             {/* Product Grid */}
             <div className="max-w-7xl mx-auto px-4 py-8">
-                {/* Produk Terlaris Section */}
-                {featuredProducts.length > 0 && (
-                    <div className="mb-10">
-                        <div className="flex items-center gap-2 mb-5">
-                            <div
-                                className="flex items-center justify-center w-8 h-8 rounded-xl"
-                                style={{ backgroundColor: `${primaryColor}15` }}
-                            >
-                                <Star className="w-4 h-4" style={{ color: primaryColor, fill: primaryColor }} />
-                            </div>
-                            <h2 className="text-lg font-bold text-zinc-900">Produk Terlaris</h2>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5">
-                            {featuredProducts.map((product) => (
-                                <ProductCard
-                                    key={product.id}
-                                    id={product.id}
-                                    name={product.name}
-                                    price={Number(product.price)}
-                                    stock={product.stock}
-                                    imageUrl={product.imageUrl}
-                                    category={product.categoryName || undefined}
-                                    isActive={product.isActive ?? true}
-                                    primaryColor={primaryColor}
-                                    variants={product.variants}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {products.length === 0 ? (
-                    <div className="text-center py-32 bg-white rounded-[3rem] border border-zinc-100 shadow-sm px-6">
-                        <div
-                            className="w-24 h-24 rounded-[2rem] flex items-center justify-center mx-auto mb-8 relative"
-                            style={{
-                                background: `linear-gradient(135deg, ${primaryColor}08, ${primaryColor}15)`,
-                                border: `1px solid ${primaryColor}10`
-                            }}
-                        >
-                            <Package className="w-12 h-12 relative z-10" style={{ color: primaryColor }} />
-                            <div className="absolute inset-0 bg-white rounded-[2rem] scale-75 blur-2xl opacity-50"></div>
-                        </div>
-                        <h3 className="text-2xl font-brand font-black text-zinc-900 mb-3 tracking-tight">Produk tidak ditemukan</h3>
-                        <p className="text-zinc-500 max-w-sm mx-auto mb-10 text-lg leading-relaxed font-medium">
-                            Kami tidak dapat menemukan produk <span className="text-zinc-900 italic">&quot;{query}&quot;</span>. Coba kata kunci lain atau jelajahi kategori.
-                        </p>
-                        <Link
-                            href={`/catalog/${slugify(outlet.name)}`}
-                            className="inline-flex h-14 items-center justify-center rounded-2xl px-10 text-base font-bold text-white transition-all shadow-xl hover:shadow-primary-500/20 active:scale-95"
-                            style={{ backgroundColor: primaryColor }}
-                        >
-                            Lihat Semua Menu
-                        </Link>
-                    </div>
-                ) : (
-                    <>
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-bold text-zinc-900">
-                                {query ? `Hasil pencarian "${query}"` : 'Produk Tersedia'}
-                            </h2>
-                            <span className="text-sm text-zinc-500">{products.length} item</span>
-                        </div>
-                        <ProductGrid
-                            products={products}
-                            primaryColor={primaryColor}
-                            outletPhone={outlet.phone}
-                            outletSlug={slugify(outlet.name)}
-                            outletName={outlet.name}
-                            outletId={outlet.id}
-                        />
-                    </>
-                )}
+                <ProductGrid
+                    products={products}
+                    featuredProducts={featuredProducts}
+                    searchQuery={query}
+                    primaryColor={primaryColor}
+                    outletPhone={outlet.phone}
+                    outletSlug={slugify(outlet.name)}
+                    outletName={outlet.name}
+                    outletId={outlet.id}
+                />
             </div>
         </div>
     );

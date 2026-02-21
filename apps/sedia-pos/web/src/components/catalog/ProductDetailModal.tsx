@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useCart } from "./CartProvider";
+import { trackCatalogEvent } from "@/lib/catalog-tracker";
 
 interface Variant {
     id: string;
@@ -38,6 +39,13 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
     const cart = useCart();
     const [quantity, setQuantity] = useState(1);
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+
+    // Track product view when modal opens
+    useEffect(() => {
+        if (isOpen && product && outletSlug) {
+            trackCatalogEvent(outletSlug, "product_view", product.id);
+        }
+    }, [isOpen, product?.id, outletSlug]);
     const [hasError, setHasError] = useState(false);
     const [justAdded, setJustAdded] = useState(false);
     const [justShared, setJustShared] = useState(false);
@@ -101,6 +109,11 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
             } : null,
             quantity,
         });
+
+        // Track add-to-cart event
+        if (outletSlug) {
+            trackCatalogEvent(outletSlug, "add_to_cart", product.id);
+        }
 
         setJustAdded(true);
         setTimeout(() => {

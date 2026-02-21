@@ -518,6 +518,17 @@ export const visitorLogs = sediaPos.table("visitor_logs", {
     uniqueDailyVisitIdx: uniqueIndex("visitor_logs_unique_daily_visit_idx").on(table.outletId, table.visitorId, table.visitDate),
 }));
 
+// Catalog interaction events for conversion tracking
+export const catalogEvents = sediaPos.table("catalog_events", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id").notNull().references(() => outlets.id, { onDelete: "cascade" }),
+    visitorId: text("visitor_id").notNull(),
+    eventType: text("event_type").notNull(), // 'product_view', 'wa_click', 'add_to_cart'
+    productId: text("product_id"), // nullable, only for product-specific events
+    eventDate: text("event_date").notNull(), // YYYY-MM-DD
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const stockOpnameItemsRelations = relations(stockOpnameItems, ({ one }) => ({
     opname: one(stockOpnames, {
         fields: [stockOpnameItems.opnameId],

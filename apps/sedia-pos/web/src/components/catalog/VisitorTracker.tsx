@@ -23,6 +23,9 @@ export function VisitorTracker({ slug }: { slug: string }) {
         if (!slug) return;
 
         const trackVisit = async () => {
+            // Add slight delay to ensure page is stable
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             try {
                 // 1. Get or Create Visitor ID (persists across sessions)
                 let visitorId = localStorage.getItem("sedia_pos_visitor_id");
@@ -30,6 +33,8 @@ export function VisitorTracker({ slug }: { slug: string }) {
                     visitorId = generateVisitorId();
                     localStorage.setItem("sedia_pos_visitor_id", visitorId);
                 }
+
+                console.log(`[Visitor Tracker] Pinging visit for slug: ${slug}`);
 
                 // 2. Ping API to record visit
                 const res = await fetch(`/api/catalog/${encodeURIComponent(slug)}/visit`, {
@@ -40,10 +45,13 @@ export function VisitorTracker({ slug }: { slug: string }) {
                 });
 
                 if (!res.ok) {
-                    console.warn("[Visitor Tracker] API responded with:", res.status);
+                    const errorData = await res.json().catch(() => ({}));
+                    console.warn("[Visitor Tracker] API Error:", res.status, errorData);
+                } else {
+                    console.log("[Visitor Tracker] Visit recorded successfully");
                 }
             } catch (error) {
-                console.warn("[Visitor Tracker] Background analytics error:", error);
+                console.warn("[Visitor Tracker] Connection error:", error);
             }
         };
 

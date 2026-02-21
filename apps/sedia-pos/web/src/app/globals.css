@@ -40,8 +40,13 @@
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @theme {
@@ -124,6 +129,28 @@ body {
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  .slim-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .slim-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .slim-scrollbar::-webkit-scrollbar-thumb {
+    background: #e4e4e7;
+    border-radius: 10px;
+  }
+
+  .slim-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #d4d4d8;
+  }
+
+  .slim-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #e4e4e7 transparent;
   }
 }
 

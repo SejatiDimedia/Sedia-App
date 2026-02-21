@@ -1,0 +1,8 @@
+Checking 178 products across all outlets:
+- [Lariskan Mart] [NORMAL] Kopi Susu Gula Aren: Stock=50, Variants=2
+  * Large: Stock=3
+  * Medium: Stock=16
+- [Lariskan Mart] [NORMAL] Matcha Latte: Stock=50, Variants=1
+  * Large: Stock=0
+- [Lariskan Mart] [NORMAL] Americano: Stock=50, Variants=1
+  * Regular: Stock=10

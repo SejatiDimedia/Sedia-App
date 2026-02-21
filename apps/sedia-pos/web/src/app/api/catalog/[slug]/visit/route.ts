@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, posSchema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { slugify } from "@/utils/slug";
 
 export async function POST(
@@ -9,7 +9,8 @@ export async function POST(
 ) {
     try {
         const { slug } = await props.params;
-        const { visitorId } = await req.json();
+        const body = await req.json().catch(() => ({}));
+        const { visitorId } = body;
 
         if (!visitorId) {
             return NextResponse.json({ error: "visitorId is required" }, { status: 400 });
@@ -17,27 +18,35 @@ export async function POST(
 
         const decodedSlug = decodeURIComponent(slug);
 
-        // 1. Resolve Outlet (Logic matches catalog page for consistency)
-        let outlet = await db.query.outlets.findFirst({
-            where: eq(posSchema.outlets.id, decodedSlug)
-        });
+        // 1. Resolve Outlet using Core Drizzle API (more robust)
+        const outletResults = await db
+            .select()
+            .from(posSchema.outlets)
+            .where(eq(posSchema.outlets.id, decodedSlug))
+            .limit(1);
 
-        if (!outlet) {
+        let outletData = outletResults[0];
+
+        if (!outletData) {
+            // Fallback: search by slugified name
             const allOutlets = await db.select().from(posSchema.outlets);
-            outlet = allOutlets.find(o => slugify(o.name) === decodedSlug);
+            outletData = allOutlets.find(o => slugify(o.name) === decodedSlug) as any;
         }
 
-        if (!outlet) {
+        if (!outletData) {
             return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
         }
 
-        // 2. Extract geolocation from Vercel headers
-        const city = req.headers.get("x-vercel-ip-city") || null;
-        const region = req.headers.get("x-vercel-ip-country-region") || null;
-        const country = req.headers.get("x-vercel-ip-country") || null;
+        const outlet = outletData;
 
-        // 3. Record Visit (Daily Unique)
-        const visitDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+        // 2. Extract geolocation from Vercel headers
+        const city = req.headers.get("x-vercel-ip-city");
+        const region = req.headers.get("x-vercel-ip-country-region");
+        const country = req.headers.get("x-vercel-ip-country");
+
+        // 3. Record Visit (Daily Unique) - Use Jakarta Time
+        const visitDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
 
         try {
             await db.insert(posSchema.visitorLogs).values({
@@ -50,11 +59,12 @@ export async function POST(
             }).onConflictDoNothing();
         } catch (dbError) {
             console.error("[Visitor API] DB Insert error:", dbError);
+            // Don't fail the whole request if insert fails (might be duplicate we missed)
         }
 
         return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("[Visitor API] Error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    } catch (error: any) {
+        console.error("[Visitor API] CRITICAL Error:", error);
+        return NextResponse.json({ error: "Internal server error", message: error?.message }, { status: 500 });
     }
 }

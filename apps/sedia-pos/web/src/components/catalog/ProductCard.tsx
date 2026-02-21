@@ -56,7 +56,7 @@ export function ProductCard({
                 "group relative bg-white rounded-3xl overflow-hidden transition-all duration-500 h-full flex flex-col",
                 "shadow-[0_2px_20px_-4px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]",
                 "hover:-translate-y-2 cursor-pointer",
-                isOutOfStock && "opacity-60 pointer-events-none"
+                isOutOfStock && "opacity-60"
             )}>
             {/* Image Container */}
             <div className="relative w-full aspect-square md:aspect-[3/4] overflow-hidden bg-gradient-to-br from-zinc-100 via-zinc-50 to-white">

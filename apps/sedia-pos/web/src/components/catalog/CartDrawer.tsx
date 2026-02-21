@@ -4,15 +4,17 @@ import { useCart } from "./CartProvider";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, Trash2, ShoppingBag, MessageCircle, Package, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
+import { trackCatalogEvent } from "@/lib/catalog-tracker";
 
 interface CartDrawerProps {
     primaryColor: string;
     outletPhone?: string | null;
     outletName: string;
     outletId: string;
+    outletSlug?: string;
 }
 
-export function CartDrawer({ primaryColor, outletPhone, outletName, outletId }: CartDrawerProps) {
+export function CartDrawer({ primaryColor, outletPhone, outletName, outletId, outletSlug }: CartDrawerProps) {
     const { items, totalItems, totalPrice, updateQuantity, removeItem, clearCart, isCartOpen, setIsCartOpen, customerName, setCustomerName } = useCart();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,6 +29,11 @@ export function CartDrawer({ primaryColor, outletPhone, outletName, outletId }: 
         }
 
         setIsSubmitting(true);
+
+        // Track WhatsApp click
+        if (outletSlug) {
+            trackCatalogEvent(outletSlug, "wa_click");
+        }
         try {
             // 1. Save to Database first
             const checkoutRes = await fetch("/api/catalog/checkout", {

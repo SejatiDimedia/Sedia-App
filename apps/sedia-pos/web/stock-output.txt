@@ -1,0 +1,144 @@
+Checking 143 products for outlet ececb24d-30a9-45c3-ac01-83503be5df3f:
+- [NORMAL] Beef Bulgogi: Stock=20, Variants=0
+- [NORMAL] Ayam Teriyaki: Stock=20, Variants=0
+- [NORMAL] Oseng Daging Pedas Manis: Stock=20, Variants=0
+- [NORMAL] Daging Bistik: Stock=20, Variants=0
+- [NORMAL] Ikan Asin Cabe Ijo Banjar: Stock=20, Variants=0
+- [NORMAL] Ayam Goreng Tulang Lunak: Stock=20, Variants=0
+- [NORMAL] Chicken Popcorn: Stock=20, Variants=0
+- [NORMAL] Beef Teriyaki: Stock=19, Variants=0
+- [FEATURED] Daging Rendang: Stock=5, Variants=0
+- [NORMAL] Ayam Saos Mentega: Stock=20, Variants=0
+- [NORMAL] Saus Bulgogi: Stock=20, Variants=0
+- [NORMAL] Chicken Katsu: Stock=19, Variants=0
+- [NORMAL] Chicken Bulgogi: Stock=20, Variants=0
+- [NORMAL] Daging Lada Hitam: Stock=19, Variants=0
+- [NORMAL] Kacang Mede Rasa Pedas Daun Jeruk Pack 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Maltitos 300 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Chic choc 400 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Oseng Cakalang Asap: Stock=20, Variants=0
+- [NORMAL] Ayam Marinasi Terasi Daun Jeruk: Stock=20, Variants=0
+- [NORMAL] Ayam Marinasi Bumbu Rempah: Stock=20, Variants=0
+- [NORMAL] Ayam Bacem Ketumbar: Stock=20, Variants=0
+- [NORMAL] Bumbu Marinasi Bawang Putih: Stock=20, Variants=0
+- [NORMAL] Chicken Strip BBQ Mayo: Stock=20, Variants=0
+- [NORMAL] Paket Udang Krispy: Stock=20, Variants=0
+- [NORMAL] Ebi Furai: Stock=20, Variants=0
+- [NORMAL] Bumbu Nasi Goreng Ebi Spesial: Stock=20, Variants=0
+- [NORMAL] Bumbu Nasi Goreng Oriental: Stock=20, Variants=0
+- [NORMAL] Bumbu Dasar Bawang Putih: Stock=20, Variants=0
+- [NORMAL] Bumbu Dasar Bawang Merah: Stock=20, Variants=0
+- [NORMAL] Bumbu Rendang Langsung Enak: Stock=20, Variants=0
+- [NORMAL] Bumbu Daging Kare Pengantin: Stock=20, Variants=0
+- [NORMAL] Ayam Kipas: Stock=20, Variants=0
+- [NORMAL] Ayam Bakar Tulang Lunak: Stock=20, Variants=0
+- [NORMAL] Ayam Kremes: Stock=20, Variants=0
+- [NORMAL] Bumbu Marinasi Terasi Daun Jeruk: Stock=20, Variants=0
+- [NORMAL] Bumbu Marinasi Spicy Cajun: Stock=20, Variants=0
+- [NORMAL] Bumbu Bakaran Original: Stock=20, Variants=0
+- [NORMAL] Bumbu Soto Banjar: Stock=20, Variants=0
+- [NORMAL] Saus Lada Hitam: Stock=20, Variants=0
+- [NORMAL] Bumbu Marinasi Rempah: Stock=20, Variants=0
+- [NORMAL] Saus Mentega: Stock=20, Variants=0
+- [NORMAL] Saus Oriental: Stock=20, Variants=0
+- [NORMAL] Kurma Sukari 1000 gram: Stock=7, Variants=0
+- [NORMAL] Kurma Anggur Barari: Stock=7, Variants=0
+- [NORMAL] Treasure Almond 32 pcs (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Treasure Cookies 32 pcs (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Nugget Stik Ayam Sayur: Stock=20, Variants=0
+- [NORMAL] Nugget Bubble Crumb: Stock=20, Variants=0
+- [NORMAL] Bumbu Bakaran Pedas: Stock=20, Variants=0
+- [NORMAL] Cha Cha Nut 390 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Treasure Milk 32 pcs (Pre-Order): Stock=10, Variants=0
+- [FEATURED] Kurma Sukari Ember 850 gram: Stock=4, Variants=0
+- [NORMAL] Delfi Mede 600 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Almond 600 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat Coin 230 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Sekat 4 Mix 4 Rasa 470 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Sambal Paru: Stock=20, Variants=0
+- [NORMAL] Sambal Cakalang: Stock=20, Variants=0
+- [NORMAL] Sambal Baby Cumi: Stock=20, Variants=0
+- [NORMAL] Bumbu Pedas Nusantara: Stock=20, Variants=0
+- [NORMAL] Saus Korean Spicy: Stock=20, Variants=0
+- [NORMAL] Kremesan Ayam: Stock=20, Variants=0
+- [NORMAL] Bola Ayam Udang: Stock=0, Variants=0
+- [NORMAL] Hekkeng Ayam Udang: Stock=20, Variants=0
+- [NORMAL] Rolade Ayam Wortel: Stock=20, Variants=0
+- [NORMAL] Gimmari: Stock=20, Variants=0
+- [NORMAL] Ayam Marinasi Bawang Putih: Stock=20, Variants=0
+- [NORMAL] Beef Spicy BBQ: Stock=20, Variants=0
+- [NORMAL] Buldak Spicy BBQ: Stock=20, Variants=0
+- [NORMAL] Ayam Marinasi Spicy Cajun: Stock=20, Variants=0
+- [NORMAL] Ayam Bakar Original: Stock=20, Variants=0
+- [NORMAL] Kacang Mede Tray 5 Sekat 5 Mix Rasa 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Sekat 3 Mix 3 Rasa 525 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Madu Pack 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Tray 5 Sekat 5 Mix Rasa 900 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Pedas Pack 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Pedas Pack 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Pedas Pack 250 gram (Pre-Order): Stock=10, Variants=0
+- [FEATURED] Ayam Shihlin: Stock=5, Variants=0
+- [NORMAL] Maltitos 190 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Wijen Pack 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Wijen Pack 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Wijen Pack 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Crispy Pack 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Crispy Pack 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Crispy Pack 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Madu Pack 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Chic Choc 255 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Almond Panggang Pack 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Almond Panggang Pack 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Almond Panggang Pack 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Varian Rasa Madu Pack 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Original Pack 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Original Pack 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Original Pack 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Pedas Daun Jeruk Pack 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Kacang Mede Rasa Pedas Daun Jeruk Pack 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Almond 355 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Mede 355 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Silverqueen Bites Almond 355 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Silverqueen Bites Mede 355 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Cha cha Milk 430 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Treasure Almond 63 pcs (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Treasure Milk 63 pcs (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Treasure Cookies 63 pcs (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Silverqueen Bites Almond 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Silverqueen Bites Almond 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Silverqueen Bites Almond 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Almond 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Almond 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Almond 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Mede 250 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Mede 1000 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Chic Choc 750 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Maltitos 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat 4 Sekat Tipe A (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat 4 Sekat Tipe B (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat 4 Sekat Tipe C (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat 4 Sekat Tipe D (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat 4 Sekat Tipe E (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat 4 Sekat Tipe F (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Tray Coklat Delfi Tipe A 1.080 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Delfi Mede 500 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Coklat Koin 400 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Tray Coklat Delfi Tipe C 1.070 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Tray Coklat Delfi Tipe B 1.100 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Tray Coklat Delfi Tipe D 900 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Paket Coklat 3 Sekat Tipe B 700 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Paket Coklat 3 Sekat Tipe A 700 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Paket Coklat 3 Sekat Tipe C 650 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Paket Coklat 3 Sekat Tipe E 600 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Paket Coklat 3 Sekat Tipe D 600 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Paket Coklat 3 Sekat Tipe F 700 gram (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Ekado (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Samosa (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Sumpia Original (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Sumpia Mini (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Cendol Keju (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Walens Soes (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Soes Keju Weston (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples Soes Keju Duo (Pre-Order): Stock=10, Variants=0
+- [NORMAL] Snack Toples GG Soes Coklat (Pre-Order): Stock=10, Variants=0
+- [FEATURED] Ikan Asin Asam Manis: Stock=5, Variants=0
