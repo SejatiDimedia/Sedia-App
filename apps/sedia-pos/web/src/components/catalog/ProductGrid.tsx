@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProductDetailModal } from "@/components/catalog/ProductDetailModal";
 import { CartProvider } from "@/components/catalog/CartProvider";
@@ -38,6 +39,19 @@ interface ProductGridProps {
 export function ProductGrid({ products, primaryColor, outletPhone, outletSlug, outletName, outletId }: ProductGridProps) {
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const searchParams = useSearchParams();
+
+    // Auto-open product modal from deep link (?product=<id>)
+    useEffect(() => {
+        const productId = searchParams?.get("product");
+        if (productId && products.length > 0) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                setSelectedProduct(product);
+                setIsModalOpen(true);
+            }
+        }
+    }, [searchParams, products]);
 
     const handleProductClick = (product: Product) => {
         setSelectedProduct(product);
@@ -46,6 +60,12 @@ export function ProductGrid({ products, primaryColor, outletPhone, outletSlug, o
 
     const handleCloseModal = () => {
         setIsModalOpen(false);
+        // Clean up deep link param from URL without reload
+        if (searchParams?.get("product")) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete("product");
+            window.history.replaceState({}, "", url.toString());
+        }
     };
 
     return (
@@ -74,6 +94,7 @@ export function ProductGrid({ products, primaryColor, outletPhone, outletSlug, o
                 onClose={handleCloseModal}
                 primaryColor={primaryColor}
                 outletPhone={outletPhone}
+                outletSlug={outletSlug}
             />
 
             <CartDrawer

@@ -47,7 +47,7 @@ export function extractR2Key(urlOrPath: string | null): string | null {
 }
 
 /**
- * Resolves a path or old R2 URL to the current public R2 domain.
+ * Resolves a path or old R2 URL to the current public R2 domain or internal proxy.
  * If the input is an external URL (not R2), it returns it as is.
  */
 export function resolveR2Url(pathOrUrl: string | null): string | null {
@@ -62,14 +62,10 @@ export function resolveR2Url(pathOrUrl: string | null): string | null {
     const key = extractR2Key(pathOrUrl);
     if (!key || key.startsWith("http")) return pathOrUrl;
 
-    // 3. Construct URL using CURRENT PUBLIC_URL from env
-    if (PUBLIC_URL) {
-        const baseUrl = PUBLIC_URL.endsWith("/") ? PUBLIC_URL.slice(0, -1) : PUBLIC_URL;
-        return `${baseUrl}/${key}`;
-    }
-
-    // 4. No public URL set, return the key or original
-    return pathOrUrl;
+    // 3. Prefer internal proxy for better Next.js Image Optimization compatibility
+    // Using absolute URL if defined, otherwise relative path
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+    return `${baseUrl}/api/storage/${key}`;
 }
 
 /**

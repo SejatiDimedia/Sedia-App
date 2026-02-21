@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, ShoppingBag, Minus, Plus, Package, Tag, ShoppingCart, Check } from "lucide-react";
+import { X, ShoppingBag, Minus, Plus, Package, Tag, ShoppingCart, Check, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -31,14 +31,16 @@ interface ProductDetailModalProps {
     onClose: () => void;
     primaryColor: string;
     outletPhone?: string | null;
+    outletSlug?: string;
 }
 
-export function ProductDetailModal({ product, isOpen, onClose, primaryColor, outletPhone }: ProductDetailModalProps) {
+export function ProductDetailModal({ product, isOpen, onClose, primaryColor, outletPhone, outletSlug }: ProductDetailModalProps) {
     const cart = useCart();
     const [quantity, setQuantity] = useState(1);
     const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
     const [justAdded, setJustAdded] = useState(false);
+    const [justShared, setJustShared] = useState(false);
 
     // Reset state when product changes
     useEffect(() => {
@@ -107,6 +109,58 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
         }, 600);
     };
 
+    const handleShare = async () => {
+        if (!product) return;
+        const baseUrl = window.location.origin;
+        const productUrl = `${baseUrl}/catalog/${outletSlug || ""}?product=${product.id}`;
+        const shareData = {
+            title: product.name,
+            text: `Cek produk ini: ${product.name} — Rp ${Number(product.price).toLocaleString("id-ID")}`,
+            url: productUrl,
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (e) {
+                if ((e as Error).name !== "AbortError") {
+                    copyToClipboard(productUrl);
+                }
+            }
+        } else {
+            copyToClipboard(productUrl);
+        }
+    };
+
+    const copyToClipboard = (text: string) => {
+        const onSuccess = () => {
+            setJustShared(true);
+            setTimeout(() => setJustShared(false), 2000);
+        };
+
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+                // Fallback for insecure contexts
+                fallbackCopy(text);
+                onSuccess();
+            });
+        } else {
+            fallbackCopy(text);
+            onSuccess();
+        }
+    };
+
+    const fallbackCopy = (text: string) => {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+    };
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -128,13 +182,22 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="relative w-full max-w-lg bg-white rounded-t-[2rem] sm:rounded-[2rem] overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
                     >
-                        {/* Close Button */}
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 right-4 z-20 p-2 bg-white/50 backdrop-blur-md rounded-full text-zinc-900 shadow-sm hover:bg-white transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
+                        {/* Action Buttons (Share + Close) */}
+                        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+                            <button
+                                onClick={handleShare}
+                                className="p-2 bg-white/50 backdrop-blur-md rounded-full text-zinc-900 shadow-sm hover:bg-white transition-colors"
+                                title="Bagikan Produk"
+                            >
+                                {justShared ? <Check className="w-5 h-5 text-emerald-600" /> : <Share2 className="w-5 h-5" />}
+                            </button>
+                            <button
+                                onClick={onClose}
+                                className="p-2 bg-white/50 backdrop-blur-md rounded-full text-zinc-900 shadow-sm hover:bg-white transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
 
                         <div className="overflow-y-auto flex-1 scrollbar-hide">
                             {/* Image Header */}
@@ -144,7 +207,6 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
                                         src={product.imageUrl}
                                         alt={product.name}
                                         fill
-                                        unoptimized
                                         priority={true}
                                         sizes="(max-width: 768px) 100vw, 512px"
                                         onError={() => setHasError(true)}

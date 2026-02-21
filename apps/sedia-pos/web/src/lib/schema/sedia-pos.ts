@@ -68,6 +68,7 @@ export const products = sediaPos.table("products", {
     trackStock: boolean("track_stock").default(true),
     imageUrl: text("image_url"),
     isActive: boolean("is_active").default(true),
+    isFeatured: boolean("is_featured").default(false),
     isDeleted: boolean("is_deleted").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),

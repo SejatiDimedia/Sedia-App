@@ -25,6 +25,7 @@ import {
     ToggleRight,
     ChevronDown,
     Share2,
+    Star,
 } from "lucide-react";
 import { slugify } from "@/utils/slug";
 import {
@@ -34,6 +35,7 @@ import {
     importProducts,
     bulkDeleteProducts,
     bulkUpdateProductStatus,
+    toggleFeatured,
 } from "./actions";
 import { useOutlet } from "@/providers/outlet-provider";
 import { toast } from "react-hot-toast";
@@ -86,6 +88,7 @@ export default function ProductsPage() {
     const [isImporting, setIsImporting] = useState(false);
     const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
     const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+    const [sortByStock, setSortByStock] = useState<'asc' | 'desc' | null>(null);
     const [confirmState, setConfirmState] = useState<{
         isOpen: boolean;
         title: string;
@@ -228,6 +231,22 @@ export default function ProductsPage() {
         }
     };
 
+    const handleToggleFeatured = async (id: string, currentFeatured: boolean) => {
+        try {
+            const res = await toggleFeatured(id, !currentFeatured);
+            if (res.success) {
+                toast.success(!currentFeatured ? '⭐ Ditambahkan ke Pilihan Owner' : 'Dihapus dari Pilihan Owner');
+                setProducts(prev => prev.map(p =>
+                    p.id === id ? { ...p, isFeatured: !currentFeatured } : p
+                ));
+            } else {
+                toast.error("Gagal mengubah status");
+            }
+        } catch (error) {
+            toast.error("Terjadi kesalahan");
+        }
+    };
+
     const filteredProducts = products.filter((product) => {
         const matchesSearch =
             product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -237,6 +256,10 @@ export default function ProductsPage() {
 
         return matchesSearch && matchesCategory;
     });
+
+    const sortedProducts = sortByStock
+        ? [...filteredProducts].sort((a, b) => sortByStock === 'asc' ? a.stock - b.stock : b.stock - a.stock)
+        : filteredProducts;
 
     const handleDownloadTemplate = async () => {
         try {
@@ -409,7 +432,7 @@ export default function ProductsPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="mx-auto w-full max-w-[1600px] p-4 lg:p-6 space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -441,15 +464,17 @@ export default function ProductsPage() {
                             </Link>
                         </>
                     )}
-                    <button
-                        onClick={handleGenerate}
-                        disabled={isGenerating || !activeOutletId}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50 hover:border-zinc-300 disabled:opacity-50"
-                        title="Generate Data Demo"
-                    >
-                        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
-                        <span className="hidden lg:inline">Generate Demo</span>
-                    </button>
+                    {products.length === 0 && (
+                        <button
+                            onClick={handleGenerate}
+                            disabled={isGenerating || !activeOutletId}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50 hover:border-zinc-300 disabled:opacity-50"
+                            title="Generate Data Demo"
+                        >
+                            {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+                            <span className="hidden lg:inline">Generate Demo</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => setIsImportModalOpen(true)}
                         className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 transition-all hover:bg-zinc-50 hover:border-zinc-300"
@@ -502,197 +527,202 @@ export default function ProductsPage() {
                             className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 py-3 pl-11 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                         />
                     </div>
-                    <p className="text-sm text-zinc-500">
-                        <span className="font-semibold text-zinc-900">{filteredProducts.length}</span> produk ditemukan
-                    </p>
-                </div>
-
-                {/* Category Pills */}
-                <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
-                    <button
-                        onClick={() => setSelectedCategoryId("all")}
-                        className={`flex h-9 items-center justify-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-all ${selectedCategoryId === "all"
-                            ? "bg-zinc-900 text-white shadow-sm"
-                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                            }`}
-                    >
-                        Semua
-                    </button>
-                    {categories.map((category) => (
-                        <button
-                            key={category.id}
-                            onClick={() => setSelectedCategoryId(category.id)}
-                            className={`flex h-9 items-center justify-center whitespace-nowrap rounded-full px-4 text-sm font-medium transition-all ${selectedCategoryId === category.id
-                                ? "bg-zinc-900 text-white shadow-sm"
-                                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                                }`}
+                    <div className="relative w-full sm:w-64">
+                        <select
+                            value={selectedCategoryId}
+                            onChange={(e) => setSelectedCategoryId(e.target.value)}
+                            className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50/50 py-3 pl-4 pr-10 text-sm text-zinc-900 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                         >
-                            {category.name}
-                        </button>
-                    ))}
+                            <option value="all">Semua Kategori</option>
+                            {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 pointer-events-none text-zinc-400" />
+                    </div>
                 </div>
+                <p className="text-xs text-zinc-500">
+                    Menampilkan <span className="font-semibold text-zinc-900">{filteredProducts.length}</span> produk
+                </p>
             </div>
 
-            {/* Products Table */}
+            {/* Products Table Wrapper */}
             <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
-                <table className="w-full">
-                    <thead>
-                        <tr className="border-b border-zinc-100 bg-zinc-50/50">
-                            <th className="w-12 px-4 py-4 text-left">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedProductIds.length === filteredProducts.length && filteredProducts.length > 0}
-                                    onChange={handleSelectAll}
-                                    className="h-4 w-4 rounded border-zinc-300 text-primary-600 focus:ring-primary-500"
-                                />
-                            </th>
-                            <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                                Produk
-                            </th>
-                            <th className="hidden px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 md:table-cell">
-                                Kategori
-                            </th>
-                            <th className="hidden px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 lg:table-cell">
-                                SKU
-                            </th>
-                            <th className="px-4 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                                Harga
-                            </th>
-                            <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                                Stok
-                            </th>
-                            <th className="hidden px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500 sm:table-cell">
-                                Status
-                            </th>
-                            <th className="w-20 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                                Aksi
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan={8} className="px-4 py-16 text-center">
-                                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-500" />
-                                    <p className="mt-3 text-sm text-zinc-500">Memuat produk...</p>
-                                </td>
+                <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-200 scrollbar-track-transparent">
+                    <table className="w-full min-w-[1100px] border-collapse">
+                        <thead>
+                            <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                                <th className="sticky left-0 z-30 bg-zinc-50/50 w-10 px-4 py-4 text-left">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedProductIds.length === filteredProducts.length && filteredProducts.length > 0}
+                                        onChange={handleSelectAll}
+                                        className="h-4 w-4 rounded border-zinc-300 text-primary-600 focus:ring-primary-500"
+                                    />
+                                </th>
+                                <th className="sticky left-10 z-30 bg-zinc-50/50 px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap min-w-[240px]">
+                                    Produk
+                                </th>
+                                <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap">
+                                    Kategori
+                                </th>
+                                <th className="px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap">
+                                    SKU
+                                </th>
+                                <th className="px-4 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap">
+                                    Harga
+                                </th>
+                                <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500 cursor-pointer hover:text-zinc-700 select-none" onClick={() => setSortByStock(prev => prev === 'asc' ? 'desc' : prev === 'desc' ? null : 'asc')}>
+                                    <span className="inline-flex items-center gap-1">
+                                        Stok
+                                        {sortByStock === 'asc' && ' ↑'}
+                                        {sortByStock === 'desc' && ' ↓'}
+                                    </span>
+                                </th>
+                                <th className="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                                    Status
+                                </th>
+                                <th className="w-20 px-4 py-4 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                                    Aksi
+                                </th>
                             </tr>
-                        ) : filteredProducts.length === 0 ? (
-                            <tr>
-                                <td colSpan={8} className="px-4 py-16 text-center">
-                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
-                                        <Package className="h-8 w-8 text-zinc-400" />
-                                    </div>
-                                    <p className="font-semibold text-zinc-900">Tidak ada produk</p>
-                                    <p className="mt-1 text-sm text-zinc-500">
-                                        {searchQuery ? "Coba ubah kata kunci pencarian" : "Mulai dengan menambah produk baru"}
-                                    </p>
-                                    {!searchQuery && (
-                                        <Link
-                                            href={`/dashboard/products/new?outletId=${activeOutletId}`}
-                                            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-                                        >
-                                            <Plus className="h-4 w-4" />
-                                            Tambah Produk
-                                        </Link>
-                                    )}
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredProducts.map((product) => (
-                                <tr
-                                    key={product.id}
-                                    className={`group transition-colors hover:bg-zinc-50/50 ${selectedProductIds.includes(product.id) ? 'bg-primary-50/30' : ''}`}
-                                >
-                                    <td className="px-4 py-4">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedProductIds.includes(product.id)}
-                                            onChange={() => handleSelectProduct(product.id)}
-                                            className="h-4 w-4 rounded border-zinc-300 text-primary-600 focus:ring-primary-500"
-                                        />
-                                    </td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <ProductImage
-                                                src={product.imageUrl || (product as any).image_url}
-                                                alt={product.name}
-                                                className="h-12 w-12 rounded-xl ring-1 ring-zinc-100"
-                                                iconSize="h-5 w-5"
-                                            />
-                                            <div className="min-w-0">
-                                                <p className="font-semibold text-zinc-900 truncate max-w-[200px]">
-                                                    {product.name}
-                                                </p>
-                                                {product.category && (
-                                                    <p className="text-xs text-zinc-500 md:hidden">{product.category.name}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="hidden px-4 py-4 md:table-cell">
-                                        {product.category ? (
-                                            <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
-                                                {product.category.name}
-                                            </span>
-                                        ) : (
-                                            <span className="text-zinc-400">-</span>
-                                        )}
-                                    </td>
-                                    <td className="hidden px-4 py-4 text-sm text-zinc-500 font-mono lg:table-cell">
-                                        {product.sku || <span className="text-zinc-300">-</span>}
-                                    </td>
-                                    <td className="px-4 py-4 text-right">
-                                        <span className="font-semibold text-zinc-900">{formatPrice(product.price)}</span>
-                                    </td>
-                                    <td className="px-4 py-4 text-center">
-                                        {getStockBadge(product.stock)}
-                                    </td>
-                                    <td className="hidden px-4 py-4 text-center sm:table-cell">
-                                        <button
-                                            onClick={() => handleQuickToggleStatus(product.id, product.isActive)}
-                                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${product.isActive
-                                                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                                                : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
-                                                }`}
-                                        >
-                                            {product.isActive ? (
-                                                <>
-                                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                                    Aktif
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
-                                                    Nonaktif
-                                                </>
-                                            )}
-                                        </button>
-                                    </td>
-                                    <td className="px-4 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                            <Link
-                                                href={`/dashboard/products/${product.id}/edit`}
-                                                className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
-                                                title="Edit"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Link>
-                                            <button
-                                                onClick={() => handleDelete(product.id)}
-                                                disabled={isDeleting === product.id}
-                                                className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                                                title="Hapus"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-                                        </div>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100">
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={8} className="px-4 py-16 text-center">
+                                        <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-500" />
+                                        <p className="mt-3 text-sm text-zinc-500">Memuat produk...</p>
                                     </td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ) : filteredProducts.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="px-4 py-16 text-center">
+                                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-100">
+                                            <Package className="h-8 w-8 text-zinc-400" />
+                                        </div>
+                                        <p className="font-semibold text-zinc-900">Tidak ada produk</p>
+                                        <p className="mt-1 text-sm text-zinc-500">
+                                            {searchQuery ? "Coba ubah kata kunci pencarian" : "Mulai dengan menambah produk baru"}
+                                        </p>
+                                        {!searchQuery && (
+                                            <Link
+                                                href={`/dashboard/products/new?outletId=${activeOutletId}`}
+                                                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                                            >
+                                                <Plus className="h-4 w-4" />
+                                                Tambah Produk
+                                            </Link>
+                                        )}
+                                    </td>
+                                </tr>
+                            ) : (
+                                sortedProducts.map((product) => (
+                                    <tr
+                                        key={product.id}
+                                        className={`group transition-colors hover:bg-zinc-50/50 ${selectedProductIds.includes(product.id) ? 'bg-primary-50/30' : ''}`}
+                                    >
+                                        <td className="sticky left-0 z-10 bg-white group-hover:bg-zinc-50 transition-colors px-4 py-4 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] md:shadow-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedProductIds.includes(product.id)}
+                                                onChange={() => handleSelectProduct(product.id)}
+                                                className="h-4 w-4 rounded border-zinc-300 text-primary-600 focus:ring-primary-500"
+                                            />
+                                        </td>
+                                        <td className="sticky left-10 z-10 bg-white group-hover:bg-zinc-50 transition-colors px-4 py-4 shadow-[1px_0_0_0_rgba(0,0,0,0.05)] md:shadow-none">
+                                            <div className="flex items-center gap-4">
+                                                <ProductImage
+                                                    src={product.imageUrl || (product as any).image_url}
+                                                    alt={product.name}
+                                                    className="h-12 w-12 rounded-xl ring-1 ring-zinc-100 shrink-0"
+                                                    iconSize="h-5 w-5"
+                                                />
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="font-semibold text-zinc-900 whitespace-nowrap">
+                                                            {product.name}
+                                                        </p>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleToggleFeatured(product.id, !!product.isFeatured);
+                                                            }}
+                                                            className={`shrink-0 p-0.5 rounded transition-colors ${product.isFeatured ? 'text-amber-500' : 'text-zinc-300 hover:text-amber-400'}`}
+                                                            title={product.isFeatured ? 'Hapus dari Pilihan Owner' : 'Jadikan Pilihan Owner'}
+                                                        >
+                                                            <Star className={`h-3.5 w-3.5 ${product.isFeatured ? 'fill-amber-500' : ''}`} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            {product.category ? (
+                                                <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
+                                                    {product.category.name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-zinc-400">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-4 text-sm text-zinc-500 font-mono">
+                                            {product.sku || <span className="text-zinc-300">-</span>}
+                                        </td>
+                                        <td className="px-4 py-4 text-right">
+                                            <span className="font-semibold text-zinc-900">{formatPrice(product.price)}</span>
+                                        </td>
+                                        <td className="px-4 py-4 text-center">
+                                            {getStockBadge(product.stock)}
+                                        </td>
+                                        <td className="px-4 py-4 text-center">
+                                            <button
+                                                onClick={() => handleQuickToggleStatus(product.id, product.isActive)}
+                                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${product.isActive
+                                                    ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                                    : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                                                    }`}
+                                            >
+                                                {product.isActive ? (
+                                                    <>
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                        Aktif
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="h-1.5 w-1.5 rounded-full bg-zinc-400" />
+                                                        Nonaktif
+                                                    </>
+                                                )}
+                                            </button>
+                                        </td>
+                                        <td className="px-4 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                                <Link
+                                                    href={`/dashboard/products/${product.id}/edit`}
+                                                    className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(product.id)}
+                                                    disabled={isDeleting === product.id}
+                                                    className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                                                    title="Hapus"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Import Modal */}

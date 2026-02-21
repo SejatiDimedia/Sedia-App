@@ -2,10 +2,12 @@ import { db, posSchema } from "@/lib/db";
 import { eq, and, ilike } from "drizzle-orm";
 import Link from "next/link";
 import Image from "next/image";
-import { Store, MapPin, Package, Clock } from "lucide-react";
+import { Store, MapPin, Package, Clock, Star } from "lucide-react";
 import { getStoreStatus } from "@/utils/store-status";
+import type { Metadata } from "next";
 
 import { ProductGrid } from "@/components/catalog/ProductGrid";
+import { ProductCard } from "@/components/catalog/ProductCard";
 import { SearchBar } from "@/components/catalog/SearchBar";
 import { CategoryFilter } from "@/components/catalog/CategoryFilter";
 import { slugify } from "@/utils/slug";
@@ -15,6 +17,53 @@ import { GreetingPopup } from "@/components/catalog/GreetingPopup";
 
 // Disable caching for development - set to 60 in production
 export const revalidate = 0;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const resolvedParams = await params;
+    const slug = resolvedParams.slug;
+    const outlet = await getOutlet(slug);
+
+    if (!outlet) {
+        return { title: "Katalog Tidak Ditemukan" };
+    }
+
+    const productCount = await db
+        .select({ id: posSchema.products.id })
+        .from(posSchema.products)
+        .where(
+            and(
+                eq(posSchema.products.outletId, outlet.id),
+                eq(posSchema.products.isActive, true),
+                eq(posSchema.products.isDeleted, false)
+            )
+        );
+
+    const logoUrl = await resolveR2UrlServer(outlet.logoUrl);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://katsira-pos.vercel.app";
+    const pageUrl = `${baseUrl}/catalog/${slug}`;
+
+    const title = `${outlet.name} — Katalog Online`;
+    const description = `Lihat ${productCount.length} produk dari ${outlet.name}. Pesan langsung via WhatsApp! 🛒`;
+
+    return {
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            url: pageUrl,
+            siteName: "Sedia POS",
+            type: "website",
+            ...(logoUrl ? { images: [{ url: logoUrl, width: 512, height: 512, alt: outlet.name }] } : {}),
+        },
+        twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            ...(logoUrl ? { images: [logoUrl] } : {}),
+        },
+    };
+}
 
 async function getOutlet(slug: string) {
     const decodedSlug = decodeURIComponent(slug);
@@ -107,7 +156,7 @@ async function getProducts(outletId: string, search: string, categoryId: string)
         name: p.name,
         price: Number(p.price),
         stock: p.stock,
-        imageUrl: await resolveR2UrlServer(p.imageUrl),
+        imageUrl: resolveR2Url(p.imageUrl),
         isActive: p.isActive ?? true,
         isDeleted: p.isDeleted,
         categoryName: p.category?.name || null,
@@ -187,6 +236,33 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
         getCategories(outlet.id)
     ]);
 
+    // Fetch featured products (only show when no search/filter active)
+    const featuredProducts = (!query && !categoryId) ? await db.query.products.findMany({
+        where: and(
+            eq(posSchema.products.outletId, outlet.id),
+            eq(posSchema.products.isDeleted, false),
+            eq(posSchema.products.isActive, true),
+            eq(posSchema.products.isFeatured, true)
+        ),
+        with: {
+            category: true,
+            variants: {
+                where: eq(posSchema.productVariants.isActive, true)
+            }
+        },
+        orderBy: (products, { asc }) => [asc(products.name)]
+    }).then(prods => prods.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        stock: p.stock,
+        imageUrl: resolveR2Url(p.imageUrl),
+        isActive: p.isActive ?? true,
+        isDeleted: p.isDeleted,
+        categoryName: p.category?.name || null,
+        variants: p.variants
+    }))) : [];
+
     const primaryColor = outlet.primaryColor || "#2e6a69";
     const secondaryColor = outlet.secondaryColor;
     const outletLogo = await resolveR2UrlServer(outlet.logoUrl);
@@ -215,7 +291,6 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                                             src={outletLogo}
                                             alt={outlet.name}
                                             fill
-                                            unoptimized
                                             className="object-cover transition-transform duration-300 group-hover:scale-110"
                                             sizes="64px"
                                         />
@@ -269,6 +344,37 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
 
             {/* Product Grid */}
             <div className="max-w-7xl mx-auto px-4 py-8">
+                {/* Produk Terlaris Section */}
+                {featuredProducts.length > 0 && (
+                    <div className="mb-10">
+                        <div className="flex items-center gap-2 mb-5">
+                            <div
+                                className="flex items-center justify-center w-8 h-8 rounded-xl"
+                                style={{ backgroundColor: `${primaryColor}15` }}
+                            >
+                                <Star className="w-4 h-4" style={{ color: primaryColor, fill: primaryColor }} />
+                            </div>
+                            <h2 className="text-lg font-bold text-zinc-900">Produk Terlaris</h2>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-5">
+                            {featuredProducts.map((product) => (
+                                <ProductCard
+                                    key={product.id}
+                                    id={product.id}
+                                    name={product.name}
+                                    price={Number(product.price)}
+                                    stock={product.stock}
+                                    imageUrl={product.imageUrl}
+                                    category={product.categoryName || undefined}
+                                    isActive={product.isActive ?? true}
+                                    primaryColor={primaryColor}
+                                    variants={product.variants}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {products.length === 0 ? (
                     <div className="text-center py-32 bg-white rounded-[3rem] border border-zinc-100 shadow-sm px-6">
                         <div

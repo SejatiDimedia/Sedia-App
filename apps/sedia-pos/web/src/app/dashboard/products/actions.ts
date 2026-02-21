@@ -506,3 +506,18 @@ export async function bulkUpdateProductStatus(ids: string[], isActive: boolean) 
         return { success: false, error: "Failed to update product status" };
     }
 }
+
+// Toggle isFeatured
+export async function toggleFeatured(id: string, isFeatured: boolean) {
+    try {
+        await db
+            .update(products)
+            .set({ isFeatured, updatedAt: new Date() })
+            .where(eq(products.id, id));
+        revalidatePath("/dashboard/products");
+        return { success: true, error: null };
+    } catch (error) {
+        console.error("Error toggling featured:", error);
+        return { success: false, error: "Failed to toggle featured" };
+    }
+}
