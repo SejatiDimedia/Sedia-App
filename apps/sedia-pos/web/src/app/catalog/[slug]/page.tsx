@@ -9,7 +9,7 @@ import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { SearchBar } from "@/components/catalog/SearchBar";
 import { CategoryFilter } from "@/components/catalog/CategoryFilter";
 import { slugify } from "@/utils/slug";
-import { resolveR2UrlServer } from "@/lib/storage";
+import { resolveR2Url, resolveR2UrlServer } from "@/lib/storage";
 import { BrandTheme } from "@/components/catalog/BrandTheme";
 import { GreetingPopup } from "@/components/catalog/GreetingPopup";
 
@@ -107,7 +107,7 @@ async function getProducts(outletId: string, search: string, categoryId: string)
         name: p.name,
         price: Number(p.price),
         stock: p.stock,
-        imageUrl: await resolveR2UrlServer(p.imageUrl),
+        imageUrl: resolveR2Url(p.imageUrl),
         isActive: p.isActive ?? true,
         isDeleted: p.isDeleted,
         categoryName: p.category?.name || null,

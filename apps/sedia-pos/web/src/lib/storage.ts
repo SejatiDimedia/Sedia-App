@@ -90,11 +90,14 @@ export async function resolveR2UrlServer(pathOrUrl: string | null): Promise<stri
 
     // Always generate a fresh signed URL for maximum reliability
     try {
-        return await getSignedUrl(key);
+        const signedUrl = await getSignedUrl(key);
+        return signedUrl;
     } catch (e) {
-        console.error("Failed to generate signed URL for key:", key, e);
+        console.error(`[R2 Storage] Failed to generate signed URL for key: "${key}"`, e);
         // Fallback to public URL
-        return resolveR2Url(pathOrUrl);
+        const fallback = resolveR2Url(pathOrUrl);
+        console.log(`[R2 Storage] Falling back to public URL: ${fallback}`);
+        return fallback;
     }
 }
 
