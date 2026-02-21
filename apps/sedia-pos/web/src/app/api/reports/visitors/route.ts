@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db, posSchema } from "@/lib/db";
-import { eq, and, gte, lte, inArray, sql, count } from "drizzle-orm";
+import { eq, and, gte, lte, inArray, count } from "drizzle-orm";
 import { getOutlets } from "@/actions/outlets";
 
 export async function GET(req: NextRequest) {
     try {
         const outlets = await getOutlets();
         if (!outlets.length) {
-            return NextResponse.json({ dailyVisitors: [], outlets: [], summary: { totalVisitors: 0, todayVisitors: 0 } });
+            return NextResponse.json({ dailyVisitors: [], outlets: [], summary: { totalVisitors: 0, todayVisitors: 0 }, locations: [] });
         }
 
         const allowedOutletIds = outlets.map(o => o.id);
@@ -48,6 +48,18 @@ export async function GET(req: NextRequest) {
             .where(and(...conditions))
             .groupBy(posSchema.visitorLogs.outletId);
 
+        // Location breakdown (by city)
+        const locationBreakdown = await db
+            .select({
+                city: posSchema.visitorLogs.city,
+                region: posSchema.visitorLogs.region,
+                country: posSchema.visitorLogs.country,
+                count: count(posSchema.visitorLogs.id),
+            })
+            .from(posSchema.visitorLogs)
+            .where(and(...conditions))
+            .groupBy(posSchema.visitorLogs.city, posSchema.visitorLogs.region, posSchema.visitorLogs.country);
+
         // Today's visitors
         const [todayStats] = await db
             .select({ count: count(posSchema.visitorLogs.id) })
@@ -71,9 +83,21 @@ export async function GET(req: NextRequest) {
             count: row.count,
         }));
 
+        // Clean location data
+        const locations = locationBreakdown
+            .filter(l => l.city || l.country) // Exclude records with no location data
+            .map(l => ({
+                city: l.city || "Unknown",
+                region: l.region || "",
+                country: l.country || "Unknown",
+                count: l.count,
+            }))
+            .sort((a, b) => b.count - a.count);
+
         return NextResponse.json({
             dailyVisitors,
             perOutlet: perOutletWithNames,
+            locations,
             outlets: outlets.map(o => ({ id: o.id, name: o.name })),
             summary: {
                 totalVisitors: totalStats?.count || 0,

@@ -31,7 +31,12 @@ export async function POST(
             return NextResponse.json({ error: "Outlet not found" }, { status: 404 });
         }
 
-        // 2. Record Visit (Daily Unique)
+        // 2. Extract geolocation from Vercel headers
+        const city = req.headers.get("x-vercel-ip-city") || null;
+        const region = req.headers.get("x-vercel-ip-country-region") || null;
+        const country = req.headers.get("x-vercel-ip-country") || null;
+
+        // 3. Record Visit (Daily Unique)
         const visitDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
         try {
@@ -39,9 +44,11 @@ export async function POST(
                 outletId: outlet.id,
                 visitorId,
                 visitDate,
+                city: city ? decodeURIComponent(city) : null,
+                region: region ? decodeURIComponent(region) : null,
+                country,
             }).onConflictDoNothing();
         } catch (dbError) {
-            // Log and ignore specific DB errors to avoid failing the whole request UX
             console.error("[Visitor API] DB Insert error:", dbError);
         }
 

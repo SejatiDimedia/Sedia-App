@@ -510,6 +510,9 @@ export const visitorLogs = sediaPos.table("visitor_logs", {
     outletId: text("outlet_id").notNull().references(() => outlets.id, { onDelete: "cascade" }),
     visitorId: text("visitor_id").notNull(), // Browser fingerprint or generated device ID
     visitDate: text("visit_date").notNull(), // ISO Date string YYYY-MM-DD
+    city: text("city"),
+    region: text("region"),
+    country: text("country"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({
     uniqueDailyVisitIdx: uniqueIndex("visitor_logs_unique_daily_visit_idx").on(table.outletId, table.visitorId, table.visitDate),
