@@ -107,7 +107,7 @@ async function getProducts(outletId: string, search: string, categoryId: string)
         name: p.name,
         price: Number(p.price),
         stock: p.stock,
-        imageUrl: resolveR2Url(p.imageUrl),
+        imageUrl: await resolveR2UrlServer(p.imageUrl),
         isActive: p.isActive ?? true,
         isDeleted: p.isDeleted,
         categoryName: p.category?.name || null,
@@ -215,6 +215,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                                             src={outletLogo}
                                             alt={outlet.name}
                                             fill
+                                            unoptimized
                                             className="object-cover transition-transform duration-300 group-hover:scale-110"
                                             sizes="64px"
                                         />

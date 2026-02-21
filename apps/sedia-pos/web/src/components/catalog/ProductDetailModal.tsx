@@ -144,6 +144,7 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
                                         src={product.imageUrl}
                                         alt={product.name}
                                         fill
+                                        unoptimized
                                         priority={true}
                                         sizes="(max-width: 768px) 100vw, 512px"
                                         onError={() => setHasError(true)}
