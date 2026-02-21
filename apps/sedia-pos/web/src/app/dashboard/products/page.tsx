@@ -89,6 +89,7 @@ export default function ProductsPage() {
     const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
     const [isBulkProcessing, setIsBulkProcessing] = useState(false);
     const [sortByStock, setSortByStock] = useState<'asc' | 'desc' | null>(null);
+    const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
     const [confirmState, setConfirmState] = useState<{
         isOpen: boolean;
         title: string;
@@ -253,8 +254,9 @@ export default function ProductsPage() {
             (product.sku && product.sku.toLowerCase().includes(searchQuery.toLowerCase()));
 
         const matchesCategory = selectedCategoryId === "all" || product.categoryId === selectedCategoryId;
+        const matchesFeatured = !showFeaturedOnly || product.isFeatured === true;
 
-        return matchesSearch && matchesCategory;
+        return matchesSearch && matchesCategory && matchesFeatured;
     });
 
     const sortedProducts = sortByStock
@@ -527,6 +529,16 @@ export default function ProductsPage() {
                             className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 py-3 pl-11 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                         />
                     </div>
+                    <button
+                        onClick={() => setShowFeaturedOnly(!showFeaturedOnly)}
+                        className={`flex h-[46px] w-[46px] items-center justify-center rounded-xl border transition-all ${showFeaturedOnly
+                            ? "border-amber-200 bg-amber-50 text-amber-500 shadow-sm"
+                            : "border-zinc-200 bg-zinc-50/50 text-zinc-400 hover:bg-white hover:text-zinc-600"
+                            }`}
+                        title={showFeaturedOnly ? "Tampilkan Semua" : "Filter Produk Terlaris"}
+                    >
+                        <Star className={`h-5 w-5 ${showFeaturedOnly ? "fill-current" : ""}`} />
+                    </button>
                     <div className="relative w-full sm:w-64">
                         <select
                             value={selectedCategoryId}

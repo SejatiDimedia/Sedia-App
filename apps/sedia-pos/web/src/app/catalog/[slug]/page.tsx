@@ -156,7 +156,7 @@ async function getProducts(outletId: string, search: string, categoryId: string)
         name: p.name,
         price: Number(p.price),
         stock: p.stock,
-        imageUrl: resolveR2Url(p.imageUrl),
+        imageUrl: await resolveR2UrlServer(p.imageUrl),
         isActive: p.isActive ?? true,
         isDeleted: p.isDeleted,
         categoryName: p.category?.name || null,
@@ -251,17 +251,17 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
             }
         },
         orderBy: (products, { asc }) => [asc(products.name)]
-    }).then(prods => prods.map(p => ({
+    }).then(async prods => await Promise.all(prods.map(async p => ({
         id: p.id,
         name: p.name,
         price: Number(p.price),
         stock: p.stock,
-        imageUrl: resolveR2Url(p.imageUrl),
+        imageUrl: await resolveR2UrlServer(p.imageUrl),
         isActive: p.isActive ?? true,
         isDeleted: p.isDeleted,
         categoryName: p.category?.name || null,
         variants: p.variants
-    }))) : [];
+    })))) : [];
 
     const primaryColor = outlet.primaryColor || "#2e6a69";
     const secondaryColor = outlet.secondaryColor;

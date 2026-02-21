@@ -15,14 +15,16 @@ export async function GET(
     request: NextRequest,
     props: { params: Promise<{ key: string[] }> }
 ) {
-    const params = await props.params;
-    const key = params.key.join("/");
-
-    if (!key) {
-        return new NextResponse("Missing key", { status: 400 });
-    }
-
+    let key = "";
     try {
+        const params = await props.params;
+        key = params.key.join("/");
+
+        if (!key || key.trim() === "" || key.endsWith("/")) {
+            console.warn("[Storage Proxy] Invalid or directory-like key requested:", key);
+            return new NextResponse("Invalid file key", { status: 404 });
+        }
+
         const command = new GetObjectCommand({
             Bucket: BUCKET_NAME,
             Key: key,
@@ -44,7 +46,10 @@ export async function GET(
                 "Cache-Control": "public, max-age=31536000, immutable", // Cache for 1 year
             },
         });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.name === "NoSuchKey") {
+            return new NextResponse("File not found", { status: 404 });
+        }
         console.error("[Storage Proxy] Error fetching key:", key, error);
         return new NextResponse("Error fetching file", { status: 500 });
     }

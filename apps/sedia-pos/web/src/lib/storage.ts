@@ -24,7 +24,12 @@ const PUBLIC_URL = process.env.R2_PUBLIC_URL;
  * Checks if a URL/path is an R2-related resource (r2.dev or cloudflarestorage).
  */
 function isR2Url(url: string): boolean {
-    return url.includes(".r2.dev") || url.includes(".r2.cloudflarestorage.com");
+    if (!url) return false;
+    return (
+        url.includes(".r2.dev") ||
+        url.includes(".r2.cloudflarestorage.com") ||
+        url.includes("cloudflarestorage.com")
+    );
 }
 
 /**
