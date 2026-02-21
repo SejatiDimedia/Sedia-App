@@ -26,6 +26,7 @@ import {
     Check,
     Truck,
     UsersRound,
+    Eye,
 } from "lucide-react";
 import { useOutlet } from "@/providers/outlet-provider";
 import KatsiraLogo from "@/components/KatsiraLogo";
@@ -52,6 +53,7 @@ const navItems = [
     { href: "/dashboard/activity", label: "Log Aktivitas", icon: History },
     { href: "/dashboard/customers", label: "Pelanggan", icon: Users },
     { href: "/dashboard/reports", label: "Laporan", icon: BarChart3 },
+    { href: "/dashboard/reports/visitors", label: "Analitik Pengunjung", icon: Eye },
     { href: "/dashboard/shifts", label: "Laporan Shift", icon: History },
     { href: "/dashboard/tax", label: "Pajak & Biaya", icon: Percent },
     { href: "/dashboard/users", label: "Manajemen User", icon: UsersRound, adminOnly: true },

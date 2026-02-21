@@ -6,7 +6,8 @@ import {
     Users,
     ArrowRight,
     AlertTriangle,
-    Clock
+    Clock,
+    Eye
 } from "lucide-react";
 
 import { db, posSchema } from "@/lib/db"; // data access
@@ -38,7 +39,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
         targetOutletIds = [selectedOutletId];
     }
 
-    let salesStats, productStats, customerStats;
+    let salesStats, productStats, customerStats, visitorStats;
     let recentTransactions: any[] = [];
     let lowStockProducts: any[] = [];
 
@@ -70,6 +71,16 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
             .select({ count: count(posSchema.customers.id) })
             .from(posSchema.customers)
             .where(inArray(posSchema.customers.outletId, targetOutletIds));
+
+        try {
+            [visitorStats] = await db
+                .select({ count: count(posSchema.visitorLogs.id) })
+                .from(posSchema.visitorLogs)
+                .where(inArray(posSchema.visitorLogs.outletId, targetOutletIds));
+        } catch {
+            // Table may not exist yet (pre-migration), gracefully default to 0
+            visitorStats = { count: 0 };
+        }
 
         // Fetch Recent Transactions
         recentTransactions = await db.query.transactions.findMany({
@@ -112,6 +123,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     const totalTransactions = Number(salesStats?.transactionCount || 0);
     const totalProducts = Number(productStats?.count || 0);
     const totalCustomers = Number(customerStats?.count || 0);
+    const totalVisitors = Number(visitorStats?.count || 0);
 
     return (
         <div className="space-y-8">
@@ -161,6 +173,14 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                     trend="Terdaftar"
                     trendUp={true}
                     color="secondary"
+                />
+                <StatCard
+                    title="Total Pengunjung"
+                    value={totalVisitors.toString()}
+                    icon={Eye}
+                    trend="Unique Visitors"
+                    trendUp={true}
+                    color="zinc"
                 />
             </div>
 
@@ -306,13 +326,15 @@ function StatCard({
     icon: React.ElementType;
     trend: string;
     trendUp: boolean;
-    color?: "primary" | "secondary";
+    color?: "primary" | "secondary" | "zinc";
 }) {
     return (
         <div className="group rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary-100">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">{title}</span>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 ${color === "primary" ? "bg-primary-50 text-primary-600" : "bg-secondary-50 text-secondary-600"
+                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-transform group-hover:scale-110 ${color === "primary" ? "bg-primary-50 text-primary-600" :
+                    color === "secondary" ? "bg-secondary-50 text-secondary-600" :
+                        "bg-zinc-100 text-zinc-600"
                     }`}>
                     <Icon className="h-5 w-5" />
                 </div>

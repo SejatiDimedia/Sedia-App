@@ -14,6 +14,7 @@ import { slugify } from "@/utils/slug";
 import { resolveR2Url, resolveR2UrlServer } from "@/lib/storage";
 import { BrandTheme } from "@/components/catalog/BrandTheme";
 import { GreetingPopup } from "@/components/catalog/GreetingPopup";
+import { VisitorTracker } from "@/components/catalog/VisitorTracker";
 
 // Disable caching for development - set to 60 in production
 export const revalidate = 0;
@@ -269,6 +270,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
 
     return (
         <div className="min-h-screen bg-zinc-50">
+            <VisitorTracker slug={slugify(outlet.name)} />
             <BrandTheme primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
             {outlet.greeting && (

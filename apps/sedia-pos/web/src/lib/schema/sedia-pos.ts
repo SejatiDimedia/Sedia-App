@@ -1,4 +1,4 @@
-import { pgSchema, text, timestamp, integer, boolean, numeric, uuid, jsonb } from "drizzle-orm/pg-core";
+import { pgSchema, text, timestamp, integer, boolean, numeric, uuid, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { user } from "./auth-schema";
 
@@ -328,6 +328,7 @@ export const outletsRelations = relations(outlets, ({ one, many }) => ({
     }),
     suppliers: many(suppliers),
     purchaseOrders: many(purchaseOrders),
+    visitorLogs: many(visitorLogs),
 }));
 
 export const suppliersRelations = relations(suppliers, ({ one, many }) => ({
@@ -504,6 +505,16 @@ export const activityLogs = sediaPos.table("activity_logs", {
     createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const visitorLogs = sediaPos.table("visitor_logs", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    outletId: text("outlet_id").notNull().references(() => outlets.id, { onDelete: "cascade" }),
+    visitorId: text("visitor_id").notNull(), // Browser fingerprint or generated device ID
+    visitDate: text("visit_date").notNull(), // ISO Date string YYYY-MM-DD
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+    uniqueDailyVisitIdx: uniqueIndex("visitor_logs_unique_daily_visit_idx").on(table.outletId, table.visitorId, table.visitDate),
+}));
+
 export const stockOpnameItemsRelations = relations(stockOpnameItems, ({ one }) => ({
     opname: one(stockOpnames, {
         fields: [stockOpnameItems.opnameId],
@@ -579,5 +590,12 @@ export const purchaseOrderItemsRelations = relations(purchaseOrderItems, ({ one 
     variant: one(productVariants, {
         fields: [purchaseOrderItems.variantId],
         references: [productVariants.id],
+    }),
+}));
+
+export const visitorLogsRelations = relations(visitorLogs, ({ one }) => ({
+    outlet: one(outlets, {
+        fields: [visitorLogs.outletId],
+        references: [outlets.id],
     }),
 }));

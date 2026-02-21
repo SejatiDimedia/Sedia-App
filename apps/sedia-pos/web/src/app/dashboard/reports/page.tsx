@@ -150,6 +150,13 @@ export default function ReportsPage() {
                         <FileText className="h-4 w-4" />
                         Laba & Rugi
                     </Link>
+                    <Link
+                        href="/dashboard/reports/visitors"
+                        className="inline-flex items-center gap-2 rounded-xl border border-primary-200 bg-white px-4 py-2.5 text-sm font-bold text-primary-600 transition-all hover:bg-primary-50 hover:shadow-sm active:scale-95"
+                    >
+                        <BarChart3 className="h-4 w-4" />
+                        Pengunjung
+                    </Link>
                     <div className="h-8 w-px bg-zinc-200 hidden sm:block mx-1" />
                     <button
                         onClick={handleExport}
