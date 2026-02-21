@@ -71,6 +71,7 @@ export function ProductCard({
                             isOutOfStock && "grayscale"
                         )}
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        unoptimized
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100">
@@ -145,6 +146,7 @@ export function ProductCard({
                             height={512}
                             priority={true}
                             loading="eager"
+                            unoptimized
                         />
                     </div>
                 )}

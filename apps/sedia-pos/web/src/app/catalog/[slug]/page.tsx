@@ -293,6 +293,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                                             fill
                                             className="object-cover transition-transform duration-300 group-hover:scale-110"
                                             sizes="64px"
+                                            unoptimized
                                         />
                                     ) : (
                                         <Store className="w-8 h-8 transition-transform duration-300 group-hover:scale-110" style={{ color: 'var(--brand-primary)' }} />

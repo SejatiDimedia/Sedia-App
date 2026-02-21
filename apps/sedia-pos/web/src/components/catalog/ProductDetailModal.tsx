@@ -211,6 +211,7 @@ export function ProductDetailModal({ product, isOpen, onClose, primaryColor, out
                                         sizes="(max-width: 768px) 100vw, 512px"
                                         onError={() => setHasError(true)}
                                         className="object-cover"
+                                        unoptimized
                                     />
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center text-zinc-300">
