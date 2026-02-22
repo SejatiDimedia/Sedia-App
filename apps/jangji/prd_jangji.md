@@ -129,3 +129,31 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'shadcn-ui'],
   },
 }
+```
+
+---
+
+## 🚀 Phase 6: Future Expansions (Upcoming Ideations)
+*Fitur tambahan yang akan dikembangkan selanjutnya untuk menjadikan Jangji sebagai aplikasi daily-driver bagi umat Muslim.*
+
+### 1. 🤲 Kumpulan Doa Harian & Dzikir Pagi Petang
+*   **Menu Dzikir**: Dzikir Pagi, Dzikir Petang, dan Dzikir setelah Sholat fardhu.
+*   **Doa Harian**: Kumpulan doa pendek (Doa mau tidur, doa makan, doa keluar rumah, dll) dengan teks Arab, Latin, dan terjemahan.
+
+### 2. 📖 Bookmark & Penanda Ayat Favorit
+*   **Koleksi Ayat**: Fitur untuk menyimpan ayat ke dalam kategori buatan sendiri (misal: "Ayat Motivasi", "Doa Nabi").
+*   **Share Ayat**: Fitur membagikan ayat ke sosial media dengan desain *card* gambar cantik (mengandung teks Arab & arti).
+
+### 3. 📅 Kalender Hijriah & Pengingat Puasa Sunnah
+*   **Widget Kalender**: Menampilkan penanggalan Hijriah hari ini secara prominent di Dashboard.
+*   **Pengingat Puasa**: Notifikasi/label khusus di dashboard untuk Puasa Senin-Kamis, Ayyamul Bidh, dll.
+
+### 4. 📿 Tasbih Digital (Interaktif)
+*   **Layar Tasbih**: Layar khusus yang merespon sentuhan penuh (*full screen tap*) disertai getaran (Haptic Feedback).
+*   **Target Harian**: Pengaturan target kuantitas dzikir harian.
+
+### 5. 🕌 Notifikasi Adzan (Push Notifications)
+*   **Pengingat Audio**: Notifikasi lokal (Service Worker Push) yang berbunyi ketika waktu sholat tiba.
+
+### 6. ✨ Mode Pembaca Tanpa Terjemahan (Mushaf Mode)
+*   **Toggle Mushaf**: Tombol di reader untuk menghilangkan teks terjemahan dan latin, sehingga layar 100% fokus menampilkan teks Arab secara penuh.
