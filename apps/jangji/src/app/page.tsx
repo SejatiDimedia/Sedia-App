@@ -102,19 +102,22 @@ export default function Home() {
 
           {/* App Menu Grid */}
           <section className="grid grid-cols-2 gap-4 sm:gap-6">
-            {menus.map((menu) => {
+            {menus.map((menu, index) => {
               const Icon = menu.icon;
               return (
                 <Link
                   key={menu.title}
                   href={menu.href}
-                  className="group flex flex-col items-center justify-center p-6 sm:p-8 rounded-[2rem] bg-white dark:bg-zinc-900 border border-secondary/40 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center relative overflow-hidden"
+                  className={`group flex flex-col items-center justify-center p-6 rounded-2xl border transition-all duration-300 text-center shadow-sm relative overflow-hidden ${index === 0
+                    ? 'bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:shadow-emerald-500/20'
+                    : 'bg-gradient-to-br from-primary/20 to-secondary/30 border-primary/30 text-primary dark:text-primary hover:shadow-primary/20'
+                    } hover:shadow-md hover:-translate-y-1`}
                 >
-                  <div className={`mb-5 flex items-center justify-center h-16 w-16 sm:h-20 sm:w-20 rounded-3xl ${menu.iconColor} ring-1 ring-transparent transition-all duration-300 group-hover:scale-110 ${menu.hoverRing}`}>
-                    <Icon className="h-8 w-8 sm:h-10 sm:w-10" />
+                  <div className={`mb-4 flex items-center justify-center h-14 w-14 rounded-2xl bg-white/60 dark:bg-black/20 shadow-inner border border-white/40 dark:border-white/10 transition-transform group-hover:scale-110`}>
+                    <Icon className="h-7 w-7" />
                   </div>
-                  <h3 className="font-bold text-lg sm:text-xl text-foreground mb-1 group-hover:text-primary transition-colors">{menu.title}</h3>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">{menu.subtitle}</p>
+                  <h3 className="font-bold text-lg mb-1">{menu.title}</h3>
+                  <p className="text-sm font-medium opacity-80">{menu.subtitle}</p>
                 </Link>
               );
             })}

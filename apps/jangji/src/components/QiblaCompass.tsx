@@ -129,13 +129,13 @@ export default function QiblaCompass() {
 
     if (error) {
         return (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-900/10">
+            <div className="rounded-2xl border border-red-200 bg-red-50/50 p-6 text-center dark:border-red-900/50 dark:bg-red-900/10">
                 <AlertCircle className="mx-auto mb-3 h-8 w-8 text-red-500" />
                 <h3 className="mb-2 text-lg font-bold text-red-700 dark:text-red-400">Gagal Memuat Kompas</h3>
                 <p className="mb-4 text-sm text-red-600/80 dark:text-red-400/80">{error}</p>
                 <button
                     onClick={startCompass}
-                    className="rounded-lg bg-red-600 px-6 py-2 text-sm font-bold text-white hover:bg-red-700 transition-colors shadow-sm"
+                    className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition-colors shadow-sm"
                 >
                     Coba Lagi
                 </button>
@@ -145,13 +145,13 @@ export default function QiblaCompass() {
 
     if (permissionGranted === null && isIOS) {
         return (
-            <div className="rounded-[2rem] border border-secondary/40 bg-white dark:bg-zinc-900/80 p-8 text-center shadow-sm">
+            <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 to-secondary/20 p-8 text-center shadow-sm">
                 <Compass className="mx-auto mb-4 h-10 w-10 text-primary" />
                 <h3 className="mb-2 text-xl font-bold text-foreground">Akses Kompas Dibutuhkan</h3>
                 <p className="mb-6 text-sm text-muted-foreground/80 max-w-xs mx-auto">iPhone membutuhkan izin untuk mengakses sensor kompas. Klik tombol di bawah untuk memulai kalibrasi.</p>
                 <button
                     onClick={startCompass}
-                    className="rounded-full bg-primary px-8 py-3 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-md active:scale-95"
+                    className="rounded-xl bg-primary px-8 py-3 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-md active:scale-95"
                 >
                     Izinkan Sensor
                 </button>
@@ -172,10 +172,10 @@ export default function QiblaCompass() {
             </div>
 
             {/* Compass UI */}
-            <div className="relative h-64 w-64 md:h-80 md:w-80 rounded-full border-[6px] border-white dark:border-zinc-800 bg-secondary/10 dark:bg-zinc-900 shadow-xl shadow-black/5 flex items-center justify-center">
+            <div className="relative h-64 w-64 md:h-80 md:w-80 rounded-full border-4 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/20 shadow-xl shadow-primary/5 flex items-center justify-center">
                 {/* Outer Compass Dial (Rotates against phone's heading to keep North up) */}
                 <motion.div
-                    className="absolute inset-[6px] rounded-full border border-secondary/40 bg-white dark:bg-zinc-900/50 shadow-inner"
+                    className="absolute inset-[6px] rounded-full border border-primary/20 bg-white/60 dark:bg-black/20 shadow-inner"
                     animate={{ rotate: -(heading || 0) }}
                     transition={{ type: "spring", damping: 50, stiffness: 200 }}
                 >
@@ -211,15 +211,15 @@ export default function QiblaCompass() {
                         <span className="text-[10px] mt-2 text-muted-foreground font-medium">Kalibrasi...</span>
                     </div>
                 ) : (
-                    <div className="absolute bottom-10 z-30 flex flex-col items-center bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-secondary/30 shadow-sm">
-                        <span className="text-xl font-bold tabular-nums text-foreground">
+                    <div className="absolute bottom-10 z-30 flex flex-col items-center bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md px-4 py-1.5 rounded-2xl border border-primary/20 shadow-sm">
+                        <span className="text-xl font-bold tabular-nums text-primary">
                             {Math.round(heading)}°
                         </span>
                     </div>
                 )}
             </div>
 
-            <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-5 py-2.5 rounded-full border border-secondary/40 text-sm shadow-sm">
+            <div className="flex items-center gap-2 bg-gradient-to-br from-primary/10 to-secondary/20 px-5 py-2.5 rounded-xl border border-primary/20 text-sm shadow-sm hover:shadow-md transition-all">
                 <MapPin className="h-4 w-4 text-primary" />
                 <span className="font-semibold text-foreground/80">
                     Arah Kiblat: <span className="text-primary font-bold ml-1">{qiblaAngle ? Math.round(qiblaAngle) + '°' : '---'}</span>
