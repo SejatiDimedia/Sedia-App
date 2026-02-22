@@ -8,7 +8,7 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  // Configure workbox to not cache API requests since Dexie handles them
+  extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
     skipWaiting: true,
@@ -20,32 +20,20 @@ const withPWA = withPWAInit({
         options: {
           cacheName: 'api-cache',
           expiration: {
-            maxEntries: 100,
+            maxEntries: 150,
             maxAgeSeconds: 60 * 60 * 24 * 30,
           },
         },
       },
       {
-        urlPattern: /\/_next\/data\/.*/i,
-        handler: 'StaleWhileRevalidate',
-        options: {
-          cacheName: 'next-data',
-        },
-      },
-      {
-        urlPattern: /\/_next\/static\/.*/i,
+        // Explicitly catch our 144 generated offline pages
+        urlPattern: /^\/(?:surah|juz)\/\d+/i,
         handler: 'CacheFirst',
         options: {
-          cacheName: 'static-assets',
-        },
-      },
-      {
-        urlPattern: /\/.*/i,
-        handler: 'StaleWhileRevalidate',
-        options: {
-          cacheName: 'pages-cache',
+          cacheName: 'quran-pages',
           expiration: {
-            maxEntries: 250, // Enough to hold 114 Surahs, 30 Juz, and general layout chunks
+            maxEntries: 200, // Enough for 114 surahs and 30 juz
+            maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
           },
         },
       },
