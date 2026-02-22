@@ -142,7 +142,7 @@ export default function PrayerTimesCard() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col gap-6"
         >
-            <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/30 border border-primary/20 shadow-sm transition-all hover:shadow-md">
+            <div className="overflow-hidden rounded-2xl bg-secondary/30 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 shadow-sm transition-all hover:shadow-md">
                 <div className="p-6 sm:p-8">
                     {/* Header: Location & Current Time */}
                     <div className="mb-6 flex items-center justify-between">
@@ -157,7 +157,7 @@ export default function PrayerTimesCard() {
 
                     {/* Countdown Hero */}
                     <div className="mb-10 text-center space-y-3">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/20 text-primary dark:bg-primary/30 text-xs font-bold uppercase tracking-widest border border-primary/30">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 text-xs font-bold uppercase tracking-widest border border-primary/20">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
@@ -185,7 +185,7 @@ export default function PrayerTimesCard() {
                                     key={slot.label}
                                     className={`flex-1 min-w-[70px] flex flex-col items-center py-4 px-2 rounded-2xl transition-all border ${isActive
                                         ? 'bg-primary text-white border-primary shadow-lg ring-4 ring-primary/10 scale-105 z-10'
-                                        : 'bg-white/40 border-primary/10 text-foreground hover:bg-white/60 dark:bg-black/20 dark:border-white/5 dark:hover:bg-black/40'
+                                        : 'bg-primary/5 border-primary/10 text-foreground hover:bg-primary/10 dark:bg-primary/10 dark:border-primary/5 dark:hover:bg-primary/20'
                                         }`}
                                 >
                                     <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 ${isActive ? 'text-white/90' : 'text-muted-foreground/70'}`}>{slot.label}</span>
@@ -201,8 +201,8 @@ export default function PrayerTimesCard() {
 
             {/* Weekly List */}
             {weeklyData && weeklyData.length > 1 && (
-                <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-secondary/30 to-primary/10 p-6 shadow-sm hover:shadow-md transition-all">
-                    <h4 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
+                <div className="rounded-2xl bg-secondary/30 dark:bg-primary/5 border border-primary/20 dark:border-primary/20 p-6 shadow-sm hover:shadow-md transition-all">
+                    <h4 className="text-lg font-bold text-primary dark:text-primary mb-6 flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-primary" />
                         Jadwal 1 Minggu
                     </h4>
@@ -217,17 +217,17 @@ export default function PrayerTimesCard() {
                             if (idDays[dayName]) dayName = idDays[dayName];
 
                             return (
-                                <div key={day.date.gregorian.date} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-4 hover:bg-white/40 dark:hover:bg-black/20 transition-colors -mx-4 px-4 rounded-xl">
+                                <div key={day.date.gregorian.date} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-4 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors -mx-4 px-4 rounded-xl">
                                     <div className="flex flex-row sm:flex-col justify-between items-center sm:items-start shrink-0 min-w-[120px]">
                                         <span className="font-bold text-foreground text-sm">{dayName}, {day.date.readable.split(' ').slice(0, 2).join(' ')}</span>
                                         <span className="text-xs text-muted-foreground font-medium">{day.date.hijri.date}H</span>
                                     </div>
                                     <div className="flex justify-between sm:justify-end sm:gap-6 md:gap-8 flex-1 text-center">
-                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/80 uppercase font-bold mb-1 tracking-wider">Subuh</span><span className="text-sm font-semibold text-foreground">{day.timings.Fajr}</span></div>
-                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/80 uppercase font-bold mb-1 tracking-wider">Dzuhur</span><span className="text-sm font-semibold text-foreground">{day.timings.Dhuhr}</span></div>
-                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/80 uppercase font-bold mb-1 tracking-wider">Ashar</span><span className="text-sm font-semibold text-foreground">{day.timings.Asr}</span></div>
-                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/80 uppercase font-bold mb-1 tracking-wider">Maghrib</span><span className="text-sm font-semibold text-foreground">{day.timings.Maghrib}</span></div>
-                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/80 uppercase font-bold mb-1 tracking-wider">Isya</span><span className="text-sm font-semibold text-foreground">{day.timings.Isha}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/70 dark:text-primary/80 uppercase font-bold mb-1 tracking-wider">Subuh</span><span className="text-sm font-semibold text-foreground">{day.timings.Fajr}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/70 dark:text-primary/80 uppercase font-bold mb-1 tracking-wider">Dzuhur</span><span className="text-sm font-semibold text-foreground">{day.timings.Dhuhr}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/70 dark:text-primary/80 uppercase font-bold mb-1 tracking-wider">Ashar</span><span className="text-sm font-semibold text-foreground">{day.timings.Asr}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/70 dark:text-primary/80 uppercase font-bold mb-1 tracking-wider">Maghrib</span><span className="text-sm font-semibold text-foreground">{day.timings.Maghrib}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-primary/70 dark:text-primary/80 uppercase font-bold mb-1 tracking-wider">Isya</span><span className="text-sm font-semibold text-foreground">{day.timings.Isha}</span></div>
                                     </div>
                                 </div>
                             );
