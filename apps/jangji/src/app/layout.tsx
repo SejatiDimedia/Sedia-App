@@ -20,6 +20,11 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Jangji",
+    startupImage: "/icon-512x512.png",
+  },
+  icons: {
+    icon: "/icon-192x192.png",
+    apple: "/icon-192x192.png",
   },
   formatDetection: {
     telephone: false,
@@ -27,7 +32,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1B5E20",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1B5E20" },
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -35,6 +43,7 @@ export const viewport: Viewport = {
 };
 
 import { Providers } from "@/components/auth/Providers";
+import PWARegistry from "@/components/PWARegistry";
 
 export default function RootLayout({
   children,
@@ -46,7 +55,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <PWARegistry />
+          {children}
+        </Providers>
       </body>
     </html>
   );

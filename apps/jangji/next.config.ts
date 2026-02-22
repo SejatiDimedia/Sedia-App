@@ -14,6 +14,9 @@ const withPWA = withPWAInit({
     skipWaiting: true,
     clientsClaim: true,
   },
+  fallbacks: {
+    document: "/~offline",
+  },
 });
 
 const nextConfig: NextConfig = {
