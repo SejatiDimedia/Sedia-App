@@ -111,14 +111,34 @@ export default function SurahReader({ nomor }: { nomor: number }) {
 
     if (error || !surah) {
         return (
-            <div className="p-8 text-center text-red-500">
-                <p>Gagal memuat data surat: {error?.message || 'Data tidak ditemukan'}</p>
-                <button
-                    onClick={() => window.location.reload()}
-                    className="mt-4 rounded bg-primary px-4 py-2 text-white"
-                >
-                    Coba Lagi
-                </button>
+            <div className="mx-auto max-w-3xl pb-24 px-4 text-foreground">
+                <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-secondary/20 h-16">
+                    <div className="container mx-auto h-full px-4 flex items-center justify-between gap-4">
+                        <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
+                            <ChevronLeft className="h-5 w-5" />
+                            <span className="font-bold">Kembali</span>
+                        </Link>
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle />
+                            <UserAuthMenu />
+                        </div>
+                    </div>
+                </header>
+                <div className="pt-24 p-8 text-center">
+                    <div className="mb-4 flex justify-center text-red-500">
+                        <span className="rounded-full bg-red-500/10 p-4">
+                            <ArrowLeft className="h-8 w-8" />
+                        </span>
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Gagal memuat data</h2>
+                    <p className="text-muted-foreground mb-6">{error?.message || 'Data belum tersedia secara offline. Silakan buka surat ini satu kali saat online.'}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20"
+                    >
+                        Coba Lagi
+                    </button>
+                </div>
             </div>
         );
     }

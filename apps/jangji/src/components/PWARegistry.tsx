@@ -13,10 +13,10 @@ export default function PWARegistry() {
                 navigator.serviceWorker
                     .register('/sw.js')
                     .then((registration) => {
-                        console.log('Jangji PWA: Service Worker registered successfully', registration.scope);
+                        console.log('Jangji PWA: Service Worker registered!', registration.scope);
                     })
                     .catch((error) => {
-                        console.error('Jangji PWA: Service Worker registration failed:', error);
+                        console.error('Jangji PWA: Registration failed:', error);
                     });
             });
         }

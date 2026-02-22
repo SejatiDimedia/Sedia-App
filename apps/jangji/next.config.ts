@@ -13,6 +13,29 @@ const withPWA = withPWAInit({
     disableDevLogs: true,
     skipWaiting: true,
     clientsClaim: true,
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/equran\.id\/api\/v2\/.*/i,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'api-cache',
+          expiration: {
+            maxEntries: 100,
+            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+          },
+        },
+      },
+      {
+        urlPattern: /\/.*/i,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'pages-cache',
+          expiration: {
+            maxEntries: 50,
+          },
+        },
+      },
+    ],
   },
   fallbacks: {
     document: "/~offline",
