@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Star, BookOpen } from 'lucide-react';
 import OfflineSyncManager from '@/components/OfflineSyncManager';
+import PrayerTimesCard from '@/components/PrayerTimesCard';
 
 export default function Home() {
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
@@ -83,6 +84,7 @@ export default function Home() {
             </div>
           </section>
 
+          <PrayerTimesCard />
           <OfflineSyncManager />
           <LastReadCard />
 
