@@ -6,27 +6,6 @@
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/inspect-cache.js
   1:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
 
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/app/page.tsx
-  20:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/app/page.tsx:20:5
-  18 |   useEffect(() => {
-  19 |     const welcomed = localStorage.getItem('jangji-welcomed');
-> 20 |     setShowWelcome(!welcomed);
-     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
-  21 |   }, []);
-  22 |
-  23 |   const handleStart = () => {  react-hooks/set-state-in-effect
-
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/app/quran/page.tsx
-  20:77  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
-
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/BookmarkList.tsx
   6:28  warning  'BookOpen' is defined but never used  @typescript-eslint/no-unused-vars
 
@@ -42,73 +21,14 @@ Calling setState synchronously within an effect body causes cascading renders th
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/LastReadCard.tsx
   6:20  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
 
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/OfflineLink.tsx
-  16:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/OfflineLink.tsx:16:9
-  14 |     useEffect(() => {
-  15 |         // Initialize state purely on the client
-> 16 |         setIsOffline(!navigator.onLine);
-     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
-  17 |
-  18 |         const handleOffline = () => setIsOffline(true);
-  19 |         const handleOnline = () => setIsOffline(false);  react-hooks/set-state-in-effect
-
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/PrayerTimesCard.tsx
-  176:31  warning  'Icon' is assigned a value but never used  @typescript-eslint/no-unused-vars
-
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/QiblaCompass.tsx
-   40:23   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-   41:40   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-   80:47   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-   82:74   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-  106:9    error  Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/QiblaCompass.tsx:106:9
-  104 |         // Detect iOS purely to show explicit button if needed (since iOS requires user click to trigger permission)
-  105 |         const userAgent = window.navigator.userAgent.toLowerCase();
-> 106 |         setIsIOS(/iphone|ipad|ipod/.test(userAgent));
-      |         ^^^^^^^^ Avoid calling setState() directly within an effect
-  107 |
-  108 |         // If not iOS (or older iOS), we can try to start immediately
-  109 |         if (!/iphone|ipad|ipod/.test(userAgent) && typeof (DeviceOrientationEvent as any).requestPermission !== 'function') {  react-hooks/set-state-in-effect
-  109:86   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
-  165:102  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react/no-unescaped-entities
-  197:31   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react/no-unescaped-entities
+  177:35  warning  'Icon' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/SurahReader.tsx
   36:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
 
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/ThemeToggle.tsx
-   8:13  warning  'theme' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
-  12:21  error    Error: Calling setState synchronously within an effect can trigger cascading renders
-
-Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
-* Update external systems with the latest state from React.
-* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
-
-Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
-
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/ThemeToggle.tsx:12:21
-  10 |
-  11 |     // Ensure component is mounted to avoid hydration mismatch
-> 12 |     useEffect(() => setMounted(true), []);
-     |                     ^^^^^^^^^^ Avoid calling setState() directly within an effect
-  13 |
-  14 |     if (!mounted) {
-  15 |         return <div className="h-10 w-10 rounded-xl bg-secondary/50" />;  react-hooks/set-state-in-effect
+  8:13  warning  'theme' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/auth/Providers.tsx
   5:8  warning  'ThemeToggle' is defined but never used  @typescript-eslint/no-unused-vars
@@ -119,6 +39,9 @@ Calling setState synchronously within an effect body causes cascading renders th
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/ui/ConfirmModal.tsx
   4:23  warning  'X' is defined but never used  @typescript-eslint/no-unused-vars
 
+/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/hooks/use-prayer-times.ts
+  44:17  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/hooks/use-quran-data.ts
   134:26  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
   153:26  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
@@ -126,5 +49,6 @@ Calling setState synchronously within an effect body causes cascading renders th
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/lib/auth.ts
   3:10  warning  'nextCookies' is defined but never used  @typescript-eslint/no-unused-vars
 
-✖ 29 problems (13 errors, 16 warnings)
+✖ 18 problems (1 error, 17 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
 

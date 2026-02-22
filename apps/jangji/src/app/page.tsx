@@ -8,7 +8,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import GlobalSearch from '@/components/GlobalSearch';
 import Image from 'next/image';
-import { Heart, BookOpen, Clock, Navigation } from 'lucide-react';
+import { Heart, BookOpen, Clock } from 'lucide-react';
 import OfflineSyncManager from '@/components/OfflineSyncManager';
 import Link from '@/components/OfflineLink';
 
@@ -37,18 +37,11 @@ export default function Home() {
       color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
     },
     {
-      title: "Jadwal Sholat",
-      subtitle: "Waktu Harian",
+      title: "Jadwal & Kiblat",
+      subtitle: "Sholat & Arah",
       href: "/sholat",
       icon: Clock,
-      color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20"
-    },
-    {
-      title: "Arah Kiblat",
-      subtitle: "Kompas Pintar",
-      href: "/kiblat",
-      icon: Navigation,
-      color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 hover:bg-purple-500/20"
+      color: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
     }
   ];
 
