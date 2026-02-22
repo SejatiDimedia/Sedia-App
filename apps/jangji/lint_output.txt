@@ -21,9 +21,6 @@
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/LastReadCard.tsx
   6:20  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
 
-/Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/PrayerTimesCard.tsx
-  177:35  warning  'Icon' is assigned a value but never used  @typescript-eslint/no-unused-vars
-
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/components/SurahReader.tsx
   36:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
 
@@ -49,6 +46,6 @@
 /Users/timurdianradhasejati/Programming/Code/Web/ReactAstro/portofolio-hub/apps/jangji/src/lib/auth.ts
   3:10  warning  'nextCookies' is defined but never used  @typescript-eslint/no-unused-vars
 
-✖ 18 problems (1 error, 17 warnings)
+✖ 17 problems (1 error, 16 warnings)
   0 errors and 1 warning potentially fixable with the `--fix` option.
 

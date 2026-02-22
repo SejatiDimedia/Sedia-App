@@ -145,48 +145,48 @@ export default function QiblaCompass() {
 
     if (permissionGranted === null && isIOS) {
         return (
-            <div className="rounded-2xl border border-secondary/50 bg-white p-6 text-center shadow-lg shadow-black/5 dark:bg-zinc-900">
-                <Compass className="mx-auto mb-3 h-8 w-8 text-primary" />
-                <h3 className="mb-2 text-lg font-bold text-foreground">Akses Kompas Dibutuhkan</h3>
-                <p className="mb-4 text-sm text-muted-foreground">iPhone membutuhkan izin untuk mengakses sensor kompas. Klik tombol di bawah untuk memulai.</p>
+            <div className="rounded-[2rem] border border-secondary/40 bg-white dark:bg-zinc-900/80 p-8 text-center shadow-sm">
+                <Compass className="mx-auto mb-4 h-10 w-10 text-primary" />
+                <h3 className="mb-2 text-xl font-bold text-foreground">Akses Kompas Dibutuhkan</h3>
+                <p className="mb-6 text-sm text-muted-foreground/80 max-w-xs mx-auto">iPhone membutuhkan izin untuk mengakses sensor kompas. Klik tombol di bawah untuk memulai kalibrasi.</p>
                 <button
                     onClick={startCompass}
-                    className="rounded-lg bg-primary px-6 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+                    className="rounded-full bg-primary px-8 py-3 text-sm font-bold text-white hover:bg-primary/90 transition-all shadow-md active:scale-95"
                 >
-                    Izinkan Sensor Kompas
+                    Izinkan Sensor
                 </button>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col items-center justify-center space-y-8 py-8">
-            <div className="text-center space-y-2">
+        <div className="flex flex-col items-center justify-center space-y-10 py-4">
+            <div className="text-center space-y-3">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center justify-center gap-2">
                     <Navigation className="h-6 w-6 text-primary" />
                     Penunjuk Arah Kiblat
                 </h2>
-                <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-                    Letakkan HP secara mendatar seperti kompas. Panah jarum hijau menunjukkan arah Ka&apos;bah (Mekkah).
+                <p className="text-muted-foreground/80 text-sm max-w-[280px] mx-auto leading-relaxed">
+                    Posisikan HP mendatar. Putar hingga jarum panah sejajar menunjuk ke arah Ka&apos;bah.
                 </p>
             </div>
 
             {/* Compass UI */}
-            <div className="relative h-64 w-64 md:h-80 md:w-80 rounded-full border-4 border-primary/20 bg-background shadow-2xl shadow-primary/10 flex items-center justify-center">
+            <div className="relative h-64 w-64 md:h-80 md:w-80 rounded-full border-[6px] border-white dark:border-zinc-800 bg-secondary/10 dark:bg-zinc-900 shadow-xl shadow-black/5 flex items-center justify-center">
                 {/* Outer Compass Dial (Rotates against phone's heading to keep North up) */}
                 <motion.div
-                    className="absolute inset-2 rounded-full border border-secondary/50"
+                    className="absolute inset-[6px] rounded-full border border-secondary/40 bg-white dark:bg-zinc-900/50 shadow-inner"
                     animate={{ rotate: -(heading || 0) }}
                     transition={{ type: "spring", damping: 50, stiffness: 200 }}
                 >
-                    <div className="absolute top-2 left-1/2 -translate-x-1/2 font-bold text-red-500">U</div>
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 font-bold text-foreground pointer-events-none">S</div>
-                    <div className="absolute left-2 top-1/2 -translate-y-1/2 font-bold text-foreground pointer-events-none">B</div>
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-foreground pointer-events-none">T</div>
+                    <div className="absolute top-3 left-1/2 -translate-x-1/2 font-bold text-red-500 text-sm">U</div>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 font-bold text-muted-foreground/50 text-xs pointer-events-none">S</div>
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground/50 text-xs pointer-events-none">B</div>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground/50 text-xs pointer-events-none">T</div>
                 </motion.div>
 
                 {/* Center Dot */}
-                <div className="absolute h-4 w-4 rounded-full bg-primary z-20 shadow-md"></div>
+                <div className="absolute h-3 w-3 rounded-full bg-primary z-20 shadow-sm border-2 border-white dark:border-zinc-900"></div>
 
                 {/* Qibla Needle */}
                 {qiblaAngle !== null && (
@@ -196,9 +196,9 @@ export default function QiblaCompass() {
                         transition={{ type: "spring", damping: 20, stiffness: 100 }}
                     >
                         {/* Needle body */}
-                        <div className="absolute top-8 left-1/2 -translate-x-1/2 w-2 h-[45%] bg-gradient-to-t from-transparent to-primary rounded-t-full shadow-lg"></div>
+                        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-1.5 h-[40%] bg-gradient-to-t from-primary/10 to-primary rounded-t-full shadow-md"></div>
                         {/* Kaaba indicator */}
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black dark:bg-zinc-800 border-2 border-primary/50 text-white rounded px-2 py-0.5 text-[10px] font-bold shadow-md shadow-primary/20">
+                        <div className="absolute top-5 left-1/2 -translate-x-1/2 bg-primary border-2 border-white dark:border-zinc-900 text-white rounded-full px-3 py-1 text-[10px] font-bold shadow-sm tracking-wider uppercase">
                             Ka&apos;bah
                         </div>
                     </motion.div>
@@ -211,18 +211,18 @@ export default function QiblaCompass() {
                         <span className="text-[10px] mt-2 text-muted-foreground font-medium">Kalibrasi...</span>
                     </div>
                 ) : (
-                    <div className="absolute bottom-12 z-30 flex flex-col items-center bg-background/80 backdrop-blur-sm px-3 py-1 rounded-lg border border-secondary/50">
-                        <span className="text-xl font-bold tabular-nums">
+                    <div className="absolute bottom-10 z-30 flex flex-col items-center bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md px-4 py-1.5 rounded-full border border-secondary/30 shadow-sm">
+                        <span className="text-xl font-bold tabular-nums text-foreground">
                             {Math.round(heading)}°
                         </span>
                     </div>
                 )}
             </div>
 
-            <div className="flex items-center gap-2 bg-secondary/30 px-4 py-2 rounded-full border border-secondary/50 text-sm">
+            <div className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-5 py-2.5 rounded-full border border-secondary/40 text-sm shadow-sm">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span className="font-medium text-foreground">
-                    Sudut Kiblat: <span className="text-primary font-bold">{qiblaAngle ? Math.round(qiblaAngle) + '°' : '---'}</span>
+                <span className="font-semibold text-foreground/80">
+                    Arah Kiblat: <span className="text-primary font-bold ml-1">{qiblaAngle ? Math.round(qiblaAngle) + '°' : '---'}</span>
                 </span>
             </div>
         </div>

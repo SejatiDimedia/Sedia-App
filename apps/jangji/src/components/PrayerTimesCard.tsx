@@ -142,7 +142,7 @@ export default function PrayerTimesCard() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col gap-6"
         >
-            <div className="overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-white via-primary/5 to-secondary/30 shadow-xl shadow-primary/5 dark:from-zinc-900 dark:via-zinc-900/90 dark:to-zinc-800">
+            <div className="overflow-hidden rounded-[2rem] border border-secondary/40 bg-white dark:bg-zinc-900/80 shadow-sm transition-all">
                 <div className="p-6 sm:p-8">
                     {/* Header: Location & Current Time */}
                     <div className="mb-6 flex items-center justify-between">
@@ -156,10 +156,14 @@ export default function PrayerTimesCard() {
                     </div>
 
                     {/* Countdown Hero */}
-                    <div className="mb-8 text-center space-y-2">
-                        <p className="text-sm font-bold uppercase tracking-widest text-primary/80 dark:text-primary/60">
+                    <div className="mb-10 mt-4 text-center space-y-3">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary dark:bg-primary/20 text-xs font-bold uppercase tracking-widest">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                            </span>
                             Menuju {nextPrayerName}
-                        </p>
+                        </div>
                         {timeLeft && (
                             <div className="font-arabic text-5xl font-bold tracking-tight text-foreground sm:text-6xl drop-shadow-sm flex items-center justify-center gap-1">
                                 <span className="tabular-nums">{timeLeft.split(':')[0].replace('-', '')}</span>
@@ -171,22 +175,21 @@ export default function PrayerTimesCard() {
                         )}
                     </div>
 
-                    {/* Schedule Timeline */}
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                    {/* Schedule Timeline (Minimal Pill Style) */}
+                    <div className="flex flex-wrap sm:flex-nowrap justify-between gap-2 overflow-x-auto pb-2 scrollbar-hide">
                         {schedule.map((slot, index) => {
-                            const Icon = slot.icon;
                             const isActive = getIsActive(slot.time, schedule[index + 1]?.time || null);
 
                             return (
                                 <div
                                     key={slot.label}
-                                    className={`flex flex-col items-center p-3 rounded-2xl transition-all border ${isActive
-                                        ? 'bg-primary text-white border-primary shadow-md scale-105'
-                                        : 'bg-white/60 border-secondary/50 text-foreground hover:bg-white dark:bg-black/20 dark:border-white/5 dark:hover:bg-black/40'
+                                    className={`flex-1 min-w-[70px] flex flex-col items-center py-4 px-2 rounded-2xl transition-all ${isActive
+                                        ? 'bg-primary text-white shadow-md shadow-primary/20 ring-4 ring-primary/10 scale-105 z-10'
+                                        : 'bg-secondary/10 text-muted-foreground hover:bg-secondary/20 dark:bg-zinc-800 dark:hover:bg-zinc-700'
                                         }`}
                                 >
-                                    <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1.5 ${isActive ? 'text-white/90' : 'text-muted-foreground'}`}>{slot.label}</span>
-                                    <span className="text-sm sm:text-base font-bold tabular-nums">
+                                    <span className={`text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 ${isActive ? 'text-white/90' : 'text-muted-foreground/70'}`}>{slot.label}</span>
+                                    <span className={`text-sm sm:text-base font-bold tabular-nums ${isActive ? 'text-white' : 'text-foreground'}`}>
                                         {slot.time}
                                     </span>
                                 </div>
@@ -196,14 +199,14 @@ export default function PrayerTimesCard() {
                 </div>
             </div>
 
-            {/* Weekly List */}
+            {/* Weekly List (Minimalist Clean Divider List) */}
             {weeklyData && weeklyData.length > 1 && (
-                <div className="rounded-3xl border border-secondary/30 bg-white/50 dark:bg-zinc-900/50 p-6 shadow-sm">
-                    <h4 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <div className="rounded-[2rem] border border-secondary/40 bg-white dark:bg-zinc-900/80 p-6 sm:p-8 shadow-sm">
+                    <h4 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-primary" />
-                        Jadwal 1 Minggu
+                        Jadwal 1 Minggu Kedepan
                     </h4>
-                    <div className="space-y-3">
+                    <div className="divide-y divide-secondary/30">
                         {weeklyData.map((day, idx) => {
                             if (idx === 0) return null; // Skip today
 
@@ -214,17 +217,17 @@ export default function PrayerTimesCard() {
                             if (idDays[dayName]) dayName = idDays[dayName];
 
                             return (
-                                <div key={day.date.gregorian.date} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-white dark:bg-black/40 border border-secondary/50 shadow-sm gap-4 transition-all hover:border-primary/30">
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-foreground text-sm">{dayName}, {day.date.readable}</span>
+                                <div key={day.date.gregorian.date} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-4 hover:bg-secondary/5 transition-colors -mx-4 px-4 rounded-xl">
+                                    <div className="flex flex-row sm:flex-col justify-between items-center sm:items-start shrink-0 min-w-[120px]">
+                                        <span className="font-bold text-foreground text-sm">{dayName}, {day.date.readable.split(' ').slice(0, 2).join(' ')}</span>
                                         <span className="text-xs text-muted-foreground font-medium">{day.date.hijri.date}H</span>
                                     </div>
-                                    <div className="grid grid-cols-5 gap-2 sm:gap-4 text-center">
-                                        <div className="flex flex-col"><span className="text-[10px] text-muted-foreground uppercase font-bold">Subuh</span><span className="text-sm font-semibold text-foreground">{day.timings.Fajr}</span></div>
-                                        <div className="flex flex-col"><span className="text-[10px] text-muted-foreground uppercase font-bold">Dzuhur</span><span className="text-sm font-semibold text-foreground">{day.timings.Dhuhr}</span></div>
-                                        <div className="flex flex-col"><span className="text-[10px] text-muted-foreground uppercase font-bold">Ashar</span><span className="text-sm font-semibold text-foreground">{day.timings.Asr}</span></div>
-                                        <div className="flex flex-col"><span className="text-[10px] text-muted-foreground uppercase font-bold">Maghrib</span><span className="text-sm font-semibold text-foreground">{day.timings.Maghrib}</span></div>
-                                        <div className="flex flex-col"><span className="text-[10px] text-muted-foreground uppercase font-bold">Isya</span><span className="text-sm font-semibold text-foreground">{day.timings.Isha}</span></div>
+                                    <div className="flex justify-between sm:justify-end sm:gap-6 md:gap-8 flex-1 text-center">
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-muted-foreground/70 uppercase font-bold mb-1">Subuh</span><span className="text-sm font-semibold text-foreground">{day.timings.Fajr}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-muted-foreground/70 uppercase font-bold mb-1">Dzuhur</span><span className="text-sm font-semibold text-foreground">{day.timings.Dhuhr}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-muted-foreground/70 uppercase font-bold mb-1">Ashar</span><span className="text-sm font-semibold text-foreground">{day.timings.Asr}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-muted-foreground/70 uppercase font-bold mb-1">Maghrib</span><span className="text-sm font-semibold text-foreground">{day.timings.Maghrib}</span></div>
+                                        <div className="flex flex-col items-center"><span className="text-[10px] text-muted-foreground/70 uppercase font-bold mb-1">Isya</span><span className="text-sm font-semibold text-foreground">{day.timings.Isha}</span></div>
                                     </div>
                                 </div>
                             );

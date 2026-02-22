@@ -34,14 +34,16 @@ export default function Home() {
       subtitle: "Baca Surat & Juz",
       href: "/quran",
       icon: BookOpen,
-      color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+      iconColor: "text-primary dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10",
+      hoverRing: "group-hover:ring-emerald-200 dark:group-hover:ring-emerald-500/30",
     },
     {
       title: "Jadwal & Kiblat",
       subtitle: "Sholat & Arah",
       href: "/sholat",
       icon: Clock,
-      color: "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+      iconColor: "text-primary dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10",
+      hoverRing: "group-hover:ring-primary/30 dark:group-hover:ring-blue-500/30",
     }
   ];
 
@@ -99,20 +101,20 @@ export default function Home() {
           </section>
 
           {/* App Menu Grid */}
-          <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <section className="grid grid-cols-2 gap-4 sm:gap-6">
             {menus.map((menu) => {
               const Icon = menu.icon;
               return (
                 <Link
                   key={menu.title}
                   href={menu.href}
-                  className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-300 text-center ${menu.color} shadow-sm`}
+                  className="group flex flex-col items-center justify-center p-6 sm:p-8 rounded-[2rem] bg-white dark:bg-zinc-900 border border-secondary/40 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-center relative overflow-hidden"
                 >
-                  <div className="mb-4 flex items-center justify-center h-14 w-14 rounded-2xl bg-white/50 dark:bg-black/20 shadow-inner border border-white/10">
-                    <Icon className="h-7 w-7" />
+                  <div className={`mb-5 flex items-center justify-center h-16 w-16 sm:h-20 sm:w-20 rounded-3xl ${menu.iconColor} ring-1 ring-transparent transition-all duration-300 group-hover:scale-110 ${menu.hoverRing}`}>
+                    <Icon className="h-8 w-8 sm:h-10 sm:w-10" />
                   </div>
-                  <h3 className="font-bold text-lg mb-1">{menu.title}</h3>
-                  <p className="text-sm font-medium opacity-80">{menu.subtitle}</p>
+                  <h3 className="font-bold text-lg sm:text-xl text-foreground mb-1 group-hover:text-primary transition-colors">{menu.title}</h3>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">{menu.subtitle}</p>
                 </Link>
               );
             })}
