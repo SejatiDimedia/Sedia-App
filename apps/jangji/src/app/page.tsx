@@ -59,13 +59,27 @@ export default function Home() {
         </header>
 
         <main className="container mx-auto px-4 py-8 sm:px-6 space-y-12">
-          <section className="rounded-2xl bg-primary/10 p-6 text-center sm:p-10 border border-primary/20 shadow-sm">
-            <h2 className="mb-2 text-2xl font-bold text-foreground sm:text-3xl">
-              Aplikasi Baca Al-Quran
-            </h2>
-            <p className="mx-auto max-w-xl text-muted-foreground">
-              Baca dan pelajari Al-Quran dengan mudah. Disertai terjemahan, transliterasi Latin, dan dapat diakses sepenuhnya secara offline.
-            </p>
+          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-[#2E7D32] to-[#1B5E20] p-8 text-center sm:p-12 shadow-xl shadow-primary/10 border border-white/10">
+            {/* Decorative Background Arabic Pattern */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-[0.07] pointer-events-none select-none">
+              <span className="font-arabic text-[180px] sm:text-[240px] leading-none text-white whitespace-nowrap">
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+              </span>
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-inner mb-2 lg:mb-4">
+                <BookOpen className="h-8 w-8 text-white" />
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl drop-shadow-sm">
+                  Aplikasi Baca Al-Quran
+                </h2>
+                <p className="mx-auto max-w-xl text-base sm:text-lg text-white/90 leading-relaxed font-medium">
+                  Baca dan pelajari Al-Quran dengan mudah. Disertai terjemahan, transliterasi Latin, dan dapat diakses sepenuhnya secara offline.
+                </p>
+              </div>
+            </div>
           </section>
 
           <LastReadCard />
@@ -116,6 +130,14 @@ export default function Home() {
             </div>
           </div>
         </main>
+
+        <footer className="container mx-auto px-4 py-8 mt-12 border-t border-secondary/20">
+          <div className="flex flex-col items-center justify-center gap-2">
+            <p className="text-xs font-medium text-muted-foreground/60 tracking-wider">
+              &copy;2026 Jangji-SejatiDimedia
+            </p>
+          </div>
+        </footer>
       </div>
     </>
   );

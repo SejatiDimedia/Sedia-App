@@ -10,12 +10,33 @@ import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import { getJuzNumber } from '@/lib/quran-utils';
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
-import { BookmarkCheck, Bookmark } from 'lucide-react';
+import { BookmarkCheck, Bookmark, Star, ChevronLeft, ArrowLeft } from 'lucide-react';
+import ConfirmModal from './ui/ConfirmModal';
+import Toast from './ui/Toast';
 
 export default function SurahReader({ nomor }: { nomor: number }) {
     const { surah, loading, error } = useSurahDetail(nomor);
     const { progress, saveProgress } = useProgress();
     const { toggleBookmark, isBookmarked } = useBookmarks();
+
+    // UI state
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; surah: number; ayah: number } | null>(null);
+    const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: 'success' | 'error' } | null>(null);
+
+    const handleSaveProgress = (surahNomor: number, ayahNomor: number) => {
+        setConfirmModal({ isOpen: true, surah: surahNomor, ayah: ayahNomor });
+    };
+
+    const onConfirmProgress = async () => {
+        if (!confirmModal) return;
+        try {
+            await saveProgress(confirmModal.surah, confirmModal.ayah);
+            setToast({ isVisible: true, message: `Ayat ${confirmModal.ayah} berhasil ditandai sebagai terakhir baca.`, type: 'success' });
+            window.dispatchEvent(new CustomEvent('jangji-progress-updated'));
+        } catch (err) {
+            setToast({ isVisible: true, message: 'Gagal menyimpan progres.', type: 'error' });
+        }
+    };
 
     const [currentJuz, setCurrentJuz] = useState(nomor ? getJuzNumber(nomor, 1) : 1);
     const [scrolled, setScrolled] = useState(false);
@@ -103,31 +124,50 @@ export default function SurahReader({ nomor }: { nomor: number }) {
     }
 
     return (
-        <div className="mx-auto max-w-3xl pb-24 px-4">
-            {/* Sticky Juz Indicator */}
-            <div className={`fixed top-20 right-4 z-40 transition-all duration-500 transform ${scrolled ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'}`}>
-                <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-xs font-bold shadow-lg backdrop-blur-md dark:bg-zinc-900/80 dark:border-primary/30">
-                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse"></span>
-                    <span className="text-primary tracking-widest uppercase">Juz {currentJuz}</span>
+        <div className="mx-auto max-w-3xl pb-24 px-4 text-foreground">
+            {/* Unified Floating Indicator (Surah • Juz) */}
+            <div className={`fixed top-20 left-4 z-40 transition-all duration-500 transform ${scrolled ? 'translate-x-0 opacity-100' : '-translate-x-12 opacity-0'}`}>
+                <div className="flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-xs font-bold shadow-lg shadow-primary/20 dark:bg-primary dark:border-primary/20 border border-white/10 text-white">
+                    <span className="h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                    <span className="tracking-wide uppercase flex items-center gap-1.5 font-bold">
+                        {surah.namaLatin} <span className="opacity-40">•</span> Juz {currentJuz}
+                    </span>
                 </div>
             </div>
 
             {/* Header */}
-            <div className="mb-8 rounded-2xl bg-gradient-to-br from-primary to-[#2E7D32] p-6 text-center text-white shadow-lg">
-                <div className="flex justify-center gap-2 text-xs font-bold uppercase tracking-widest opacity-80 mb-2">
-                    <span>{surah.tempatTurun}</span>
-                    <span>•</span>
-                    <span>{surah.jumlahAyat} Ayat</span>
-                    <span>•</span>
-                    <span>Juz {getJuzNumber(surah.nomor, 1)}</span>
+            <div className="relative overflow-hidden mb-8 rounded-3xl bg-gradient-to-br from-primary via-[#2E7D32] to-[#1B5E20] p-8 text-center text-white shadow-xl shadow-primary/10 border border-white/10">
+                {/* Decorative Background Arabic Pattern */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none select-none">
+                    <span className="font-arabic text-[120px] sm:text-[180px] leading-none text-white whitespace-nowrap">
+                        بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                    </span>
                 </div>
-                <h1 className="font-arabic text-4xl font-bold mb-2">{surah.nama}</h1>
-                <h2 className="text-2xl font-bold tracking-tight mb-1">{surah.namaLatin}</h2>
-                <p className="text-white/90 text-sm italic">{surah.arti}</p>
-                {/* Full Surah Audio (Mishary Rashid Alafasy) */}
-                {surah.audioFull && surah.audioFull['05'] && (
-                    <AudioPlayer audioUrl={surah.audioFull['05']} />
-                )}
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="mb-4 flex flex-wrap justify-center gap-3">
+                        <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                            {surah.tempatTurun}
+                        </span>
+                        <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                            {surah.jumlahAyat} Ayat
+                        </span>
+                        <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                            Juz {getJuzNumber(surah.nomor, 1)}
+                        </span>
+                    </div>
+
+                    <h1 className="font-arabic text-5xl font-bold mb-3 drop-shadow-md">{surah.nama}</h1>
+                    <h2 className="text-2xl font-bold tracking-tight mb-2">{surah.namaLatin}</h2>
+                    <p className="text-white/80 text-sm italic mb-6 max-w-lg mx-auto leading-relaxed">{surah.arti}</p>
+
+                    {/* Full Surah Audio (Mishary Rashid Alafasy) */}
+                    {surah.audioFull && surah.audioFull['05'] && (
+                        <div className="w-full max-w-xs scale-90 sm:scale-100">
+                            <AudioPlayer audioUrl={surah.audioFull['05']} />
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Bismillah (except Surah Al-Fatihah and At-Tawbah) */}
@@ -148,50 +188,54 @@ export default function SurahReader({ nomor }: { nomor: number }) {
                             key={ayah.nomorAyat}
                             id={`ayah-${ayah.nomorAyat}`}
                             data-ayah={ayah.nomorAyat}
-                            className={`ayah-item group relative border-b border-secondary/40 pb-8 last:border-0 dark:border-secondary/10 transition-colors scroll-mt-24 ${isLastRead ? 'bg-secondary/30 rounded-lg p-4 -mx-4 shadow-sm' : ''}`}
+                            className={`ayah-item group relative border-b border-secondary/40 pb-12 last:border-0 dark:border-secondary/10 transition-colors scroll-mt-24 ${isLastRead ? 'bg-secondary/30 rounded-2xl p-6 -mx-4 shadow-sm' : ''}`}
                         >
-                            <div className="absolute left-0 top-0 flex flex-col gap-2 items-center">
-                                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-secondary/80 text-sm font-bold text-primary dark:bg-secondary/20">
-                                    {ayah.nomorAyat}
-                                </div>
-                                <AyahAudioPlayer audioUrl={ayah.audio['05']} />
-                                <button
-                                    onClick={() => saveProgress(surah.nomor, ayah.nomorAyat)}
-                                    title="Tandai Terakhir Dibaca"
-                                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors mt-2 ${isLastRead
-                                        ? 'bg-primary text-white shadow-md'
-                                        : 'text-muted-foreground hover:bg-secondary hover:text-primary dark:hover:bg-secondary/20'
-                                        }`}
-                                >
-                                    {isLastRead ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-                                </button>
-                                <button
-                                    onClick={() => toggleBookmark(surah.nomor, ayah.nomorAyat)}
-                                    title="Tandai Favorit"
-                                    className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${isFavorited
-                                        ? 'text-yellow-500 bg-yellow-500/10'
-                                        : 'text-muted-foreground hover:bg-secondary hover:text-primary dark:hover:bg-secondary/20'
-                                        }`}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isFavorited ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                                </button>
-                            </div>
-
-                            <div className="pl-12 pt-2">
-                                <div
-                                    className="font-arabic text-3xl sm:text-4xl leading-[2.5] text-right mb-6 text-foreground break-words"
-                                    dir="rtl"
-                                >
-                                    {ayah.teksArab}
+                            <div className="relative z-10">
+                                <div className="absolute left-0 top-0 flex flex-col gap-2 items-center">
+                                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-secondary/80 text-sm font-bold text-primary dark:bg-secondary/20">
+                                        {ayah.nomorAyat}
+                                    </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <p className="text-primary/90 text-sm font-medium leading-relaxed tracking-wide">
-                                        {ayah.teksLatin}
-                                    </p>
-                                    <p className="text-muted-foreground text-[15px] leading-relaxed">
-                                        {ayah.teksIndonesia}
-                                    </p>
+                                <div className="pl-12 pt-2">
+                                    <div
+                                        className="font-arabic text-3xl sm:text-4xl leading-[2.5] text-right mb-6 text-foreground opacity-100 break-words"
+                                        dir="rtl"
+                                    >
+                                        {ayah.teksArab}
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <p className="text-primary/90 text-sm font-medium leading-relaxed tracking-wide">
+                                            {ayah.teksLatin}
+                                        </p>
+                                        <p className="text-muted-foreground text-[15px] leading-relaxed">
+                                            {ayah.teksIndonesia}
+                                        </p>
+                                        <div className="mt-6 flex items-center gap-3">
+                                            <AyahAudioPlayer audioUrl={ayah.audio['05']} />
+                                            <button
+                                                onClick={() => toggleBookmark(surah.nomor, ayah.nomorAyat)}
+                                                title="Tandai Favorit"
+                                                className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${isFavorited
+                                                    ? 'text-yellow-500 bg-yellow-500/10'
+                                                    : 'text-muted-foreground hover:bg-secondary hover:text-primary dark:hover:bg-secondary/20'
+                                                    }`}
+                                            >
+                                                <Star className="h-4 w-4" fill={isFavorited ? "currentColor" : "none"} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleSaveProgress(surah.nomor, ayah.nomorAyat)}
+                                                title="Tandai Terakhir Dibaca"
+                                                className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${isLastRead
+                                                    ? 'bg-primary text-white shadow-md scale-110'
+                                                    : 'text-muted-foreground hover:bg-secondary hover:text-primary dark:hover:bg-secondary/20'
+                                                    }`}
+                                            >
+                                                {isLastRead ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -221,6 +265,21 @@ export default function SurahReader({ nomor }: { nomor: number }) {
                     </Link>
                 ) : <div />}
             </div>
+
+            <ConfirmModal
+                isOpen={confirmModal?.isOpen || false}
+                onClose={() => setConfirmModal(null)}
+                onConfirm={onConfirmProgress}
+                title="Tandai Bacaan"
+                message={`Pindah penanda terakhir baca ke Ayat ${confirmModal?.ayah}?`}
+            />
+
+            <Toast
+                isVisible={toast?.isVisible || false}
+                message={toast?.message || ''}
+                type={toast?.type}
+                onClose={() => setToast(null)}
+            />
         </div>
     );
 }

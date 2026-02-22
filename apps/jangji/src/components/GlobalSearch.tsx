@@ -44,7 +44,7 @@ export default function GlobalSearch() {
                 <input
                     type="text"
                     className="block w-full rounded-full border border-secondary/50 bg-white py-2 pl-10 pr-10 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary dark:bg-zinc-800/10 dark:text-foreground"
-                    placeholder="Cari surat atau nomor..."
+                    placeholder="Cari surah atau nomor..."
                     value={query}
                     onFocus={() => setIsOpen(true)}
                     onChange={(e) => setQuery(e.target.value)}
