@@ -8,10 +8,14 @@ import WelcomeScreen from '@/components/WelcomeScreen';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import GlobalSearch from '@/components/GlobalSearch';
+import JuzList from '@/components/JuzList';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, Star, BookOpen } from 'lucide-react';
 
 export default function Home() {
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
+  const [activeTab, setActiveTab] = useState<'surah' | 'juz'>('surah');
 
   useEffect(() => {
     const welcomed = localStorage.getItem('jangji-welcomed');
@@ -36,14 +40,10 @@ export default function Home() {
                 <Image
                   src="/Jangji_Logo.png"
                   alt="Jangji Logo"
-                  width={32}
-                  height={32}
-                  className="h-8 w-auto object-contain rounded-md"
+                  width={60}
+                  height={60}
+                  className="h-16 w-auto object-contain rounded-lg"
                 />
-                <h1 className="hidden sm:block text-xl font-bold tracking-tight text-primary">Jangji</h1>
-              </div>
-              <div className="hidden md:block text-sm font-medium text-muted-foreground border-l border-secondary pl-4">
-                Jejak Ngaji
               </div>
             </div>
 
@@ -70,22 +70,51 @@ export default function Home() {
 
           <LastReadCard />
 
-          <section>
-            <div className="mb-6 flex items-center justify-between border-b border-border pb-2">
-              <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star text-yellow-500"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
-                Fav Ayat
-              </h3>
+          <div className="flex flex-col gap-12">
+            {/* Favorit Saya Section */}
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20">
+                  <Heart className="h-5 w-5 fill-current" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">Favorit Saya</h2>
+              </div>
+              <BookmarkList />
             </div>
-            <BookmarkList />
-          </section>
 
-          <section>
-            <div className="mb-6 border-b border-border pb-2">
-              <h3 className="text-xl font-semibold text-foreground">Daftar Surat</h3>
+            {/* Main List & Sections (Tabs) */}
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <div className="flex p-1 bg-secondary/30 rounded-xl border border-secondary/50">
+                  <button
+                    onClick={() => setActiveTab('surah')}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'surah' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-primary'}`}
+                  >
+                    Surah
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('juz')}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'juz' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-primary'}`}
+                  >
+                    Juz
+                  </button>
+                </div>
+                <h2 className="text-xl font-bold text-foreground">Daftar {activeTab === 'surah' ? 'Surah' : 'Juz'}</h2>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {activeTab === 'surah' ? <SurahList /> : <JuzList />}
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <SurahList />
-          </section>
+          </div>
         </main>
       </div>
     </>

@@ -15,14 +15,14 @@ export default function WelcomeScreen({ onStart }: WelcomeScreenProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#F5F7F5] dark:bg-[#0D0D0D] p-6 text-center"
+                className="fixed inset-0 z-[100] flex flex-col items-center bg-[#F5F7F5] dark:bg-[#0D0D0D] p-6 py-10 text-center overflow-y-auto sm:justify-center"
             >
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden">
-                    <span className="absolute top-10 -left-10 font-arabic text-[300px] leading-none text-primary">
+                    <span className="absolute top-10 -left-10 font-arabic text-[150px] sm:text-[300px] leading-none text-primary">
                         القرآن
                     </span>
-                    <span className="absolute -bottom-20 -right-20 font-arabic text-[400px] leading-none text-primary">
+                    <span className="absolute -bottom-20 -right-20 font-arabic text-[200px] sm:text-[400px] leading-none text-primary">
                         كريم
                     </span>
                 </div>
@@ -35,7 +35,7 @@ export default function WelcomeScreen({ onStart }: WelcomeScreenProps) {
                         transition={{ delay: 0.2, duration: 0.5, type: 'spring' }}
                         className="mb-8 flex flex-col items-center"
                     >
-                        <div className="relative h-24 w-24 mb-4 rounded-3xl bg-primary/10 p-4 shadow-inner">
+                        <div className="relative h-20 w-20 sm:h-24 sm:w-24 mb-4 rounded-3xl bg-primary/10 p-4 shadow-inner">
                             <Image
                                 src="/Jangji_Logo.png"
                                 alt="Jangji Logo"
@@ -43,7 +43,7 @@ export default function WelcomeScreen({ onStart }: WelcomeScreenProps) {
                                 className="object-contain p-2"
                             />
                         </div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-primary">Jangji</h1>
+                        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-primary">Jangji</h1>
                         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground mt-1">Jejak Ngaji</p>
                     </motion.div>
 
@@ -55,8 +55,8 @@ export default function WelcomeScreen({ onStart }: WelcomeScreenProps) {
                         className="space-y-6"
                     >
                         <div className="space-y-2">
-                            <h2 className="text-2xl font-bold text-foreground">Selamat Datang di Jangji</h2>
-                            <p className="text-muted-foreground">
+                            <h2 className="text-xl sm:text-2xl font-bold text-foreground">Selamat Datang di Jangji</h2>
+                            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                                 Aplikasi Al-Quran modern yang dirancang untuk menemani ibadah Anda di mana pun, kapan pun.
                             </p>
                         </div>
@@ -92,7 +92,7 @@ export default function WelcomeScreen({ onStart }: WelcomeScreenProps) {
                         </motion.button>
 
                         <p className="text-xs text-muted-foreground mt-4 opacity-60">
-                            Versi 1.0.0 • Karya Sedia Ecosystem
+                            Versi 1.0.0 • SejatiDimedia
                         </p>
                     </motion.div>
                 </div>

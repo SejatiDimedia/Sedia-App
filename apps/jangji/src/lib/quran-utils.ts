@@ -49,3 +49,27 @@ export function getJuzNumber(surahNomor: number, ayahNomor: number): number {
     }
     return 1;
 }
+
+export function getJuzInfo(juzNumber: number) {
+    const start = juzMappings.find(m => m.juz === juzNumber);
+    const next = juzMappings.find(m => m.juz === juzNumber + 1);
+
+    return {
+        start: start!,
+        end: next ? { surah: next.surah, ayah: next.ayah - 1 } : { surah: 114, ayah: 6 } // Simplified end for Juz 30
+    };
+}
+
+// Map of how many Ayat in each Surah (needed for Juz transitions)
+// This is a simplified version, ideally we get this from the API or a full static map.
+// For now, we'll use it to know which Surahs are involved in a Juz.
+export function getSurahsInJuz(juzNumber: number): number[] {
+    const startSurah = juzMappings[juzNumber - 1].surah;
+    const endSurah = juzNumber < 30 ? juzMappings[juzNumber].surah : 114;
+
+    const surahs = [];
+    for (let i = startSurah; i <= endSurah; i++) {
+        surahs.push(i);
+    }
+    return surahs;
+}

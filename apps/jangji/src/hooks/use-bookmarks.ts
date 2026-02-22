@@ -1,21 +1,28 @@
 import { useState, useEffect } from 'react';
 import { db, type LocalProgress } from '@/lib/dexie';
+import { authClient } from '@/lib/auth-client';
 
 export function useBookmarks() {
+    const { data: session } = authClient.useSession();
     const [bookmarks, setBookmarks] = useState<LocalProgress['bookmarks']>([]);
+
+    // Storage ID logic: use user ID if logged in, otherwise 'guest'
+    const storageId = session?.user?.id || 'guest';
 
     useEffect(() => {
         async function load() {
-            const p = await db.localProgress.get('default');
+            const p = await db.localProgress.get(storageId);
             if (p && p.bookmarks) {
                 setBookmarks(p.bookmarks);
+            } else {
+                setBookmarks([]);
             }
         }
         load();
-    }, []);
+    }, [storageId]);
 
     const toggleBookmark = async (surahNomor: number, ayahNomor: number) => {
-        const p = await db.localProgress.get('default');
+        const p = await db.localProgress.get(storageId);
         const currentBookmarks = p?.bookmarks || [];
 
         const existsIndex = currentBookmarks.findIndex(b => b.surah === surahNomor && b.ayah === ayahNomor);
@@ -27,7 +34,7 @@ export function useBookmarks() {
         }
 
         const newProgress: LocalProgress = {
-            ...(p || { id: 'default', lastSurah: 1, lastAyah: 1, lastReadAt: Date.now() }),
+            ...(p || { id: storageId, lastSurah: 1, lastAyah: 1, lastReadAt: Date.now(), bookmarks: [] }),
             bookmarks: currentBookmarks
         };
 

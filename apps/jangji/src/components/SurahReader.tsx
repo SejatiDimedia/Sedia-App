@@ -9,13 +9,17 @@ import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import { getJuzNumber } from '@/lib/quran-utils';
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { BookmarkCheck, Bookmark } from 'lucide-react';
 
 export default function SurahReader({ nomor }: { nomor: number }) {
     const { surah, loading, error } = useSurahDetail(nomor);
     const { progress, saveProgress } = useProgress();
     const { toggleBookmark, isBookmarked } = useBookmarks();
+
+    const [currentJuz, setCurrentJuz] = useState(nomor ? getJuzNumber(nomor, 1) : 1);
+    const [scrolled, setScrolled] = useState(false);
+    const observerRef = useRef<IntersectionObserver | null>(null);
 
     // Auto-scroll to hash if it exists after content is loaded
     useEffect(() => {
@@ -45,6 +49,36 @@ export default function SurahReader({ nomor }: { nomor: number }) {
         return () => window.removeEventListener('hashchange', handleScroll);
     }, [loading, surah]);
 
+    // Handle sticky Juz and scroll state
+    useEffect(() => {
+        const handleWindowScroll = () => {
+            setScrolled(window.scrollY > 300);
+        };
+
+        window.addEventListener('scroll', handleWindowScroll);
+
+        // Setup Intersection Observer to track Juz changes
+        if (!loading && surah?.ayat) {
+            observerRef.current = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const ayahNomor = parseInt(entry.target.getAttribute('data-ayah') || '1');
+                        const juz = getJuzNumber(surah.nomor, ayahNomor);
+                        setCurrentJuz(juz);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '-20% 0px -70% 0px' });
+
+            const ayahElements = document.querySelectorAll('.ayah-item');
+            ayahElements.forEach(el => observerRef.current?.observe(el));
+        }
+
+        return () => {
+            window.removeEventListener('scroll', handleWindowScroll);
+            observerRef.current?.disconnect();
+        };
+    }, [loading, surah]);
+
     if (loading) {
         return (
             <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
@@ -69,7 +103,15 @@ export default function SurahReader({ nomor }: { nomor: number }) {
     }
 
     return (
-        <div className="mx-auto max-w-3xl pb-24">
+        <div className="mx-auto max-w-3xl pb-24 px-4">
+            {/* Sticky Juz Indicator */}
+            <div className={`fixed top-20 right-4 z-40 transition-all duration-500 transform ${scrolled ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'}`}>
+                <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-xs font-bold shadow-lg backdrop-blur-md dark:bg-zinc-900/80 dark:border-primary/30">
+                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                    <span className="text-primary tracking-widest uppercase">Juz {currentJuz}</span>
+                </div>
+            </div>
+
             {/* Header */}
             <div className="mb-8 rounded-2xl bg-gradient-to-br from-primary to-[#2E7D32] p-6 text-center text-white shadow-lg">
                 <div className="flex justify-center gap-2 text-xs font-bold uppercase tracking-widest opacity-80 mb-2">
@@ -105,7 +147,8 @@ export default function SurahReader({ nomor }: { nomor: number }) {
                         <div
                             key={ayah.nomorAyat}
                             id={`ayah-${ayah.nomorAyat}`}
-                            className={`group relative border-b border-secondary/40 pb-8 last:border-0 dark:border-secondary/10 transition-colors scroll-mt-24 ${isLastRead ? 'bg-secondary/30 rounded-lg p-4 -mx-4 shadow-sm' : ''}`}
+                            data-ayah={ayah.nomorAyat}
+                            className={`ayah-item group relative border-b border-secondary/40 pb-8 last:border-0 dark:border-secondary/10 transition-colors scroll-mt-24 ${isLastRead ? 'bg-secondary/30 rounded-lg p-4 -mx-4 shadow-sm' : ''}`}
                         >
                             <div className="absolute left-0 top-0 flex flex-col gap-2 items-center">
                                 <div className="flex items-center justify-center h-8 w-8 rounded-full bg-secondary/80 text-sm font-bold text-primary dark:bg-secondary/20">

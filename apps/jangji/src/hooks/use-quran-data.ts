@@ -45,6 +45,27 @@ export function useSurahs() {
     return { surahs, loading, error };
 }
 
+export async function fetchSurahDetail(nomor: number): Promise<SurahDetail> {
+    // 1. Check local Dexie DB
+    const localSurah = await db.surahDetails.get(nomor);
+    if (localSurah) {
+        return localSurah;
+    }
+
+    // 2. Fetch from API
+    const res = await fetch(`${API_BASE_URL}/surat/${nomor}`);
+    if (!res.ok) throw new Error(`Failed to fetch surah ${nomor}`);
+
+    const json: QuranResponse<SurahDetail> = await res.json();
+
+    // 3. Save to Dexie
+    if (json.data) {
+        await db.surahDetails.put(json.data);
+        return json.data;
+    }
+    throw new Error(`No data for surah ${nomor}`);
+}
+
 export function useSurahDetail(nomor: number) {
     const [surah, setSurah] = useState<SurahDetail | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -56,26 +77,8 @@ export function useSurahDetail(nomor: number) {
         async function fetchDetail() {
             try {
                 setLoading(true);
-                // 1. Check local Dexie DB
-                const localSurah = await db.surahDetails.get(nomor);
-                if (localSurah) {
-                    setSurah(localSurah);
-                    setLoading(false);
-                    return;
-                }
-
-                // 2. Fetch from API
-                const res = await fetch(`${API_BASE_URL}/surat/${nomor}`);
-                if (!res.ok) throw new Error(`Failed to fetch surah ${nomor}`);
-
-                const json: QuranResponse<SurahDetail> = await res.json();
-
-                // 3. Save to Dexie and state
-                if (json.data) {
-                    // Add nomor explicitly as primary key if not mapped perfectly by Dexie though we used 'nomor'
-                    await db.surahDetails.put(json.data);
-                    setSurah(json.data);
-                }
+                const data = await fetchSurahDetail(nomor);
+                setSurah(data);
             } catch (err: unknown) {
                 console.error(`Error fetching surah ${nomor}:`, err);
                 setError(err instanceof Error ? err : new Error('Unknown error'));

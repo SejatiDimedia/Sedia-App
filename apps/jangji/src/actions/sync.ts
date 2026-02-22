@@ -30,10 +30,11 @@ export async function syncProgress(clientProgress: LocalProgress | null) {
                 return {
                     success: true,
                     data: {
-                        id: 'default',
+                        id: userId,
                         lastSurah: existing[0].lastSurah,
                         lastAyah: existing[0].lastAyah,
                         lastReadAt: existing[0].lastReadAt.getTime(),
+                        bookmarks: existing[0].bookmarks || [],
                     } as LocalProgress
                 }
             }
@@ -48,6 +49,7 @@ export async function syncProgress(clientProgress: LocalProgress | null) {
                 lastSurah: clientProgress.lastSurah,
                 lastAyah: clientProgress.lastAyah,
                 lastReadAt: new Date(clientProgress.lastReadAt),
+                bookmarks: clientProgress.bookmarks || [],
             };
 
             if (existing.length > 0) {
@@ -59,19 +61,18 @@ export async function syncProgress(clientProgress: LocalProgress | null) {
             return { success: true, data: clientProgress }; // Client wins
         }
 
-        // If server is newer and client sent an older timestamp, we should probably 
-        // force client to adopt server. (Wait, PRD says client-heavy, but 
-        // timestamp rules).
+        // 4. If server is newer, server wins
         if (existing.length > 0 && serverTimestamp > clientProgress.lastReadAt) {
             return {
                 success: true,
                 data: {
-                    id: 'default',
+                    id: userId,
                     lastSurah: existing[0].lastSurah,
                     lastAyah: existing[0].lastAyah,
                     lastReadAt: existing[0].lastReadAt.getTime(),
+                    bookmarks: existing[0].bookmarks || [],
                 } as LocalProgress
-            }; // Server wins
+            };
         }
 
         // Identical
