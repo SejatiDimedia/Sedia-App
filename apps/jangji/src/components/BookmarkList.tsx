@@ -2,7 +2,7 @@
 
 import { useBookmarks } from '@/hooks/use-bookmarks';
 import { useSurahs } from '@/hooks/use-quran-data';
-import Link from 'next/link';
+import Link from '@/components/OfflineLink';
 import { Star, ArrowRight, BookOpen } from 'lucide-react';
 
 export default function BookmarkList() {

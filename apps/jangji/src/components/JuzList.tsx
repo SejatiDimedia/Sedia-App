@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/OfflineLink';
 import { getJuzInfo, juzMappings } from '@/lib/quran-utils';
 
 export default function JuzList() {

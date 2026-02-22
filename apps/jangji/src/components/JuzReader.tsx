@@ -10,7 +10,7 @@ import { useBookmarks } from '@/hooks/use-bookmarks';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import { BookmarkCheck, Bookmark, ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import Link from 'next/link';
+import Link from '@/components/OfflineLink';
 import ConfirmModal from './ui/ConfirmModal';
 import Toast from './ui/Toast';
 

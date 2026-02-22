@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/dexie';
 import type { SurahBase } from '@/types/quran';
-import Link from 'next/link';
+import Link from '@/components/OfflineLink';
 import { Search, X } from 'lucide-react';
 import { getJuzNumber } from '@/lib/quran-utils';
 

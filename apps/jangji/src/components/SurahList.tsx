@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/OfflineLink';
 import { useSurahs } from '@/hooks/use-quran-data';
 import { getJuzNumber } from '@/lib/quran-utils';
 

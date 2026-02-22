@@ -8,7 +8,7 @@ import AyahAudioPlayer from '@/components/AyahAudioPlayer';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import { getJuzNumber } from '@/lib/quran-utils';
-import Link from 'next/link';
+import Link from '@/components/OfflineLink';
 import { useEffect, useState, useRef } from 'react';
 import { BookmarkCheck, Bookmark, Star, ChevronLeft, ArrowLeft } from 'lucide-react';
 import ConfirmModal from './ui/ConfirmModal';

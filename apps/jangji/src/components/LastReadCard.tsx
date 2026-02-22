@@ -2,7 +2,7 @@
 
 import { useProgress } from '@/hooks/use-progress';
 import { useSurahs } from '@/hooks/use-quran-data';
-import Link from 'next/link';
+import Link from '@/components/OfflineLink';
 import { BookOpen, ArrowRight, LayoutGrid, List } from 'lucide-react';
 import { getJuzNumber } from '@/lib/quran-utils';
 
