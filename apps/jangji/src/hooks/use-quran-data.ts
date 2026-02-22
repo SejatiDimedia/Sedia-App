@@ -99,6 +99,15 @@ export function useOfflineSync() {
     const [currentSurah, setCurrentSurah] = useState<string>('');
     const [isComplete, setIsComplete] = useState(false);
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const isSynced = localStorage.getItem('jangji_offline_synced');
+            if (isSynced === 'true') {
+                setIsComplete(true);
+            }
+        }
+    }, []);
+
     const syncAll = async (surahList: SurahBase[]) => {
         if (isSyncing) return;
         setIsSyncing(true);
@@ -106,22 +115,50 @@ export function useOfflineSync() {
         setProgress(0);
 
         try {
+            const totalSteps = surahList.length + 30;
+            let currentStep = 0;
+
+            // 1. Sync all 114 Surahs (Data + Route)
             for (let i = 0; i < surahList.length; i++) {
                 const s = surahList[i];
                 setCurrentSurah(s.namaLatin);
 
-                // Fetch and save (fetchSurahDetail already handles Dexie save)
+                // Fetch and save API Data
                 await fetchSurahDetail(s.nomor);
 
-                const percent = Math.round(((i + 1) / surahList.length) * 100);
-                setProgress(percent);
+                // Pre-cache Next.js HTML/RSC Payload for offline routing
+                try { await fetch(`/surah/${s.nomor}`); } catch (e) { }
 
-                // Small delay to be nice to API
+                currentStep++;
+                setProgress(Math.round((currentStep / totalSteps) * 100));
+
+                // Small delay to be polite to API and Browser
                 if (i % 5 === 0) {
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
             }
+
+            // 2. Sync all 30 Juz (Route only, data derived locally)
+            for (let i = 1; i <= 30; i++) {
+                setCurrentSurah(`Juz ${i}`);
+
+                // Pre-cache Next.js HTML/RSC Payload for offline routing
+                try { await fetch(`/juz/${i}`); } catch (e) { }
+
+                currentStep++;
+                setProgress(Math.round((currentStep / totalSteps) * 100));
+
+                if (i % 5 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+            }
+
             setIsComplete(true);
+
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('jangji_offline_synced', 'true');
+            }
+
         } catch (err) {
             console.error('Offline Sync Error:', err);
         } finally {

@@ -45,7 +45,7 @@ const withPWA = withPWAInit({
         options: {
           cacheName: 'pages-cache',
           expiration: {
-            maxEntries: 50,
+            maxEntries: 250, // Enough to hold 114 Surahs, 30 Juz, and general layout chunks
           },
         },
       },

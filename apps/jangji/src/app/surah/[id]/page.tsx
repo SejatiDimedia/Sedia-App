@@ -3,8 +3,12 @@ import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 
-// Optional: Provide generateStaticParams if we want to pre-render the paths.
-// But since data is client-side/Dexie driven, we can just use dynamic client fetching.
+// Provide generateStaticParams to pre-render paths for offline PWA support.
+export async function generateStaticParams() {
+    return Array.from({ length: 114 }, (_, i) => ({
+        id: (i + 1).toString(),
+    }));
+}
 
 export default async function SurahPage({
     params,
