@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-arabic: "KFGQPC Uthmanic Script HAFS", "LPMQ IsepMisbah", "Traditional Arabic", Arial, sans-serif;
+}
+
+@layer base {
+  .font-arabic {
+    font-family: 'Amiri', 'Meiryo', 'Arial', serif;
+  }
+
+  @keyframes highlightFade {
+    0% {
+      background-color: rgba(46, 125, 50, 0.2);
+    }
+
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .highlight-ayah {
+    animation: highlightFade 3s ease-out forwards;
+    border-radius: 0.5rem;
+  }
+
+  :root {
+    --background: #F5F7F5;
+    --foreground: #121212;
+    --primary: #1B5E20;
+    --secondary: #E8F5E9;
+  }
+
+  .dark {
+    --background: #0D0D0D;
+    --foreground: #F5F7F5;
+    --primary: #81C784;
+    --secondary: #1B5E20;
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased;
+  }
+}
