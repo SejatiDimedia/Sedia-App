@@ -13,6 +13,7 @@ export default function OfflineLink({ href, children, className, onClick, ...pro
 
     useEffect(() => {
         // Initialize state purely on the client
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsOffline(!navigator.onLine);
 
         const handleOffline = () => setIsOffline(true);

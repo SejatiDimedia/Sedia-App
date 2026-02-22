@@ -1,26 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import SurahList from '@/components/SurahList';
 import BookmarkList from '@/components/BookmarkList';
 import LastReadCard from '@/components/LastReadCard';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import GlobalSearch from '@/components/GlobalSearch';
-import JuzList from '@/components/JuzList';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Star, BookOpen } from 'lucide-react';
+import { Heart, BookOpen, Clock, Navigation } from 'lucide-react';
 import OfflineSyncManager from '@/components/OfflineSyncManager';
-import PrayerTimesCard from '@/components/PrayerTimesCard';
+import Link from '@/components/OfflineLink';
 
 export default function Home() {
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'surah' | 'juz'>('surah');
 
   useEffect(() => {
     const welcomed = localStorage.getItem('jangji-welcomed');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowWelcome(!welcomed);
   }, []);
 
@@ -30,6 +27,30 @@ export default function Home() {
   };
 
   if (showWelcome === null) return null; // Prevent flicker
+
+  const menus = [
+    {
+      title: "Al-Qur'an",
+      subtitle: "Baca Surat & Juz",
+      href: "/quran",
+      icon: BookOpen,
+      color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+    },
+    {
+      title: "Jadwal Sholat",
+      subtitle: "Waktu Harian",
+      href: "/sholat",
+      icon: Clock,
+      color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 hover:bg-blue-500/20"
+    },
+    {
+      title: "Arah Kiblat",
+      subtitle: "Kompas Pintar",
+      href: "/kiblat",
+      icon: Navigation,
+      color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20 hover:bg-purple-500/20"
+    }
+  ];
 
   return (
     <>
@@ -60,7 +81,7 @@ export default function Home() {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-8 sm:px-6 space-y-12">
+        <main className="container mx-auto px-4 py-8 sm:px-6 space-y-10">
           <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-[#2E7D32] to-[#1B5E20] p-8 text-center sm:p-12 shadow-xl shadow-primary/10 border border-white/10">
             {/* Decorative Background Arabic Pattern */}
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.07] pointer-events-none select-none">
@@ -75,16 +96,35 @@ export default function Home() {
               </div>
               <div className="space-y-4">
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl drop-shadow-sm">
-                  Aplikasi Baca Al-Quran
+                  Pusat Ibadah Harian
                 </h2>
                 <p className="mx-auto max-w-xl text-base sm:text-lg text-white/90 leading-relaxed font-medium">
-                  Baca dan pelajari Al-Quran dengan mudah. Disertai terjemahan, transliterasi Latin, dan dapat diakses sepenuhnya secara offline.
+                  Baca Al-Quran, pantau jadwal sholat, tentukan arah kiblat, dan evaluasi progres ibadah Anda dengan mudah di manapun.
                 </p>
               </div>
             </div>
           </section>
 
-          <PrayerTimesCard />
+          {/* App Menu Grid */}
+          <section className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {menus.map((menu) => {
+              const Icon = menu.icon;
+              return (
+                <Link
+                  key={menu.title}
+                  href={menu.href}
+                  className={`flex flex-col items-center justify-center p-6 rounded-3xl border transition-all duration-300 text-center ${menu.color} shadow-sm`}
+                >
+                  <div className="mb-4 flex items-center justify-center h-14 w-14 rounded-2xl bg-white/50 dark:bg-black/20 shadow-inner border border-white/10">
+                    <Icon className="h-7 w-7" />
+                  </div>
+                  <h3 className="font-bold text-lg mb-1">{menu.title}</h3>
+                  <p className="text-sm font-medium opacity-80">{menu.subtitle}</p>
+                </Link>
+              );
+            })}
+          </section>
+
           <OfflineSyncManager />
           <LastReadCard />
 
@@ -98,39 +138,6 @@ export default function Home() {
                 <h2 className="text-xl font-bold text-foreground">Favorit Saya</h2>
               </div>
               <BookmarkList />
-            </div>
-
-            {/* Main List & Sections (Tabs) */}
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <div className="flex p-1 bg-secondary/30 rounded-xl border border-secondary/50">
-                  <button
-                    onClick={() => setActiveTab('surah')}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'surah' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-primary'}`}
-                  >
-                    Surah
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('juz')}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'juz' ? 'bg-primary text-white shadow-md' : 'text-muted-foreground hover:text-primary'}`}
-                  >
-                    Juz
-                  </button>
-                </div>
-                <h2 className="text-xl font-bold text-foreground">Daftar {activeTab === 'surah' ? 'Surah' : 'Juz'}</h2>
-              </div>
-
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {activeTab === 'surah' ? <SurahList /> : <JuzList />}
-                </motion.div>
-              </AnimatePresence>
             </div>
           </div>
         </main>

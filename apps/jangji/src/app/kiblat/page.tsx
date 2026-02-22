@@ -1,0 +1,24 @@
+'use client';
+
+import { ChevronLeft } from 'lucide-react';
+import Link from '@/components/OfflineLink';
+import QiblaCompass from '@/components/QiblaCompass';
+
+export default function KiblatPage() {
+    return (
+        <div className="min-h-screen bg-background text-foreground transition-colors dark:bg-background/95">
+            <header className="sticky top-0 z-20 w-full border-b border-secondary/30 bg-background/80 py-4 backdrop-blur-md dark:bg-background/80">
+                <div className="container mx-auto px-4 sm:px-6 flex items-center gap-4">
+                    <Link href="/" className="rounded-full p-2 hover:bg-secondary/20 transition-colors">
+                        <ChevronLeft className="h-6 w-6 text-foreground" />
+                    </Link>
+                    <h1 className="text-xl font-bold text-foreground">Arah Kiblat</h1>
+                </div>
+            </header>
+
+            <main className="container mx-auto px-4 py-8 sm:px-6 max-w-xl">
+                <QiblaCompass />
+            </main>
+        </div>
+    );
+}
