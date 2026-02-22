@@ -127,7 +127,11 @@ export function useOfflineSync() {
                 await fetchSurahDetail(s.nomor);
 
                 // Pre-cache Next.js HTML/RSC Payload for offline routing
-                try { await fetch(`/surah/${s.nomor}`); } catch (e) { }
+                // We must explicitly fetch the RSC payload since App Router client-side navigation relies on it.
+                try {
+                    await fetch(`/surah/${s.nomor}`);
+                    await fetch(`/surah/${s.nomor}`, { headers: { 'RSC': '1' } });
+                } catch (e) { }
 
                 currentStep++;
                 setProgress(Math.round((currentStep / totalSteps) * 100));
@@ -143,7 +147,10 @@ export function useOfflineSync() {
                 setCurrentSurah(`Juz ${i}`);
 
                 // Pre-cache Next.js HTML/RSC Payload for offline routing
-                try { await fetch(`/juz/${i}`); } catch (e) { }
+                try {
+                    await fetch(`/juz/${i}`);
+                    await fetch(`/juz/${i}`, { headers: { 'RSC': '1' } });
+                } catch (e) { }
 
                 currentStep++;
                 setProgress(Math.round((currentStep / totalSteps) * 100));
