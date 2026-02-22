@@ -50,8 +50,8 @@ export function UserAuthMenu() {
                                 <User className="h-5 w-5" />
                             </div>
                         )}
-                        <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white dark:bg-zinc-800 border border-secondary/30 shadow-sm sm:hidden">
-                            <ChevronDown className={`h-2.5 w-2.5 text-zinc-900 dark:text-white transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white border border-secondary/30 shadow-sm sm:hidden">
+                            <ChevronDown className={`h-2.5 w-2.5 text-primary transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                         </div>
                     </div>
                 </div>

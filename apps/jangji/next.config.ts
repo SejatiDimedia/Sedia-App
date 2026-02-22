@@ -21,8 +21,22 @@ const withPWA = withPWAInit({
           cacheName: 'api-cache',
           expiration: {
             maxEntries: 100,
-            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            maxAgeSeconds: 60 * 60 * 24 * 30,
           },
+        },
+      },
+      {
+        urlPattern: /\/_next\/data\/.*/i,
+        handler: 'StaleWhileRevalidate',
+        options: {
+          cacheName: 'next-data',
+        },
+      },
+      {
+        urlPattern: /\/_next\/static\/.*/i,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: 'static-assets',
         },
       },
       {

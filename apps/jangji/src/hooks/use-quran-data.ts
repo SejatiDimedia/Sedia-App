@@ -92,3 +92,42 @@ export function useSurahDetail(nomor: number) {
 
     return { surah, loading, error };
 }
+
+export function useOfflineSync() {
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [currentSurah, setCurrentSurah] = useState<string>('');
+    const [isComplete, setIsComplete] = useState(false);
+
+    const syncAll = async (surahList: SurahBase[]) => {
+        if (isSyncing) return;
+        setIsSyncing(true);
+        setIsComplete(false);
+        setProgress(0);
+
+        try {
+            for (let i = 0; i < surahList.length; i++) {
+                const s = surahList[i];
+                setCurrentSurah(s.namaLatin);
+
+                // Fetch and save (fetchSurahDetail already handles Dexie save)
+                await fetchSurahDetail(s.nomor);
+
+                const percent = Math.round(((i + 1) / surahList.length) * 100);
+                setProgress(percent);
+
+                // Small delay to be nice to API
+                if (i % 5 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+            setIsComplete(true);
+        } catch (err) {
+            console.error('Offline Sync Error:', err);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    return { syncAll, isSyncing, progress, currentSurah, isComplete };
+}
