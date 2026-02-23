@@ -21,7 +21,7 @@ export function useBookmarks() {
         load();
     }, [storageId]);
 
-    const toggleBookmark = async (surahNomor: number, ayahNomor: number) => {
+    const toggleBookmark = async (surahNomor: number, ayahNomor: number, category: string = 'Umum') => {
         const p = await db.localProgress.get(storageId);
         const currentBookmarks = p?.bookmarks || [];
 
@@ -30,7 +30,7 @@ export function useBookmarks() {
         if (existsIndex >= 0) {
             currentBookmarks.splice(existsIndex, 1);
         } else {
-            currentBookmarks.push({ surah: surahNomor, ayah: ayahNomor, timestamp: Date.now() });
+            currentBookmarks.push({ surah: surahNomor, ayah: ayahNomor, timestamp: Date.now(), category });
         }
 
         const newProgress: LocalProgress = {

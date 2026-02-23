@@ -1,6 +1,7 @@
 'use client';
 
 import PrayerTimesCard from '@/components/PrayerTimesCard';
+import NotificationSettings from '@/components/NotificationSettings';
 import QiblaCompass from '@/components/QiblaCompass';
 import { ChevronLeft } from 'lucide-react';
 import Link from '@/components/OfflineLink';
@@ -19,6 +20,7 @@ export default function SholatPage() {
 
             <main className="container mx-auto px-4 py-8 sm:px-6 max-w-2xl space-y-12">
                 <PrayerTimesCard />
+                <NotificationSettings />
 
                 <div className="pt-6 border-t border-secondary/30">
                     <QiblaCompass />

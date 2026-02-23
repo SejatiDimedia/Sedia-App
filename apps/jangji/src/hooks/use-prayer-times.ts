@@ -14,7 +14,14 @@ export interface PrayerData {
     date: {
         readable: string;
         gregorian: { date: string; weekday: { en: string } };
-        hijri: { date: string; weekday: { en: string; ar?: string } };
+        hijri: {
+            date: string;
+            day: string;
+            month: { number: number; en: string; ar?: string };
+            year: string;
+            weekday: { en: string; ar?: string };
+            holidays: string[];
+        };
     };
 }
 
@@ -103,7 +110,9 @@ export function usePrayerTimes() {
             const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`);
             const data = await res.json();
             if (data.city || data.locality) {
-                setLocationName(data.city || data.locality);
+                const name = data.city || data.locality;
+                setLocationName(name);
+                localStorage.setItem('jangji_location_name', name);
             }
         } catch {
             console.error('Reverse geocoding failed');

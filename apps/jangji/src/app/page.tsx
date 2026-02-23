@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import BookmarkList from '@/components/BookmarkList';
 import LastReadCard from '@/components/LastReadCard';
 import WelcomeScreen from '@/components/WelcomeScreen';
+import HijriCalendarCard from '@/components/HijriCalendarCard';
+import KhatamTrackerCard from '@/components/KhatamTrackerCard';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import GlobalSearch from '@/components/GlobalSearch';
 import Image from 'next/image';
-import { Heart, BookOpen, Clock } from 'lucide-react';
+import { Heart, BookOpen, Clock, Navigation } from 'lucide-react';
 import OfflineSyncManager from '@/components/OfflineSyncManager';
 import Link from '@/components/OfflineLink';
 
@@ -44,6 +46,14 @@ export default function Home() {
       icon: Clock,
       iconColor: "text-primary dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10",
       hoverRing: "group-hover:ring-primary/30 dark:group-hover:ring-blue-500/30",
+    },
+    {
+      title: "Dzikir & Doa",
+      subtitle: "Tasbih & Harian",
+      href: "/doa",
+      icon: Navigation,
+      iconColor: "text-primary dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10",
+      hoverRing: "group-hover:ring-orange-200 dark:group-hover:ring-orange-500/30",
     }
   ];
 
@@ -101,7 +111,7 @@ export default function Home() {
           </section>
 
           {/* App Menu Grid */}
-          <section className="grid grid-cols-2 gap-4 sm:gap-6">
+          <section className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             {menus.map((menu) => {
               const Icon = menu.icon;
               return (
@@ -121,6 +131,8 @@ export default function Home() {
           </section>
 
           <OfflineSyncManager />
+          <KhatamTrackerCard />
+          <HijriCalendarCard />
           <LastReadCard />
 
           <div className="flex flex-col gap-12">

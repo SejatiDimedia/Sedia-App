@@ -9,10 +9,11 @@ import { useProgress } from '@/hooks/use-progress';
 import { useBookmarks } from '@/hooks/use-bookmarks';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
-import { BookmarkCheck, Bookmark, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { BookmarkCheck, Bookmark, ChevronLeft, ChevronRight, Star, Languages, ChevronUp, Share2, Brain } from 'lucide-react';
 import Link from '@/components/OfflineLink';
 import ConfirmModal from './ui/ConfirmModal';
 import Toast from './ui/Toast';
+import ShareAyatModal from './ShareAyatModal';
 
 export default function JuzReader({ juzId }: { juzId: number }) {
     const [surahs, setSurahs] = useState<SurahDetail[]>([]);
@@ -27,6 +28,57 @@ export default function JuzReader({ juzId }: { juzId: number }) {
     // UI state
     const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; surah: number; ayah: number } | null>(null);
     const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: 'success' | 'error' } | null>(null);
+    const [categoryPicker, setCategoryPicker] = useState<{ surah: number; ayah: number } | null>(null);
+    const [shareModal, setShareModal] = useState<{ surah: string; ayah: number; arabic: string; translation: string; latin?: string } | null>(null);
+    const [mushafMode, setMushafMode] = useState(false);
+
+    // Memorization Mode State
+    const [hapalanMode, setHapalanMode] = useState(false);
+    const [hapalanConfig, setHapalanConfig] = useState<{ hideArabic: boolean; hideTranslation: boolean }>({
+        hideArabic: false,
+        hideTranslation: true
+    });
+    const [revealedAyahs, setRevealedAyahs] = useState<Record<string, { arabic?: boolean; translation?: boolean }>>({});
+
+    // Load Mushaf Mode preference
+    useEffect(() => {
+        const stored = localStorage.getItem('jangji-mushaf-mode');
+        if (stored === 'true') setMushafMode(true);
+    }, []);
+
+    const toggleMushafMode = () => {
+        const newVal = !mushafMode;
+        setMushafMode(newVal);
+        localStorage.setItem('jangji-mushaf-mode', newVal.toString());
+        if (newVal && hapalanMode) setHapalanMode(false);
+        setToast({
+            isVisible: true,
+            message: newVal ? 'Mushaf Mode Aktif (Hanya Arab)' : 'Mode Terjemahan Aktif',
+            type: 'success'
+        });
+    };
+
+    const toggleHapalanMode = () => {
+        const newVal = !hapalanMode;
+        setHapalanMode(newVal);
+        if (newVal && mushafMode) setMushafMode(false);
+        setRevealedAyahs({});
+        setToast({
+            isVisible: true,
+            message: newVal ? 'Mode Hapalan Aktif' : 'Mode Hapalan Dinonaktifkan',
+            type: 'success'
+        });
+    };
+
+    const toggleReveal = (key: string, type: 'arabic' | 'translation') => {
+        setRevealedAyahs(prev => ({
+            ...prev,
+            [key]: {
+                ...prev[key],
+                [type]: !prev[key]?.[type]
+            }
+        }));
+    };
 
     const handleSaveProgress = (surahNomor: number, ayahNomor: number) => {
         setConfirmModal({ isOpen: true, surah: surahNomor, ayah: ayahNomor });
@@ -215,6 +267,26 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={toggleMushafMode}
+                            title={mushafMode ? "Tampilkan Terjemahan" : "Mushaf Mode (Hanya Arab)"}
+                            className={`p-2 rounded-xl transition-all ${mushafMode
+                                ? 'bg-primary text-white shadow-md'
+                                : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
+                                }`}
+                        >
+                            <Languages className="h-5 w-5" />
+                        </button>
+                        <button
+                            onClick={toggleHapalanMode}
+                            title="Mode Hapalan"
+                            className={`p-2 rounded-xl transition-all ${hapalanMode
+                                ? 'bg-primary text-white shadow-md'
+                                : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
+                                }`}
+                        >
+                            <Brain className="h-5 w-5" />
+                        </button>
                         <ThemeToggle />
                         <UserAuthMenu />
                     </div>
@@ -237,6 +309,35 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                         <p className="text-white/80 text-sm font-medium">Dimulai dari <span className="text-white font-bold">{juzAyat[0]?.surahNama}</span> ayat {juzAyat[0]?.ayah.nomorAyat}</p>
                     </div>
                 </div>
+
+                {/* Memorization Controls (when active) */}
+                {hapalanMode && (
+                    <div className="mb-10 p-5 rounded-3xl bg-primary/5 border border-primary/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                                <Brain className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-primary">Mode Hapalan</h4>
+                                <p className="text-[10px] font-medium text-primary/60 uppercase tracking-widest">Ketuk teks untuk melihat</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 p-1 bg-primary/5 rounded-2xl border border-primary/10">
+                            <button
+                                onClick={() => setHapalanConfig(prev => ({ ...prev, hideArabic: !prev.hideArabic }))}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${hapalanConfig.hideArabic ? 'bg-primary text-white shadow-sm' : 'text-primary/40 hover:text-primary/60'}`}
+                            >
+                                Arab
+                            </button>
+                            <button
+                                onClick={() => setHapalanConfig(prev => ({ ...prev, hideTranslation: !prev.hideTranslation }))}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${hapalanConfig.hideTranslation ? 'bg-primary text-white shadow-sm' : 'text-primary/40 hover:text-primary/60'}`}
+                            >
+                                Latin & Terjemahan
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Ayat List */}
                 <div className="space-y-12">
@@ -272,23 +373,52 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                                         </div>
 
                                         <div className="flex-1 text-right pl-12 pt-2">
-                                            <p className="font-arabic text-3xl leading-[2.5] text-foreground opacity-100 break-words">
+                                            <p
+                                                onClick={() => hapalanMode && hapalanConfig.hideArabic && toggleReveal(`${surahNomor}-${ayah.nomorAyat}`, 'arabic')}
+                                                className={`font-arabic leading-[2.5] text-foreground break-words transition-all duration-500 cursor-pointer ${mushafMode ? 'text-4xl sm:text-5xl py-8' : 'text-3xl'} ${hapalanMode && hapalanConfig.hideArabic && !revealedAyahs[`${surahNomor}-${ayah.nomorAyat}`]?.arabic
+                                                    ? 'blur-lg opacity-40 select-none scale-[0.98] origin-right'
+                                                    : 'opacity-100'
+                                                    }`}
+                                            >
                                                 {ayah.teksArab}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <p className="text-primary/80 font-medium text-sm leading-relaxed tracking-wide">
-                                            {ayah.teksLatin}
-                                        </p>
-                                        <p className="text-muted-foreground text-[15px] leading-relaxed">
-                                            {ayah.teksIndonesia}
-                                        </p>
-                                        <div className="mt-6 flex items-center gap-3">
-                                            <AyahAudioPlayer audioUrl={ayah.audio['05']} />
+                                    {!mushafMode && (
+                                        <div className="space-y-4">
+                                            <div
+                                                onClick={() => hapalanMode && hapalanConfig.hideTranslation && toggleReveal(`${surahNomor}-${ayah.nomorAyat}`, 'translation')}
+                                                className={`transition-all duration-500 cursor-pointer ${hapalanMode && hapalanConfig.hideTranslation && !revealedAyahs[`${surahNomor}-${ayah.nomorAyat}`]?.translation
+                                                        ? 'blur-md opacity-30 select-none'
+                                                        : 'opacity-100'
+                                                    }`}
+                                            >
+                                                <p className="text-primary/80 font-medium text-sm leading-relaxed tracking-wide mb-3">
+                                                    {ayah.teksLatin}
+                                                </p>
+                                                <p className="text-muted-foreground text-[15px] leading-relaxed">
+                                                    {ayah.teksIndonesia}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-6 flex items-center gap-3">
+                                        <AyahAudioPlayer audioUrl={ayah.audio['05']} />
+                                        <div className="relative">
                                             <button
-                                                onClick={() => toggleBookmark(surahNomor, ayah.nomorAyat)}
+                                                onClick={() => {
+                                                    if (bookmarked) {
+                                                        toggleBookmark(surahNomor, ayah.nomorAyat);
+                                                    } else {
+                                                        setCategoryPicker({ surah: surahNomor, ayah: ayah.nomorAyat });
+                                                    }
+                                                }}
+                                                onContextMenu={(e) => {
+                                                    e.preventDefault();
+                                                    setCategoryPicker({ surah: surahNomor, ayah: ayah.nomorAyat });
+                                                }}
                                                 title="Tandai Favorit"
                                                 className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors ${bookmarked
                                                     ? 'text-yellow-500 bg-yellow-500/10'
@@ -297,25 +427,77 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                                             >
                                                 <Star className="h-4 w-4" fill={bookmarked ? "currentColor" : "none"} />
                                             </button>
-                                            <button
-                                                onClick={() => handleSaveProgress(surahNomor, ayah.nomorAyat)}
-                                                title="Tandai Terakhir Dibaca"
-                                                className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${isLastRead
-                                                    ? 'bg-primary text-white shadow-md scale-110'
-                                                    : 'text-muted-foreground hover:bg-secondary hover:text-primary dark:hover:bg-secondary/20'
-                                                    }`}
-                                            >
-                                                {isLastRead ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
-                                            </button>
+
+                                            {categoryPicker?.ayah === ayah.nomorAyat && categoryPicker?.surah === surahNomor && (
+                                                <div className="absolute left-0 bottom-full mb-2 z-50 bg-background border border-secondary/50 rounded-2xl p-2 shadow-xl flex flex-col gap-1 min-w-[120px]">
+                                                    {['Umum', 'Doa', 'Motivasi', 'Hukum', 'Indah'].map(cat => (
+                                                        <button
+                                                            key={cat}
+                                                            onClick={() => {
+                                                                toggleBookmark(surahNomor, ayah.nomorAyat, cat);
+                                                                setCategoryPicker(null);
+                                                            }}
+                                                            className="text-left px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-primary/10 hover:text-primary transition-colors"
+                                                        >
+                                                            {cat}
+                                                        </button>
+                                                    ))}
+                                                    <div className="h-px bg-secondary/30 mx-2 my-1"></div>
+                                                    <button
+                                                        onClick={() => setCategoryPicker(null)}
+                                                        className="text-left px-3 py-1.5 rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors"
+                                                    >
+                                                        Batal
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
+                                        <button
+                                            onClick={() => handleSaveProgress(surahNomor, ayah.nomorAyat)}
+                                            title="Tandai Terakhir Dibaca"
+                                            className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${isLastRead
+                                                ? 'bg-primary text-white shadow-md scale-110'
+                                                : 'text-muted-foreground hover:bg-secondary hover:text-primary dark:hover:bg-secondary/20'
+                                                }`}
+                                        >
+                                            {isLastRead ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                const surahName = surahs.find(s => s.nomor === surahNomor)?.namaLatin || 'Surah';
+                                                setShareModal({
+                                                    surah: surahName,
+                                                    ayah: ayah.nomorAyat,
+                                                    arabic: ayah.teksArab,
+                                                    translation: ayah.teksIndonesia,
+                                                    latin: ayah.teksLatin
+                                                });
+                                            }}
+                                            title="Bagikan Ayat"
+                                            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-primary transition-colors dark:hover:bg-secondary/20"
+                                        >
+                                            <Share2 className="h-4 w-4" />
+                                        </button>
                                     </div>
-
-
                                 </div>
                             </div>
                         );
                     })}
                 </div>
+
+                {shareModal && (
+                    <ShareAyatModal
+                        isOpen={!!shareModal}
+                        onClose={() => setShareModal(null)}
+                        surahName={shareModal.surah}
+                        ayahNumber={shareModal.ayah}
+                        arabicText={shareModal.arabic}
+                        translation={shareModal.translation}
+                        latinText={shareModal.latin}
+                    />
+                )}
+
 
                 {/* Navigation */}
                 <div className="mt-12 flex items-center justify-between border-t border-secondary/30 pt-8">
@@ -355,6 +537,6 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                 type={toast?.type}
                 onClose={() => setToast(null)}
             />
-        </div>
+        </div >
     );
 }

@@ -44,6 +44,7 @@ export const viewport: Viewport = {
 
 import { Providers } from "@/components/auth/Providers";
 import PWARegistry from "@/components/PWARegistry";
+import GlobalScheduler from "@/components/GlobalScheduler";
 
 export default function RootLayout({
   children,
@@ -57,6 +58,7 @@ export default function RootLayout({
       >
         <Providers>
           <PWARegistry />
+          <GlobalScheduler />
           {children}
         </Providers>
       </body>

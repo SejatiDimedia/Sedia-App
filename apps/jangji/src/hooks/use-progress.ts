@@ -23,6 +23,7 @@ export function useProgress() {
     }, [storageId]);
 
     const saveProgress = async (surahNomor: number, ayahNomor: number) => {
+        const today = new Date().toISOString().split('T')[0];
         const newProgress: LocalProgress = {
             id: storageId,
             lastSurah: surahNomor,
@@ -32,6 +33,23 @@ export function useProgress() {
         };
 
         await db.localProgress.put(newProgress);
+
+        // Update reading history
+        const history = await db.readingHistory.where('[userId+date]').equals([storageId, today]).first();
+        if (history) {
+            await db.readingHistory.update(history.id!, {
+                ayahCount: history.ayahCount + 1,
+                surahsRead: Array.from(new Set([...history.surahsRead, surahNomor]))
+            });
+        } else {
+            await db.readingHistory.add({
+                userId: storageId,
+                date: today,
+                ayahCount: 1,
+                surahsRead: [surahNomor]
+            });
+        }
+
         setProgress(newProgress);
 
         // Potentially trigger a background sync if online

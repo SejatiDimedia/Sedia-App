@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useMemo } from 'react';
+
 import { useBookmarks } from '@/hooks/use-bookmarks';
 import { useSurahs } from '@/hooks/use-quran-data';
 import Link from '@/components/OfflineLink';
@@ -8,6 +10,20 @@ import { Star, ArrowRight, BookOpen } from 'lucide-react';
 export default function BookmarkList() {
     const { bookmarks } = useBookmarks();
     const { surahs } = useSurahs();
+    const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
+
+    const categories = useMemo(() => {
+        const cats = new Set<string>(['Semua']);
+        bookmarks.forEach(b => {
+            if (b.category) cats.add(b.category);
+        });
+        return Array.from(cats);
+    }, [bookmarks]);
+
+    const filteredBookmarks = useMemo(() => {
+        if (selectedCategory === 'Semua') return bookmarks;
+        return bookmarks.filter(b => b.category === selectedCategory || (selectedCategory === 'Umum' && !b.category));
+    }, [bookmarks, selectedCategory]);
 
     if (!bookmarks || bookmarks.length === 0) {
         return (
@@ -24,52 +40,70 @@ export default function BookmarkList() {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {bookmarks.sort((a, b) => b.timestamp - a.timestamp).map((bookmark) => {
-                const surah = surahs.find(s => s.nomor === bookmark.surah);
-                if (!surah) return null;
-
-                return (
-                    <Link
-                        key={`${bookmark.surah}-${bookmark.ayah}`}
-                        href={`/surah/${bookmark.surah}#ayah-${bookmark.ayah}`}
-                        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-secondary/50 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl dark:border-secondary/10 dark:bg-white/5 dark:hover:bg-white/[0.08]"
+        <div className="space-y-6">
+            {/* Category Filter */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+                {categories.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-bold transition-all ${selectedCategory === cat
+                            ? 'bg-primary text-white shadow-md'
+                            : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+                            }`}
                     >
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                                    <Star className="h-6 w-6 fill-current" />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-bold text-foreground">
-                                        {surah.namaLatin}
-                                    </h4>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                        <span>Ayat {bookmark.ayah}</span>
-                                        <span className="h-1 w-1 rounded-full bg-muted-foreground/30"></span>
-                                        <span className="text-xs">{surah.arti}</span>
+                        {cat}
+                    </button>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {filteredBookmarks.sort((a, b) => b.timestamp - a.timestamp).map((bookmark) => {
+                    const surah = surahs.find(s => s.nomor === bookmark.surah);
+                    if (!surah) return null;
+
+                    return (
+                        <Link
+                            key={`${bookmark.surah}-${bookmark.ayah}`}
+                            href={`/surah/${bookmark.surah}#ayah-${bookmark.ayah}`}
+                            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-secondary/50 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:shadow-xl dark:border-secondary/10 dark:bg-white/5 dark:hover:bg-white/[0.08]"
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                                        <Star className="h-6 w-6 fill-current" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold text-foreground">
+                                            {surah.namaLatin}
+                                        </h4>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <span>Ayat {bookmark.ayah}</span>
+                                            <span className="h-1 w-1 rounded-full bg-muted-foreground/30"></span>
+                                            <span className="text-xs">{bookmark.category || 'Umum'}</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <div className="font-arabic text-xl opacity-20 transition-opacity group-hover:opacity-100 dark:text-white">
+                                    {surah.nama}
+                                </div>
                             </div>
-                            <div className="font-arabic text-xl opacity-20 transition-opacity group-hover:opacity-100 dark:text-white">
-                                {surah.nama}
-                            </div>
-                        </div>
 
-                        <div className="mt-6 flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                                {new Date(bookmark.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                            </span>
-                            <div className="flex items-center gap-1 text-xs font-bold text-primary opacity-0 transition-all group-hover:opacity-100">
-                                Baca Sekarang <ArrowRight className="h-3 w-3" />
+                            <div className="mt-6 flex items-center justify-between">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                                    {new Date(bookmark.timestamp).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                </span>
+                                <div className="flex items-center gap-1 text-xs font-bold text-primary opacity-0 transition-all group-hover:opacity-100">
+                                    Baca Sekarang <ArrowRight className="h-3 w-3" />
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Decoration */}
-                        <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-all group-hover:bg-primary/10"></div>
-                    </Link>
-                );
-            })}
+                            {/* Decoration */}
+                            <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-all group-hover:bg-primary/10"></div>
+                        </Link>
+                    );
+                })}
+            </div>
         </div>
     );
 }
