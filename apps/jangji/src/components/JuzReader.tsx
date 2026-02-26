@@ -34,6 +34,19 @@ export default function JuzReader({ juzId }: { juzId: number }) {
     const [categoryPicker, setCategoryPicker] = useState<{ surah: number; ayah: number } | null>(null);
     const [shareModal, setShareModal] = useState<{ surah: string; ayah: number; arabic: string; translation: string; latin?: string } | null>(null);
     const [mushafMode, setMushafMode] = useState(false);
+    const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
+    const speedMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close speed menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (speedMenuRef.current && !speedMenuRef.current.contains(event.target as Node)) {
+                setIsSpeedMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     // Memorization Mode State
     const [hapalanMode, setHapalanMode] = useState(false);
