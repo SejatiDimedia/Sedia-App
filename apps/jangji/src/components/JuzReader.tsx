@@ -7,9 +7,11 @@ import { fetchSurahDetail } from '@/hooks/use-quran-data';
 import AyahAudioPlayer from '@/components/AyahAudioPlayer';
 import { useProgress } from '@/hooks/use-progress';
 import { useBookmarks } from '@/hooks/use-bookmarks';
+import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
-import { BookmarkCheck, Bookmark, ChevronLeft, ChevronRight, Star, Languages, ChevronUp, Share2, Brain } from 'lucide-react';
+import { BookmarkCheck, Bookmark, ChevronLeft, ChevronRight, Star, Languages, ChevronUp, Share2, Brain, Play, Pause, ChevronDown } from 'lucide-react';
+import { ReaderSettings } from './ReaderSettings';
 import Link from '@/components/OfflineLink';
 import ConfirmModal from './ui/ConfirmModal';
 import Toast from './ui/Toast';
@@ -24,6 +26,7 @@ export default function JuzReader({ juzId }: { juzId: number }) {
     const observerRef = useRef<IntersectionObserver | null>(null);
     const { progress, saveProgress } = useProgress();
     const { toggleBookmark, isBookmarked } = useBookmarks();
+    const { isAutoScrolling, scrollSpeed, setScrollSpeed, toggleAutoScroll, stopAutoScroll } = useAutoScroll();
 
     // UI state
     const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; surah: number; ayah: number } | null>(null);
@@ -172,8 +175,9 @@ export default function JuzReader({ juzId }: { juzId: number }) {
         return () => {
             window.removeEventListener('scroll', handleWindowScroll);
             observerRef.current?.disconnect();
+            stopAutoScroll();
         };
-    }, [loading, juzAyat.length]); // juzAyat is derived from surahs, so using length is safe here
+    }, [loading, juzAyat.length, stopAutoScroll]); // juzAyat is derived from surahs, so using length is safe here
 
     // Auto-scroll to hash if it exists after content is loaded
     useEffect(() => {
@@ -266,28 +270,86 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={toggleMushafMode}
-                            title={mushafMode ? "Tampilkan Terjemahan" : "Mushaf Mode (Hanya Arab)"}
-                            className={`p-2 rounded-xl transition-all ${mushafMode
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
-                                }`}
-                        >
-                            <Languages className="h-5 w-5" />
-                        </button>
-                        <button
-                            onClick={toggleHapalanMode}
-                            title="Mode Hapalan"
-                            className={`p-2 rounded-xl transition-all ${hapalanMode
-                                ? 'bg-primary text-white shadow-md'
-                                : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
-                                }`}
-                        >
-                            <Brain className="h-5 w-5" />
-                        </button>
-                        <ThemeToggle />
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        {/* Desktop Controls */}
+                        <div className="hidden sm:flex items-center gap-1 sm:gap-2">
+                            <button
+                                onClick={toggleMushafMode}
+                                title={mushafMode ? "Tampilkan Terjemahan" : "Mushaf Mode (Hanya Arab)"}
+                                className={`p-2 rounded-xl transition-all ${mushafMode
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
+                                    }`}
+                            >
+                                <Languages className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={toggleHapalanMode}
+                                title="Mode Hapalan"
+                                className={`p-2 rounded-xl transition-all ${hapalanMode
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
+                                    }`}
+                            >
+                                <Brain className="h-5 w-5" />
+                            </button>
+                            <ThemeToggle />
+                        </div>
+
+                        {/* Mobile Settings Menu */}
+                        <div className="sm:hidden">
+                            <ReaderSettings
+                                mushafMode={mushafMode}
+                                toggleMushafMode={toggleMushafMode}
+                                hapalanMode={hapalanMode}
+                                toggleHapalanMode={toggleHapalanMode}
+                            />
+                        </div>
+
+                        <div className="relative flex items-center gap-1">
+                            <button
+                                onClick={toggleAutoScroll}
+                                title={isAutoScrolling ? "Hentikan Auto Scroll" : "Aktifkan Auto Scroll"}
+                                className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all ${isAutoScrolling
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
+                                    }`}
+                            >
+                                {isAutoScrolling ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                            </button>
+
+                            {isAutoScrolling && (
+                                <div className="relative" ref={speedMenuRef}>
+                                    <button
+                                        onClick={() => setIsSpeedMenuOpen(!isSpeedMenuOpen)}
+                                        className="flex h-9 items-center gap-1 rounded-xl bg-primary/10 px-2 text-[10px] font-bold text-primary transition-all hover:bg-primary/20"
+                                    >
+                                        <span className="hidden xs:inline">Speed</span> {scrollSpeed}
+                                        <ChevronDown className={`h-3 w-3 transition-transform ${isSpeedMenuOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    <div className={`absolute right-0 top-full mt-2 w-32 overflow-hidden rounded-xl border border-primary/20 bg-white p-1 shadow-xl transition-all duration-200 dark:bg-background ${isSpeedMenuOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2'}`}>
+                                        <div className="mb-1 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-primary/50">Kecepatan</div>
+                                        {[1, 2, 3, 4, 5].map((speed) => (
+                                            <button
+                                                key={speed}
+                                                onClick={() => {
+                                                    setScrollSpeed(speed);
+                                                    setIsSpeedMenuOpen(false);
+                                                }}
+                                                className={`flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-bold transition-colors ${scrollSpeed === speed
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'text-muted-foreground hover:bg-secondary/50'
+                                                    }`}
+                                            >
+                                                <span>Speed {speed}</span>
+                                                {scrollSpeed === speed && <div className="h-1 w-1 rounded-full bg-primary" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <UserAuthMenu />
                     </div>
                 </div>
@@ -390,8 +452,8 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                                             <div
                                                 onClick={() => hapalanMode && hapalanConfig.hideTranslation && toggleReveal(`${surahNomor}-${ayah.nomorAyat}`, 'translation')}
                                                 className={`transition-all duration-500 cursor-pointer ${hapalanMode && hapalanConfig.hideTranslation && !revealedAyahs[`${surahNomor}-${ayah.nomorAyat}`]?.translation
-                                                        ? 'blur-md opacity-30 select-none'
-                                                        : 'opacity-100'
+                                                    ? 'blur-md opacity-30 select-none'
+                                                    : 'opacity-100'
                                                     }`}
                                             >
                                                 <p className="text-primary/80 font-medium text-sm leading-relaxed tracking-wide mb-3">
