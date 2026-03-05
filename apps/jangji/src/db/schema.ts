@@ -5,7 +5,8 @@ import {
     integer,
     boolean,
     jsonb,
-    uuid
+    uuid,
+    serial
 } from "drizzle-orm/pg-core"
 
 export const jangjiSchema = pgSchema("jangji_db");
@@ -64,4 +65,13 @@ export const userProgress = jangjiSchema.table("user_progress", {
     lastAyah: integer("last_ayah").default(1),
     lastReadAt: timestamp("last_read_at").defaultNow().notNull(),
     bookmarks: jsonb("bookmarks").default([]),
+});
+
+export const userKhatamEvent = jangjiSchema.table("user_khatam_event", {
+    id: serial("id").primaryKey(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+    source: text("source").notNull(), // "juz" | "manual"
+    juzNumber: integer("juz_number"),
+    completedAt: timestamp("completed_at").defaultNow().notNull(),
+    note: text("note"),
 });

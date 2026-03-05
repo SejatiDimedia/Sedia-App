@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
-import { syncProgress } from '@/actions/sync';
+import { syncKhatamHistory, syncProgress } from '@/actions/sync';
 import { db } from '@/lib/dexie';
 
 export function SyncEngine() {
@@ -34,6 +34,27 @@ export function SyncEngine() {
                         });
                     }
                 }
+
+                const [localJuzEvents, localManualEvents] = await Promise.all([
+                    db.juzCompletionEvents.where('userId').equals(userId).toArray(),
+                    db.manualKhatamEvents.where('userId').equals(userId).toArray(),
+                ]);
+
+                const khatamSyncResult = await syncKhatamHistory(localJuzEvents, localManualEvents);
+                if (khatamSyncResult.success && khatamSyncResult.data) {
+                    const { juzEvents, manualEvents } = khatamSyncResult.data;
+                    await db.transaction('rw', db.juzCompletionEvents, db.manualKhatamEvents, async () => {
+                        await db.juzCompletionEvents.where('userId').equals(userId).delete();
+                        await db.manualKhatamEvents.where('userId').equals(userId).delete();
+                        if (juzEvents.length > 0) {
+                            await db.juzCompletionEvents.bulkAdd(juzEvents);
+                        }
+                        if (manualEvents.length > 0) {
+                            await db.manualKhatamEvents.bulkAdd(manualEvents);
+                        }
+                    });
+                    window.dispatchEvent(new CustomEvent('jangji-khatam-updated'));
+                }
             } catch (err) {
                 console.warn("Sync failed, will retry later:", err);
             }
@@ -53,10 +74,12 @@ export function SyncEngine() {
             }
         };
         window.addEventListener('jangji-progress-updated', handleProgressUpdate);
+        window.addEventListener('jangji-khatam-updated', handleProgressUpdate);
 
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('jangji-progress-updated', handleProgressUpdate);
+            window.removeEventListener('jangji-khatam-updated', handleProgressUpdate);
         };
     }, [session]);
 

@@ -3,8 +3,8 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { userProgress } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { userKhatamEvent, userProgress } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 import type { LocalProgress } from "@/lib/dexie";
 
 // Returns the newly updated progress or the existing one if server is newer
@@ -80,6 +80,104 @@ export async function syncProgress(clientProgress: LocalProgress | null) {
 
     } catch (error) {
         console.error("Failed to sync progress:", error);
+        return { success: false, error: "Internal Server Error" };
+    }
+}
+
+type LocalJuzCompletionEvent = {
+    userId: string;
+    juzNumber: number;
+    completedAt: number;
+};
+
+type LocalManualKhatamEvent = {
+    userId: string;
+    completedAt: number;
+    note?: string;
+};
+
+export async function syncKhatamHistory(
+    localJuzEvents: LocalJuzCompletionEvent[],
+    localManualEvents: LocalManualKhatamEvent[]
+) {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    });
+
+    if (!session?.user?.id) {
+        return { success: false, error: "Unauthorized" };
+    }
+
+    const userId = session.user.id;
+
+    try {
+        for (const event of localJuzEvents) {
+            if (event.userId !== userId) continue;
+
+            const existing = await db.select({ id: userKhatamEvent.id })
+                .from(userKhatamEvent)
+                .where(and(
+                    eq(userKhatamEvent.userId, userId),
+                    eq(userKhatamEvent.source, "juz"),
+                    eq(userKhatamEvent.juzNumber, event.juzNumber),
+                    eq(userKhatamEvent.completedAt, new Date(event.completedAt))
+                ))
+                .limit(1);
+
+            if (existing.length === 0) {
+                await db.insert(userKhatamEvent).values({
+                    userId,
+                    source: "juz",
+                    juzNumber: event.juzNumber,
+                    completedAt: new Date(event.completedAt),
+                });
+            }
+        }
+
+        for (const event of localManualEvents) {
+            if (event.userId !== userId) continue;
+
+            const existing = await db.select({ id: userKhatamEvent.id })
+                .from(userKhatamEvent)
+                .where(and(
+                    eq(userKhatamEvent.userId, userId),
+                    eq(userKhatamEvent.source, "manual"),
+                    eq(userKhatamEvent.completedAt, new Date(event.completedAt)),
+                    eq(userKhatamEvent.note, event.note || null)
+                ))
+                .limit(1);
+
+            if (existing.length === 0) {
+                await db.insert(userKhatamEvent).values({
+                    userId,
+                    source: "manual",
+                    completedAt: new Date(event.completedAt),
+                    note: event.note || null,
+                });
+            }
+        }
+
+        const allServerEvents = await db.select().from(userKhatamEvent).where(eq(userKhatamEvent.userId, userId));
+
+        const juzEvents = allServerEvents
+            .filter((event) => event.source === "juz" && event.juzNumber !== null)
+            .map((event) => ({
+                userId,
+                juzNumber: event.juzNumber as number,
+                completedAt: event.completedAt.getTime(),
+            }));
+
+        const manualEvents = allServerEvents
+            .filter((event) => event.source === "manual")
+            .map((event) => ({
+                userId,
+                completedAt: event.completedAt.getTime(),
+                note: event.note || undefined,
+            }));
+
+        return { success: true, data: { juzEvents, manualEvents } };
+    } catch (error) {
+        console.error("Failed to sync khatam history:", error);
         return { success: false, error: "Internal Server Error" };
     }
 }
