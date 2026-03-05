@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { db, type LocalProgress } from '@/lib/dexie';
 import { authClient } from '@/lib/auth-client';
 
+function getLocalDateKey(timestamp = Date.now()): string {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 export function useProgress() {
     const { data: session } = authClient.useSession();
     const [progress, setProgress] = useState<LocalProgress | null>(null);
@@ -23,12 +31,14 @@ export function useProgress() {
     }, [storageId]);
 
     const saveProgress = async (surahNomor: number, ayahNomor: number) => {
-        const today = new Date().toISOString().split('T')[0];
+        const now = Date.now();
+        const today = getLocalDateKey(now);
+        const ayahKey = `${surahNomor}:${ayahNomor}`;
         const newProgress: LocalProgress = {
             id: storageId,
             lastSurah: surahNomor,
             lastAyah: ayahNomor,
-            lastReadAt: Date.now(),
+            lastReadAt: now,
             bookmarks: progress?.bookmarks || [],
         };
 
@@ -37,16 +47,24 @@ export function useProgress() {
         // Update reading history
         const history = await db.readingHistory.where('[userId+date]').equals([storageId, today]).first();
         if (history) {
+            const existingKeys = new Set(history.readAyahKeys || []);
+            const isNewAyah = !existingKeys.has(ayahKey);
+            if (isNewAyah) existingKeys.add(ayahKey);
+
             await db.readingHistory.update(history.id!, {
-                ayahCount: history.ayahCount + 1,
-                surahsRead: Array.from(new Set([...history.surahsRead, surahNomor]))
+                ayahCount: isNewAyah ? history.ayahCount + 1 : history.ayahCount,
+                dailyTapCount: (history.dailyTapCount || history.ayahCount) + 1,
+                surahsRead: Array.from(new Set([...history.surahsRead, surahNomor])),
+                readAyahKeys: Array.from(existingKeys),
             });
         } else {
             await db.readingHistory.add({
                 userId: storageId,
                 date: today,
                 ayahCount: 1,
-                surahsRead: [surahNomor]
+                dailyTapCount: 1,
+                surahsRead: [surahNomor],
+                readAyahKeys: [ayahKey],
             });
         }
 

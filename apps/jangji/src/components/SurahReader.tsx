@@ -28,7 +28,10 @@ export default function SurahReader({ nomor }: { nomor: number }) {
     const [categoryPicker, setCategoryPicker] = useState<{ surah: number; ayah: number } | null>(null);
     const [shareModal, setShareModal] = useState<{ surah: string; ayah: number; arabic: string; translation: string; latin?: string } | null>(null);
     const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: 'success' | 'error' } | null>(null);
-    const [mushafMode, setMushafMode] = useState(false);
+    const [mushafMode, setMushafMode] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return localStorage.getItem('jangji-mushaf-mode') === 'true';
+    });
     const [hapalanMode, setHapalanMode] = useState(false);
     const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
     const speedMenuRef = useRef<HTMLDivElement>(null);
@@ -48,12 +51,6 @@ export default function SurahReader({ nomor }: { nomor: number }) {
         hideTranslation: true
     });
     const [revealedAyahs, setRevealedAyahs] = useState<Record<number, { arabic?: boolean; translation?: boolean }>>({});
-
-    // Load Mushaf Mode preference
-    useEffect(() => {
-        const stored = localStorage.getItem('jangji-mushaf-mode');
-        if (stored === 'true') setMushafMode(true);
-    }, []);
 
     const toggleMushafMode = () => {
         const newVal = !mushafMode;
@@ -98,7 +95,6 @@ export default function SurahReader({ nomor }: { nomor: number }) {
         try {
             await saveProgress(confirmModal.surah, confirmModal.ayah);
             setToast({ isVisible: true, message: `Ayat ${confirmModal.ayah} berhasil ditandai sebagai terakhir baca.`, type: 'success' });
-            window.dispatchEvent(new CustomEvent('jangji-progress-updated'));
         } catch (err) {
             setToast({ isVisible: true, message: 'Gagal menyimpan progres.', type: 'error' });
         }

@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { useStats } from '@/hooks/use-stats';
-import { Flame, Target, TrendingUp, BarChart2, Calendar } from 'lucide-react';
+import { Flame, Target, BarChart2, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StatsModal from '@/components/StatsModal';
 
 export default function KhatamTrackerCard() {
-    const { streak, completionPercentage, todayCount, goal, totalAyahsRead, totalQuranAyahs } = useStats();
+    const { streak, completionPercentage, todayCount, todayTapCount, goal, totalAyahsRead, totalQuranAyahs, khatamCount, lastKhatamAt } = useStats();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const dailyProgress = goal ? Math.min((todayCount / goal.dailyTargetAyahs) * 100, 100) : 0;
@@ -86,6 +86,31 @@ export default function KhatamTrackerCard() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                <div className="pt-6 border-t border-primary/10 flex items-center justify-between">
+                    <div>
+                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Aktivitas Hari Ini</p>
+                        <p className="text-[10px] text-muted-foreground">Ayat unik vs total tap</p>
+                    </div>
+                    <p className="text-sm font-bold text-foreground tabular-nums">
+                        {todayCount} <span className="opacity-40">/</span> {todayTapCount}
+                    </p>
+                </div>
+
+                <div className="pt-6 border-t border-primary/10 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Khatam</span>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-lg font-black text-foreground tabular-nums">{khatamCount}x</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-70">
+                            {lastKhatamAt
+                                ? `Terakhir ${new Date(lastKhatamAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                                : 'Belum ada khatam penuh'}
+                        </p>
+                    </div>
+                </div>
 
                 {/* Decorative Arabic Text (Subtle) */}
                 <div className="absolute -right-6 -bottom-6 opacity-[0.03] dark:opacity-[0.05] pointer-events-none select-none">

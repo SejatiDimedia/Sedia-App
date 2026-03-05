@@ -6,6 +6,8 @@ import type { SurahDetail, Ayah } from '@/types/quran';
 import { fetchSurahDetail } from '@/hooks/use-quran-data';
 import AyahAudioPlayer from '@/components/AyahAudioPlayer';
 import { useProgress } from '@/hooks/use-progress';
+import { db } from '@/lib/dexie';
+import { authClient } from '@/lib/auth-client';
 import { useBookmarks } from '@/hooks/use-bookmarks';
 import { useAutoScroll } from '@/hooks/use-auto-scroll';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -25,15 +27,20 @@ export default function JuzReader({ juzId }: { juzId: number }) {
     const [currentSurahName, setCurrentSurahName] = useState('');
     const observerRef = useRef<IntersectionObserver | null>(null);
     const { progress, saveProgress } = useProgress();
+    const { data: session } = authClient.useSession();
     const { toggleBookmark, isBookmarked } = useBookmarks();
     const { isAutoScrolling, scrollSpeed, setScrollSpeed, toggleAutoScroll, stopAutoScroll } = useAutoScroll();
 
     // UI state
     const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; surah: number; ayah: number } | null>(null);
+    const [confirmKhatamModal, setConfirmKhatamModal] = useState(false);
     const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: 'success' | 'error' } | null>(null);
     const [categoryPicker, setCategoryPicker] = useState<{ surah: number; ayah: number } | null>(null);
     const [shareModal, setShareModal] = useState<{ surah: string; ayah: number; arabic: string; translation: string; latin?: string } | null>(null);
-    const [mushafMode, setMushafMode] = useState(false);
+    const [mushafMode, setMushafMode] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return localStorage.getItem('jangji-mushaf-mode') === 'true';
+    });
     const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
     const speedMenuRef = useRef<HTMLDivElement>(null);
 
@@ -55,12 +62,6 @@ export default function JuzReader({ juzId }: { juzId: number }) {
         hideTranslation: true
     });
     const [revealedAyahs, setRevealedAyahs] = useState<Record<string, { arabic?: boolean; translation?: boolean }>>({});
-
-    // Load Mushaf Mode preference
-    useEffect(() => {
-        const stored = localStorage.getItem('jangji-mushaf-mode');
-        if (stored === 'true') setMushafMode(true);
-    }, []);
 
     const toggleMushafMode = () => {
         const newVal = !mushafMode;
@@ -105,9 +106,29 @@ export default function JuzReader({ juzId }: { juzId: number }) {
         try {
             await saveProgress(confirmModal.surah, confirmModal.ayah);
             setToast({ isVisible: true, message: `Ayat ${confirmModal.ayah} berhasil ditandai sebagai terakhir baca.`, type: 'success' });
-            window.dispatchEvent(new CustomEvent('jangji-progress-updated'));
         } catch (err) {
             setToast({ isVisible: true, message: 'Gagal menyimpan progres.', type: 'error' });
+        }
+    };
+
+    const onConfirmKhatamJuz = async () => {
+        try {
+            await db.juzCompletionEvents.add({
+                userId: session?.user?.id || 'guest',
+                juzNumber: juzId,
+                completedAt: Date.now(),
+            });
+            if (typeof window !== 'undefined' && window.dispatchEvent) {
+                window.dispatchEvent(new CustomEvent('jangji-khatam-updated'));
+            }
+            setToast({
+                isVisible: true,
+                message: `Juz ${juzId} ditandai tamat dan waktunya tersimpan.`,
+                type: 'success'
+            });
+            setConfirmKhatamModal(false);
+        } catch {
+            setToast({ isVisible: true, message: 'Gagal menandai tamat juz.', type: 'error' });
         }
     };
 
@@ -382,6 +403,12 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                         <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-[0.2em]">Al-Quranul Karim</span>
                         <h1 className="text-5xl font-bold drop-shadow-md">Juz {juzId}</h1>
                         <p className="text-white/80 text-sm font-medium">Dimulai dari <span className="text-white font-bold">{juzAyat[0]?.surahNama}</span> ayat {juzAyat[0]?.ayah.nomorAyat}</p>
+                        <button
+                            onClick={() => setConfirmKhatamModal(true)}
+                            className="mt-3 inline-flex items-center rounded-xl bg-white/20 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white border border-white/20 hover:bg-white/30 transition-colors"
+                        >
+                            Tandai Tamat Juz
+                        </button>
                     </div>
                 </div>
 
@@ -604,6 +631,14 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                 onConfirm={onConfirmProgress}
                 title="Tandai Bacaan"
                 message={`Pindah penanda terakhir baca ke Ayat ${confirmModal?.ayah}?`}
+            />
+
+            <ConfirmModal
+                isOpen={confirmKhatamModal}
+                onClose={() => setConfirmKhatamModal(false)}
+                onConfirm={onConfirmKhatamJuz}
+                title="Tamatkan Juz"
+                message={`Tandai Juz ${juzId} sudah selesai dibaca sekarang?`}
             />
 
             <Toast

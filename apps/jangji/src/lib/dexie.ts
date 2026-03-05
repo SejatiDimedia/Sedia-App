@@ -14,7 +14,9 @@ export interface ReadingHistory {
     userId: string;
     date: string; // YYYY-MM-DD
     ayahCount: number;
+    dailyTapCount?: number;
     surahsRead: number[];
+    readAyahKeys?: string[]; // e.g. "2:255"
 }
 
 export interface UserGoal {
@@ -23,21 +25,39 @@ export interface UserGoal {
     dailyTargetAyahs: number;
 }
 
+export interface JuzCompletionEvent {
+    id?: number;
+    userId: string;
+    juzNumber: number;
+    completedAt: number; // timestamp
+}
+
+export interface ManualKhatamEvent {
+    id?: number;
+    userId: string;
+    completedAt: number; // timestamp
+    note?: string;
+}
+
 export class JangjiDatabase extends Dexie {
     surahs!: Table<SurahBase, number>;
     surahDetails!: Table<SurahDetail, number>;
     localProgress!: Table<LocalProgress, string>;
     readingHistory!: Table<ReadingHistory, number>;
     userGoals!: Table<UserGoal, string>;
+    juzCompletionEvents!: Table<JuzCompletionEvent, number>;
+    manualKhatamEvents!: Table<ManualKhatamEvent, number>;
 
     constructor() {
         super('JangjiLocalDB');
-        this.version(4).stores({
+        this.version(8).stores({
             surahs: 'nomor, namaLatin',
             surahDetails: 'nomor',
             localProgress: 'id',
             readingHistory: '++id, [userId+date], userId, date',
             userGoals: 'userId',
+            juzCompletionEvents: '++id, userId, completedAt, [userId+completedAt], [userId+juzNumber]',
+            manualKhatamEvents: '++id, userId, completedAt, [userId+completedAt]',
         });
     }
 }

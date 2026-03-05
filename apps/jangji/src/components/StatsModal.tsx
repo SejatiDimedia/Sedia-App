@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStats } from '@/hooks/use-stats';
-import { X, Calendar, TrendingUp, Info, Target, ChevronRight, Activity, Flame } from 'lucide-react';
+import { X, Calendar, TrendingUp, Info, Target, Activity, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface StatsModalProps {
@@ -11,14 +11,29 @@ interface StatsModalProps {
 }
 
 export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
-    const { streak, weeklyActivity, predictedKhatamDate, goal, totalAyahsRead, totalQuranAyahs, setKhatamTarget } = useStats();
-    const [selectedDays, setSelectedDays] = useState<number | null>(null);
+    const { streak, weeklyActivity, predictedKhatamDate, goal, totalAyahsRead, todayCount, todayTapCount, setKhatamTarget, khatamCount, lastKhatamAt, addManualKhatam, khatamHistory } = useStats();
+    const [manualDateTime, setManualDateTime] = useState(() => {
+        const now = new Date();
+        const tzOffset = now.getTimezoneOffset() * 60000;
+        return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
+    });
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const nowMs = new Date().getTime();
 
     const maxCount = Math.max(...weeklyActivity.map(a => a.count), 1);
 
     const handleSetGoal = async (days: number) => {
         await setKhatamTarget(days);
-        setSelectedDays(null);
+    };
+
+    const handleAddManualKhatam = async () => {
+        const timestamp = new Date(manualDateTime).getTime();
+        if (Number.isNaN(timestamp)) {
+            setSaveMessage('Tanggal tidak valid.');
+            return;
+        }
+        await addManualKhatam(timestamp, 'Manual input from stats modal');
+        setSaveMessage('Riwayat khatam berhasil ditambahkan.');
     };
 
     return (
@@ -103,6 +118,21 @@ export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
                                     <p className="text-3xl font-black text-foreground tracking-tight tabular-nums">{streak}</p>
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Streak Hari</p>
                                 </div>
+                                <div className="p-6 rounded-3xl bg-secondary/30 border border-primary/10 transition-colors hover:bg-secondary/40 col-span-2">
+                                    <Calendar className="h-6 w-6 text-primary mb-3" />
+                                    <p className="text-3xl font-black text-foreground tracking-tight tabular-nums">{khatamCount}x</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Khatam Penuh</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        {lastKhatamAt
+                                            ? `Terakhir: ${new Date(lastKhatamAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}`
+                                            : 'Belum ada riwayat khatam penuh'}
+                                    </p>
+                                </div>
+                                <div className="p-6 rounded-3xl bg-secondary/30 border border-primary/10 transition-colors hover:bg-secondary/40 col-span-2">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Hari Ini</p>
+                                    <p className="text-2xl font-black text-foreground tracking-tight tabular-nums">{todayCount} / {todayTapCount}</p>
+                                    <p className="text-xs text-muted-foreground">Ayat unik vs total tap</p>
+                                </div>
                             </section>
 
                             {/* Khatam Prediction */}
@@ -122,6 +152,64 @@ export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
                                 </div>
                             </section>
 
+                            <section className="space-y-4 p-6 rounded-[2rem] bg-secondary/20 border border-primary/10">
+                                <div className="flex items-center gap-3">
+                                    <Calendar className="h-5 w-5 text-primary" />
+                                    <h4 className="font-bold text-foreground">Tambah Riwayat Khatam Manual</h4>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Gunakan ini kalau sudah khatam sebelumnya (misal 1 bulan lalu).
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <input
+                                        type="datetime-local"
+                                        value={manualDateTime}
+                                        onChange={(e) => setManualDateTime(e.target.value)}
+                                        className="flex-1 rounded-xl border border-primary/20 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                                    />
+                                    <button
+                                        onClick={handleAddManualKhatam}
+                                        className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90 transition-colors"
+                                    >
+                                        Tambah Riwayat Khatam
+                                    </button>
+                                </div>
+                                {saveMessage && (
+                                    <p className="text-xs font-medium text-primary">{saveMessage}</p>
+                                )}
+                            </section>
+
+                            <section className="space-y-4 p-6 rounded-[2rem] bg-secondary/20 border border-primary/10">
+                                <div className="flex items-center gap-3">
+                                    <Activity className="h-5 w-5 text-primary" />
+                                    <h4 className="font-bold text-foreground">Riwayat Khatam</h4>
+                                </div>
+                                {khatamHistory.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground">Belum ada riwayat khatam.</p>
+                                ) : (
+                                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                        {khatamHistory.map((item, index) => (
+                                            <div
+                                                key={`${item.completedAt}-${index}`}
+                                                className="flex items-center justify-between rounded-xl border border-primary/10 bg-background/70 px-3 py-2"
+                                            >
+                                                <div>
+                                                    <p className="text-sm font-semibold text-foreground">
+                                                        {new Date(item.completedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                    </p>
+                                                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                                                        {item.source === 'manual' ? 'Manual' : 'Otomatis'}
+                                                    </p>
+                                                </div>
+                                                {item.note && (
+                                                    <span className="text-[10px] text-muted-foreground">{item.note}</span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
+
                             {/* Goal Setting */}
                             <section className="space-y-6 pt-8 border-t border-primary/10">
                                 <div className="flex items-center gap-3">
@@ -134,7 +222,7 @@ export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
                                         <button
                                             key={days}
                                             onClick={() => handleSetGoal(days)}
-                                            className={`py-5 rounded-2xl border transition-all flex flex-col items-center gap-1 active:scale-95 ${goal && Math.round((goal.targetKhatamDate - Date.now()) / 86400000) === days
+                                            className={`py-5 rounded-2xl border transition-all flex flex-col items-center gap-1 active:scale-95 ${goal && Math.round((goal.targetKhatamDate - nowMs) / 86400000) === days
                                                     ? 'bg-primary border-primary text-white shadow-xl shadow-primary/20'
                                                     : 'bg-secondary/40 border-primary/10 text-muted-foreground hover:bg-secondary/60 hover:border-primary/20'
                                                 }`}
@@ -148,7 +236,7 @@ export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
                                 {goal && (
                                     <div className="flex items-center gap-4 p-5 rounded-2xl bg-primary/5 border border-primary/10 text-[12px] text-muted-foreground font-medium italic leading-relaxed">
                                         <Info className="h-5 w-5 shrink-0 opacity-50" />
-                                        <span>Target saat ini: <strong>{goal.dailyTargetAyahs} ayat</strong> per hari untuk Khatam <strong>{Math.round((goal.targetKhatamDate - Date.now()) / 86400000)} hari</strong> lagi.</span>
+                                        <span>Target saat ini: <strong>{goal.dailyTargetAyahs} ayat</strong> per hari untuk Khatam <strong>{Math.round((goal.targetKhatamDate - nowMs) / 86400000)} hari</strong> lagi.</span>
                                     </div>
                                 )}
                             </section>
