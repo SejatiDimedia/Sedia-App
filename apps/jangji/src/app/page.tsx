@@ -6,6 +6,7 @@ import LastReadCard from '@/components/LastReadCard';
 import WelcomeScreen from '@/components/WelcomeScreen';
 import HijriCalendarCard from '@/components/HijriCalendarCard';
 import KhatamTrackerCard from '@/components/KhatamTrackerCard';
+import ProgressGamificationCard from '@/components/ProgressGamificationCard';
 import ThemeToggle from '@/components/ThemeToggle';
 import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import GlobalSearch from '@/components/GlobalSearch';
@@ -132,6 +133,7 @@ export default function Home() {
 
           <OfflineSyncManager />
           <KhatamTrackerCard />
+          <ProgressGamificationCard />
           <HijriCalendarCard />
           <LastReadCard />
 

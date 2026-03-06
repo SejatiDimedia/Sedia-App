@@ -11,7 +11,7 @@ import { UserAuthMenu } from '@/components/auth/UserAuthMenu';
 import { getJuzNumber } from '@/lib/quran-utils';
 import Link from '@/components/OfflineLink';
 import { useEffect, useState, useRef } from 'react';
-import { BookmarkCheck, Bookmark, Star, ChevronLeft, ArrowLeft, Languages, Share2, ChevronUp, Brain, Eye, EyeOff, Play, Pause, ChevronDown, ChevronRight } from 'lucide-react';
+import { BookmarkCheck, Bookmark, Star, ChevronLeft, ArrowLeft, Languages, Share2, ChevronUp, Brain, Eye, EyeOff, Play, Pause, ChevronDown, ChevronRight, LocateFixed } from 'lucide-react';
 import { ReaderSettings } from './ReaderSettings';
 import ConfirmModal from './ui/ConfirmModal';
 import Toast from './ui/Toast';
@@ -321,6 +321,16 @@ export default function SurahReader({ nomor }: { nomor: number }) {
                                     }`}
                             >
                                 <Brain className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={toggleAutoTrackEnabled}
+                                title={autoTrackEnabled ? "Nonaktifkan Auto Track" : "Aktifkan Auto Track"}
+                                className={`p-2 rounded-xl transition-all ${autoTrackEnabled
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'text-muted-foreground hover:bg-secondary/50 dark:hover:bg-primary/10'
+                                    }`}
+                            >
+                                <LocateFixed className="h-5 w-5" />
                             </button>
                             <ThemeToggle />
                         </div>

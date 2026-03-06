@@ -20,6 +20,11 @@ type KhatamHistoryItem = {
     note?: string;
 };
 
+type KhatamMonthlyActivityItem = {
+    label: string;
+    count: number;
+};
+
 export function useStats() {
     const { data: session } = authClient.useSession();
     const { surahs } = useSurahs();
@@ -72,6 +77,7 @@ export function useStats() {
     }, [surahs]);
 
     const stats = useMemo(() => {
+        const nowMs = new Date().getTime();
         const sortedEvents = [...juzEvents].sort((a, b) => a.completedAt - b.completedAt);
         const completedJuz = new Set<number>();
         const khatamDates: number[] = [];
@@ -99,22 +105,56 @@ export function useStats() {
             })),
         ].sort((a, b) => b.completedAt - a.completedAt);
 
+        const monthlyMap = new Map<string, number>();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            monthlyMap.set(key, 0);
+        }
+        khatamHistory.forEach((item) => {
+            const d = new Date(item.completedAt);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (monthlyMap.has(key)) {
+                monthlyMap.set(key, (monthlyMap.get(key) || 0) + 1);
+            }
+        });
+        const khatamMonthlyActivity: KhatamMonthlyActivityItem[] = Array.from(monthlyMap.entries()).map(([key, count]) => {
+            const [year, month] = key.split('-').map(Number);
+            const d = new Date(year, month - 1, 1);
+            return {
+                label: d.toLocaleDateString('id-ID', { month: 'short' }),
+                count,
+            };
+        });
+
+        const weeklyActivity = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(nowMs - i * 86400000);
+            const ds = getLocalDateKey(d.getTime());
+            weeklyActivity.push({
+                date: ds,
+                dayName: d.toLocaleDateString('id-ID', { weekday: 'short' }),
+                count: 0
+            });
+        }
+
         if (history.length === 0) return {
             streak: 0,
             completionPercentage: 0,
             todayCount: 0,
             todayTapCount: 0,
-            weeklyActivity: [],
+            weeklyActivity,
             predictedKhatamDate: null,
             khatamCount,
             lastKhatamAt,
             khatamHistory,
+            khatamMonthlyActivity,
         };
 
         // 1. Calculate Streak
         let streak = 0;
         const sortedHistory = [...history].sort((a, b) => b.date.localeCompare(a.date));
-        const nowMs = new Date().getTime();
         const today = getLocalDateKey(nowMs);
         const yesterday = getLocalDateKey(nowMs - 86400000);
 
@@ -142,16 +182,9 @@ export function useStats() {
         const completionPercentage = Math.min((totalAyahsRead / totalQuranAyahs) * 100, 100);
 
         // 3. Weekly Activity (Last 7 days)
-        const weeklyActivity = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(nowMs - i * 86400000);
-            const ds = getLocalDateKey(d.getTime());
-            weeklyActivity.push({
-                date: ds,
-                dayName: d.toLocaleDateString('id-ID', { weekday: 'short' }),
-                count: historyMap.get(ds)?.ayahCount || 0
-            });
-        }
+        weeklyActivity.forEach((day) => {
+            day.count = historyMap.get(day.date)?.ayahCount || 0;
+        });
 
         // 4. Prediction
         let predictedKhatamDate = null;
@@ -178,6 +211,7 @@ export function useStats() {
             khatamCount,
             lastKhatamAt,
             khatamHistory,
+            khatamMonthlyActivity,
         };
     }, [history, juzEvents, manualKhatamEvents, totalAyahsRead, totalQuranAyahs]);
 

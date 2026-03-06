@@ -108,6 +108,7 @@ export function usePrayerTimes() {
         // Optional: Get city name using a free reverse geocoding API (e.g. bigdatacloud)
         try {
             const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=id`);
+            if (!res.ok) return;
             const data = await res.json();
             if (data.city || data.locality) {
                 const name = data.city || data.locality;
@@ -115,7 +116,7 @@ export function usePrayerTimes() {
                 localStorage.setItem('jangji_location_name', name);
             }
         } catch {
-            console.error('Reverse geocoding failed');
+            // Non-critical: prayer times can still be shown using coordinates.
         }
     };
 
@@ -147,6 +148,11 @@ export function usePrayerTimes() {
     }, []);
 
     useEffect(() => {
+        const cachedLocationName = localStorage.getItem('jangji_location_name');
+        if (cachedLocationName) {
+            setLocationName(cachedLocationName);
+        }
+
         // Check for cached location first
         const cachedLocation = localStorage.getItem('jangji_location');
         if (cachedLocation) {
