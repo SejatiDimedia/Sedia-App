@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { userKhatamEvent, userProgress } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { LocalProgress } from "@/lib/dexie";
 
 // Returns the newly updated progress or the existing one if server is newer
@@ -137,13 +137,17 @@ export async function syncKhatamHistory(
         for (const event of localManualEvents) {
             if (event.userId !== userId) continue;
 
+            const noteCondition = event.note
+                ? eq(userKhatamEvent.note, event.note)
+                : isNull(userKhatamEvent.note);
+
             const existing = await db.select({ id: userKhatamEvent.id })
                 .from(userKhatamEvent)
                 .where(and(
                     eq(userKhatamEvent.userId, userId),
                     eq(userKhatamEvent.source, "manual"),
                     eq(userKhatamEvent.completedAt, new Date(event.completedAt)),
-                    eq(userKhatamEvent.note, event.note || null)
+                    noteCondition
                 ))
                 .limit(1);
 
