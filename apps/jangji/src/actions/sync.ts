@@ -111,6 +111,9 @@ export async function syncKhatamHistory(
     const userId = session.user.id;
 
     try {
+        const toManualKey = (completedAt: Date | number, note?: string | null) =>
+            `${new Date(completedAt).getTime()}|${note ?? ''}`;
+
         for (const event of localJuzEvents) {
             if (event.userId !== userId) continue;
 
@@ -131,6 +134,24 @@ export async function syncKhatamHistory(
                     juzNumber: event.juzNumber,
                     completedAt: new Date(event.completedAt),
                 });
+            }
+        }
+
+        const serverManualEvents = await db.select()
+            .from(userKhatamEvent)
+            .where(and(eq(userKhatamEvent.userId, userId), eq(userKhatamEvent.source, "manual")));
+
+        const localManualKeySet = new Set(
+            localManualEvents
+                .filter((event) => event.userId === userId)
+                .map((event) => toManualKey(event.completedAt, event.note))
+        );
+
+        // Delete manual events removed/edited on client so server stays consistent
+        for (const serverEvent of serverManualEvents) {
+            const key = toManualKey(serverEvent.completedAt, serverEvent.note);
+            if (!localManualKeySet.has(key)) {
+                await db.delete(userKhatamEvent).where(eq(userKhatamEvent.id, serverEvent.id));
             }
         }
 

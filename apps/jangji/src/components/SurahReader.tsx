@@ -18,6 +18,8 @@ import Toast from './ui/Toast';
 import ShareAyatModal from './ShareAyatModal';
 
 export default function SurahReader({ nomor }: { nomor: number }) {
+    const AUTO_TRACK_DELAY_MS = 1800;
+    const AUTO_TRACK_MIN_INTERVAL_MS = 4000;
     const { surah, loading, error } = useSurahDetail(nomor);
     const { progress, saveProgress } = useProgress();
     const { toggleBookmark, isBookmarked } = useBookmarks();
@@ -33,6 +35,11 @@ export default function SurahReader({ nomor }: { nomor: number }) {
         return localStorage.getItem('jangji-mushaf-mode') === 'true';
     });
     const [hapalanMode, setHapalanMode] = useState(false);
+    const [autoTrackEnabled, setAutoTrackEnabled] = useState(() => {
+        if (typeof window === 'undefined') return true;
+        const stored = localStorage.getItem('jangji-auto-track');
+        return stored === null ? true : stored === 'true';
+    });
     const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
     const speedMenuRef = useRef<HTMLDivElement>(null);
 
@@ -76,6 +83,17 @@ export default function SurahReader({ nomor }: { nomor: number }) {
         });
     };
 
+    const toggleAutoTrackEnabled = () => {
+        const next = !autoTrackEnabled;
+        setAutoTrackEnabled(next);
+        localStorage.setItem('jangji-auto-track', String(next));
+        setToast({
+            isVisible: true,
+            message: next ? 'Auto-track aktif.' : 'Auto-track nonaktif.',
+            type: 'success'
+        });
+    };
+
     const toggleReveal = (ayahNomor: number, type: 'arabic' | 'translation') => {
         setRevealedAyahs(prev => ({
             ...prev,
@@ -103,6 +121,10 @@ export default function SurahReader({ nomor }: { nomor: number }) {
     const [currentJuz, setCurrentJuz] = useState(nomor ? getJuzNumber(nomor, 1) : 1);
     const [scrolled, setScrolled] = useState(false);
     const observerRef = useRef<IntersectionObserver | null>(null);
+    const autoTrackObserverRef = useRef<IntersectionObserver | null>(null);
+    const autoTrackTimersRef = useRef<Map<Element, ReturnType<typeof setTimeout>>>(new Map());
+    const autoTrackedKeysRef = useRef<Set<string>>(new Set());
+    const lastAutoTrackAtRef = useRef(0);
 
     // Auto-scroll to hash if it exists after content is loaded
     useEffect(() => {
@@ -162,6 +184,60 @@ export default function SurahReader({ nomor }: { nomor: number }) {
             stopAutoScroll(); // Ensure scroll stops on unmount
         };
     }, [loading, surah, stopAutoScroll]);
+
+    useEffect(() => {
+        if (loading || !surah?.ayat?.length || !autoTrackEnabled) return;
+        const timers = autoTrackTimersRef.current;
+
+        autoTrackedKeysRef.current.clear();
+        autoTrackObserverRef.current?.disconnect();
+        timers.forEach((timer) => clearTimeout(timer));
+        timers.clear();
+
+        autoTrackObserverRef.current = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                const element = entry.target as HTMLElement;
+                const ayahAttr = element.getAttribute('data-ayah');
+                const ayahNomor = Number(ayahAttr || 0);
+                if (!ayahNomor) return;
+
+                const ayahKey = `${surah.nomor}:${ayahNomor}`;
+
+                if (entry.isIntersecting) {
+                    if (autoTrackedKeysRef.current.has(ayahKey) || timers.has(element)) return;
+                    const timer = setTimeout(async () => {
+                        if (autoTrackedKeysRef.current.has(ayahKey)) return;
+                        if (progress?.lastSurah === surah.nomor && progress?.lastAyah === ayahNomor) return;
+                        const now = Date.now();
+                        if (now - lastAutoTrackAtRef.current < AUTO_TRACK_MIN_INTERVAL_MS) return;
+                        try {
+                            await saveProgress(surah.nomor, ayahNomor);
+                            autoTrackedKeysRef.current.add(ayahKey);
+                            lastAutoTrackAtRef.current = now;
+                        } catch {
+                            // no-op: manual save remains available
+                        }
+                    }, AUTO_TRACK_DELAY_MS);
+                    timers.set(element, timer);
+                } else {
+                    const timer = timers.get(element);
+                    if (timer) {
+                        clearTimeout(timer);
+                        timers.delete(element);
+                    }
+                }
+            });
+        }, { threshold: 0.75 });
+
+        const ayahElements = document.querySelectorAll('.ayah-item');
+        ayahElements.forEach((el) => autoTrackObserverRef.current?.observe(el));
+
+        return () => {
+            autoTrackObserverRef.current?.disconnect();
+            timers.forEach((timer) => clearTimeout(timer));
+            timers.clear();
+        };
+    }, [autoTrackEnabled, loading, progress?.lastAyah, progress?.lastSurah, saveProgress, surah?.ayat?.length, surah?.nomor]);
 
     if (loading) {
         return (
@@ -256,6 +332,8 @@ export default function SurahReader({ nomor }: { nomor: number }) {
                                 toggleMushafMode={toggleMushafMode}
                                 hapalanMode={hapalanMode}
                                 toggleHapalanMode={toggleHapalanMode}
+                                autoTrackEnabled={autoTrackEnabled}
+                                toggleAutoTrackEnabled={toggleAutoTrackEnabled}
                             />
                         </div>
 

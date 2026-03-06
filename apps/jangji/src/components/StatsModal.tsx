@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useStats } from '@/hooks/use-stats';
-import { X, Calendar, TrendingUp, Info, Target, Activity, Flame } from 'lucide-react';
+import { X, Calendar, TrendingUp, Info, Target, Activity, Flame, Pencil, Trash2, Check, X as XIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface StatsModalProps {
@@ -11,13 +11,15 @@ interface StatsModalProps {
 }
 
 export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
-    const { streak, weeklyActivity, predictedKhatamDate, goal, totalAyahsRead, todayCount, todayTapCount, setKhatamTarget, khatamCount, lastKhatamAt, addManualKhatam, khatamHistory } = useStats();
+    const { streak, weeklyActivity, predictedKhatamDate, goal, totalAyahsRead, todayCount, todayTapCount, setKhatamTarget, khatamCount, lastKhatamAt, addManualKhatam, updateManualKhatam, deleteManualKhatam, khatamHistory } = useStats();
     const [manualDateTime, setManualDateTime] = useState(() => {
         const now = new Date();
         const tzOffset = now.getTimezoneOffset() * 60000;
         return new Date(now.getTime() - tzOffset).toISOString().slice(0, 16);
     });
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const [editingManualId, setEditingManualId] = useState<number | null>(null);
+    const [editingDateTime, setEditingDateTime] = useState('');
     const nowMs = new Date().getTime();
 
     const maxCount = Math.max(...weeklyActivity.map(a => a.count), 1);
@@ -34,6 +36,41 @@ export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
         }
         await addManualKhatam(timestamp, 'Manual input from stats modal');
         setSaveMessage('Riwayat khatam berhasil ditambahkan.');
+    };
+
+    const toDateTimeLocal = (timestamp: number) => {
+        const d = new Date(timestamp);
+        const tzOffset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+    };
+
+    const startEditManual = (id: number, completedAt: number) => {
+        setEditingManualId(id);
+        setEditingDateTime(toDateTimeLocal(completedAt));
+    };
+
+    const cancelEditManual = () => {
+        setEditingManualId(null);
+        setEditingDateTime('');
+    };
+
+    const saveEditManual = async (id: number) => {
+        const timestamp = new Date(editingDateTime).getTime();
+        if (Number.isNaN(timestamp)) {
+            setSaveMessage('Tanggal edit tidak valid.');
+            return;
+        }
+        await updateManualKhatam(id, timestamp, 'Manual input from stats modal');
+        setSaveMessage('Riwayat manual berhasil diperbarui.');
+        cancelEditManual();
+    };
+
+    const handleDeleteManual = async (id: number) => {
+        await deleteManualKhatam(id);
+        setSaveMessage('Riwayat manual berhasil dihapus.');
+        if (editingManualId === id) {
+            cancelEditManual();
+        }
     };
 
     return (
@@ -191,18 +228,67 @@ export default function StatsModal({ isOpen, onClose }: StatsModalProps) {
                                         {khatamHistory.map((item, index) => (
                                             <div
                                                 key={`${item.completedAt}-${index}`}
-                                                className="flex items-center justify-between rounded-xl border border-primary/10 bg-background/70 px-3 py-2"
+                                                className="rounded-xl border border-primary/10 bg-background/70 px-3 py-2"
                                             >
-                                                <div>
-                                                    <p className="text-sm font-semibold text-foreground">
-                                                        {new Date(item.completedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
-                                                    </p>
-                                                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                                                        {item.source === 'manual' ? 'Manual' : 'Otomatis'}
-                                                    </p>
-                                                </div>
-                                                {item.note && (
-                                                    <span className="text-[10px] text-muted-foreground">{item.note}</span>
+                                                {item.source === 'manual' && item.id && editingManualId === item.id ? (
+                                                    <div className="space-y-2">
+                                                        <input
+                                                            type="datetime-local"
+                                                            value={editingDateTime}
+                                                            onChange={(e) => setEditingDateTime(e.target.value)}
+                                                            className="w-full rounded-lg border border-primary/20 bg-background px-2 py-1.5 text-xs outline-none focus:border-primary"
+                                                        />
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <button
+                                                                onClick={() => saveEditManual(item.id!)}
+                                                                className="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1 text-[11px] font-bold text-white"
+                                                            >
+                                                                <Check className="h-3 w-3" />
+                                                                Simpan
+                                                            </button>
+                                                            <button
+                                                                onClick={cancelEditManual}
+                                                                className="inline-flex items-center gap-1 rounded-lg border border-primary/20 px-2.5 py-1 text-[11px] font-bold text-muted-foreground"
+                                                            >
+                                                                <XIcon className="h-3 w-3" />
+                                                                Batal
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-foreground">
+                                                                {new Date(item.completedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                            </p>
+                                                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                                                                {item.source === 'manual' ? 'Manual' : 'Otomatis'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {item.note && (
+                                                                <span className="text-[10px] text-muted-foreground">{item.note}</span>
+                                                            )}
+                                                            {item.source === 'manual' && item.id && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => startEditManual(item.id!, item.completedAt)}
+                                                                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-primary/20 text-primary"
+                                                                        title="Edit riwayat manual"
+                                                                    >
+                                                                        <Pencil className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteManual(item.id!)}
+                                                                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-200 text-red-500"
+                                                                        title="Hapus riwayat manual"
+                                                                    >
+                                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
                                         ))}

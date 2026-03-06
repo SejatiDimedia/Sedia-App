@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db, type LocalProgress } from '@/lib/dexie';
 import { authClient } from '@/lib/auth-client';
 
@@ -30,7 +30,7 @@ export function useProgress() {
         load();
     }, [storageId]);
 
-    const saveProgress = async (surahNomor: number, ayahNomor: number) => {
+    const saveProgress = useCallback(async (surahNomor: number, ayahNomor: number) => {
         const now = Date.now();
         const today = getLocalDateKey(now);
         const ayahKey = `${surahNomor}:${ayahNomor}`;
@@ -74,7 +74,7 @@ export function useProgress() {
         if (typeof window !== 'undefined' && window.dispatchEvent) {
             window.dispatchEvent(new CustomEvent('jangji-progress-updated', { detail: newProgress }));
         }
-    };
+    }, [progress?.bookmarks, storageId]);
 
     return { progress, saveProgress };
 }

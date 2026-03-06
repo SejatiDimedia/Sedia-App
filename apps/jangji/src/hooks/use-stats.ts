@@ -14,6 +14,7 @@ function getLocalDateKey(timestamp = Date.now()): string {
 }
 
 type KhatamHistoryItem = {
+    id?: number;
     completedAt: number;
     source: 'auto' | 'manual';
     note?: string;
@@ -91,6 +92,7 @@ export function useStats() {
         const khatamHistory: KhatamHistoryItem[] = [
             ...khatamDates.map((date) => ({ completedAt: date, source: 'auto' as const })),
             ...manualKhatamEvents.map((event) => ({
+                id: event.id,
                 completedAt: event.completedAt,
                 source: 'manual' as const,
                 note: event.note,
@@ -205,5 +207,22 @@ export function useStats() {
         }
     };
 
-    return { ...stats, goal, totalAyahsRead, totalQuranAyahs, setKhatamTarget, addManualKhatam };
+    const updateManualKhatam = async (id: number, completedAt: number, note?: string) => {
+        await db.manualKhatamEvents.update(id, {
+            completedAt,
+            note,
+        });
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('jangji-khatam-updated'));
+        }
+    };
+
+    const deleteManualKhatam = async (id: number) => {
+        await db.manualKhatamEvents.delete(id);
+        if (typeof window !== 'undefined' && window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('jangji-khatam-updated'));
+        }
+    };
+
+    return { ...stats, goal, totalAyahsRead, totalQuranAyahs, setKhatamTarget, addManualKhatam, updateManualKhatam, deleteManualKhatam };
 }

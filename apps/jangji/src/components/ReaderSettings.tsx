@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings2, Languages, Brain, Sun, Moon, Check, CheckCircle2 } from 'lucide-react';
+import { Settings2, Languages, Brain, Sun, Moon, CheckCircle2, LocateFixed } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 
@@ -9,13 +9,17 @@ interface ReaderSettingsProps {
     toggleMushafMode: () => void;
     hapalanMode: boolean;
     toggleHapalanMode: () => void;
+    autoTrackEnabled: boolean;
+    toggleAutoTrackEnabled: () => void;
 }
 
 export function ReaderSettings({
     mushafMode,
     toggleMushafMode,
     hapalanMode,
-    toggleHapalanMode
+    toggleHapalanMode,
+    autoTrackEnabled,
+    toggleAutoTrackEnabled
 }: ReaderSettingsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -81,6 +85,20 @@ export function ReaderSettings({
                             <span>Mode Hapalan</span>
                         </div>
                         {hapalanMode && <CheckCircle2 className="h-4 w-4 fill-primary text-white" />}
+                    </button>
+
+                    <button
+                        onClick={toggleAutoTrackEnabled}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold transition-all ${autoTrackEnabled
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-muted-foreground hover:bg-secondary/50'
+                            }`}
+                    >
+                        <div className="flex items-center gap-2.5">
+                            <LocateFixed className="h-4 w-4" />
+                            <span>Auto Track</span>
+                        </div>
+                        {autoTrackEnabled && <CheckCircle2 className="h-4 w-4 fill-primary text-white" />}
                     </button>
 
                     <div className="my-1.5 h-px bg-secondary/10" />

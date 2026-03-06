@@ -20,12 +20,18 @@ import Toast from './ui/Toast';
 import ShareAyatModal from './ShareAyatModal';
 
 export default function JuzReader({ juzId }: { juzId: number }) {
+    const AUTO_TRACK_DELAY_MS = 1800;
+    const AUTO_TRACK_MIN_INTERVAL_MS = 4000;
     const [surahs, setSurahs] = useState<SurahDetail[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [scrolled, setScrolled] = useState(false);
     const [currentSurahName, setCurrentSurahName] = useState('');
     const observerRef = useRef<IntersectionObserver | null>(null);
+    const autoTrackObserverRef = useRef<IntersectionObserver | null>(null);
+    const autoTrackTimersRef = useRef<Map<Element, ReturnType<typeof setTimeout>>>(new Map());
+    const autoTrackedKeysRef = useRef<Set<string>>(new Set());
+    const lastAutoTrackAtRef = useRef(0);
     const { progress, saveProgress } = useProgress();
     const { data: session } = authClient.useSession();
     const { toggleBookmark, isBookmarked } = useBookmarks();
@@ -42,6 +48,11 @@ export default function JuzReader({ juzId }: { juzId: number }) {
         return localStorage.getItem('jangji-mushaf-mode') === 'true';
     });
     const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
+    const [autoTrackEnabled, setAutoTrackEnabled] = useState(() => {
+        if (typeof window === 'undefined') return true;
+        const stored = localStorage.getItem('jangji-auto-track');
+        return stored === null ? true : stored === 'true';
+    });
     const speedMenuRef = useRef<HTMLDivElement>(null);
 
     // Close speed menu when clicking outside
@@ -83,6 +94,17 @@ export default function JuzReader({ juzId }: { juzId: number }) {
         setToast({
             isVisible: true,
             message: newVal ? 'Mode Hapalan Aktif' : 'Mode Hapalan Dinonaktifkan',
+            type: 'success'
+        });
+    };
+
+    const toggleAutoTrackEnabled = () => {
+        const next = !autoTrackEnabled;
+        setAutoTrackEnabled(next);
+        localStorage.setItem('jangji-auto-track', String(next));
+        setToast({
+            isVisible: true,
+            message: next ? 'Auto-track aktif.' : 'Auto-track nonaktif.',
             type: 'success'
         });
     };
@@ -213,6 +235,60 @@ export default function JuzReader({ juzId }: { juzId: number }) {
         };
     }, [loading, juzAyat.length, stopAutoScroll]); // juzAyat is derived from surahs, so using length is safe here
 
+    useEffect(() => {
+        if (loading || juzAyat.length === 0 || !autoTrackEnabled) return;
+        const timers = autoTrackTimersRef.current;
+
+        autoTrackedKeysRef.current.clear();
+        autoTrackObserverRef.current?.disconnect();
+        timers.forEach((timer) => clearTimeout(timer));
+        timers.clear();
+
+        autoTrackObserverRef.current = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                const element = entry.target as HTMLElement;
+                const surahNomor = Number(element.getAttribute('data-surah-nomor') || 0);
+                const ayahNomor = Number(element.getAttribute('data-ayah') || 0);
+                if (!surahNomor || !ayahNomor) return;
+
+                const ayahKey = `${surahNomor}:${ayahNomor}`;
+
+                if (entry.isIntersecting) {
+                    if (autoTrackedKeysRef.current.has(ayahKey) || timers.has(element)) return;
+                    const timer = setTimeout(async () => {
+                        if (autoTrackedKeysRef.current.has(ayahKey)) return;
+                        if (progress?.lastSurah === surahNomor && progress?.lastAyah === ayahNomor) return;
+                        const now = Date.now();
+                        if (now - lastAutoTrackAtRef.current < AUTO_TRACK_MIN_INTERVAL_MS) return;
+                        try {
+                            await saveProgress(surahNomor, ayahNomor);
+                            autoTrackedKeysRef.current.add(ayahKey);
+                            lastAutoTrackAtRef.current = now;
+                        } catch {
+                            // no-op: manual save remains available
+                        }
+                    }, AUTO_TRACK_DELAY_MS);
+                    timers.set(element, timer);
+                } else {
+                    const timer = timers.get(element);
+                    if (timer) {
+                        clearTimeout(timer);
+                        timers.delete(element);
+                    }
+                }
+            });
+        }, { threshold: 0.75 });
+
+        const ayahElements = document.querySelectorAll('.ayah-item');
+        ayahElements.forEach((el) => autoTrackObserverRef.current?.observe(el));
+
+        return () => {
+            autoTrackObserverRef.current?.disconnect();
+            timers.forEach((timer) => clearTimeout(timer));
+            timers.clear();
+        };
+    }, [autoTrackEnabled, juzAyat.length, loading, progress?.lastAyah, progress?.lastSurah, saveProgress]);
+
     // Auto-scroll to hash if it exists after content is loaded
     useEffect(() => {
         if (!loading && surahs.length > 0 && typeof window !== 'undefined') {
@@ -337,6 +413,8 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                                 toggleMushafMode={toggleMushafMode}
                                 hapalanMode={hapalanMode}
                                 toggleHapalanMode={toggleHapalanMode}
+                                autoTrackEnabled={autoTrackEnabled}
+                                toggleAutoTrackEnabled={toggleAutoTrackEnabled}
                             />
                         </div>
 
@@ -464,6 +542,8 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                                     className={`ayah-item group relative border-b border-secondary/20 pb-12 last:border-0 transition-all ${isLastRead ? 'bg-secondary/10 rounded-2xl p-6 -mx-4 shadow-sm' : ''}`}
                                     id={`ayah-${surahNomor}-${ayah.nomorAyat}`}
                                     data-surah={surahNama}
+                                    data-surah-nomor={surahNomor}
+                                    data-ayah={ayah.nomorAyat}
                                 >
 
 
