@@ -277,7 +277,7 @@ export default function JuzReader({ juzId }: { juzId: number }) {
                     }
                 }
             });
-        }, { threshold: 0.75 });
+        }, { threshold: 0.35, rootMargin: '-10% 0px -35% 0px' });
 
         const ayahElements = document.querySelectorAll('.ayah-item');
         ayahElements.forEach((el) => autoTrackObserverRef.current?.observe(el));

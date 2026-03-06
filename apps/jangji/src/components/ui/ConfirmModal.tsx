@@ -6,7 +6,7 @@ import { AlertCircle, X } from 'lucide-react';
 interface ConfirmModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     title: string;
     message: string;
     confirmText?: string;
@@ -65,8 +65,8 @@ export default function ConfirmModal({
                                         {cancelText}
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            onConfirm();
+                                        onClick={async () => {
+                                            await onConfirm();
                                             onClose();
                                         }}
                                         className={`flex-1 rounded-xl py-3 text-sm font-bold text-white shadow-lg transition-all ${type === 'danger' ? 'bg-red-500 shadow-red-500/20 hover:bg-red-600' : 'bg-primary shadow-primary/20 hover:bg-primary/90'}`}
